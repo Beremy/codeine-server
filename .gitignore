@@ -1,0 +1,21 @@
+# Node modules
+node_modules/
+npm-debug.log*
+
+# Sequelize
+config/config.json
+
+# Environment variables
+.env
+
+# Editor configuration files
+.vscode/
+.idea/
+
+# Logs
+logs/
+*.log
+
+# Misc
+.DS_Store
+Thumbs.db

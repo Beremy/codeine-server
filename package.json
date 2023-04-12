@@ -1,0 +1,19 @@
+{
+  "name": "hostomytho-server",
+  "version": "1.0.0",
+  "description": "Hostomytho application server",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node index.js "
+  },
+  "author": "Beremy",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/hostomytho/hostomytho-server/issues"
+  },
+  "homepage": "https://github.com/hostomytho/hostomytho-server#readme",
+  "dependencies": {
+    "express": "^4.18.2"
+  }
+}
