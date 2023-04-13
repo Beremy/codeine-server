@@ -1,0 +1,5 @@
+DB_NAME=hostomytho_bdd
+DB_USER=root
+DB_PASSWORD=
+DB_DIALECT=mysql
+DB_HOST=localhost
