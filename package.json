@@ -2,7 +2,7 @@
   "name": "hostomytho-server",
   "version": "1.0.0",
   "description": "Hostomytho application server",
-  "main": "index.js",
+  "main": "app.js",
   "scripts": {
     "start": "nodemon ./bin/www"
   },
@@ -14,7 +14,7 @@
     "dotenv": "^16.0.3",
     "express": "~4.16.1",
     "morgan": "~1.9.1",
-    "mysql2": "^3.2.0",
+    "mysql2": "^3.2.4",
     "nodemon": "^2.0.22",
     "sequelize": "^6.31.0"
   }
