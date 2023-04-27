@@ -1,5 +1,6 @@
 var express = require("express");
 var path = require("path");
+var cors = require('cors')
 var cookieParser = require("cookie-parser");
 var logger = require("morgan");
 const PORT = 3001;
@@ -9,6 +10,14 @@ var indexRouter = require("./routes/index");
 var usersRouter = require("./routes/users");
 
 var app = express();
+app.use(cors())
+
+
+// // Si on veut restreindre l'accès:
+// const corsOptions = {
+//   origin: "http://localhost:3000", // Remplacez par l'URL de l'application client
+// };
+// app.use(cors(corsOptions));
 
 app.listen(PORT, async () => {
   console.log(`Server is running at http://localhost:${PORT}`);

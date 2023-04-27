@@ -28,11 +28,7 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.INTEGER,
         defaultValue: 0,
       },
-      good_answers: {
-        type: DataTypes.INTEGER,
-        defaultValue: 0,
-      },
-      bad_answers: {
+      trust_index: {
         type: DataTypes.INTEGER,
         defaultValue: 0,
       },
@@ -47,7 +43,7 @@ module.exports = (sequelize, DataTypes) => {
     },
     {
       sequelize,
-      modelName: "User",
+      modelName: "users",
       timestamps: false,
     }
   );
