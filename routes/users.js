@@ -1,26 +1,24 @@
 var express = require("express");
 var router = express.Router();
 const { User } = require("../models"); // Import your User model
+const authMiddleware = require("../middleware/authMiddleware");
+const userController = require("../controllers/userController");
+
+router.get("/protected-route", authMiddleware, (req, res) => {
+  // Route protégée par l'authentification
+});
 
 /* GET users listing. */
-router.get("/", async function (req, res, next) {
-  try {
-    const users = await User.findAll();
-    res.json(users);
-  } catch (err) {
-    next(err);
-  }
-});
+router.get("/", userController.getAllUsers);
 
-router.get("/:userid", async function (req, res, next) {
-  var userId = req.params.userid;
-  try {
-    const user = await User.findByPk(userId);
-    res.json(user);
-  } catch (err) {
-    next(err);
-  }
-});
+// GET user by ID
+router.get("/:id", userController.getUserById);
+
+// POST new user (signup)
+router.post("/signup", userController.signup);
+
+// POST user login (signin)
+router.post("/signin", userController.signin);
 
 router.post("/", async function (req, res, next) {
   try {
