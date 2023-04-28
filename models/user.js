@@ -24,6 +24,10 @@ module.exports = (sequelize, DataTypes) => {
         values: ["etudiant", "medecin", "autre"],
         allowNull: false,
       },
+      email: {
+        type: DataTypes.STRING(255),
+        defaultValue: '',
+      },
       points: {
         type: DataTypes.INTEGER,
         defaultValue: 0,

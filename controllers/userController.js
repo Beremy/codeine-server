@@ -3,8 +3,13 @@ const bcrypt = require("bcryptjs");
 const { User } = require("../models");
 
 const createUser = async (user) => {
-  user.password = await bcrypt.hash(user.password, 10);
-  return await User.create(user);
+  try {
+    user.password = await bcrypt.hash(user.password, 10);
+    return await User.create(user);
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
 };
 
 const getUserByUsername = async (username) => {
