@@ -1,6 +1,6 @@
 var express = require("express");
 var path = require("path");
-var cors = require('cors')
+var cors = require("cors");
 var cookieParser = require("cookie-parser");
 var logger = require("morgan");
 const PORT = 3001;
@@ -8,10 +8,10 @@ const { sequelize, connectToDb } = require("./service/db");
 
 var indexRouter = require("./routes/index");
 var usersRouter = require("./routes/users");
+var achievementsRouter = require("./routes/achievements");
 
 var app = express();
-app.use(cors())
-
+app.use(cors());
 
 // // Si on veut restreindre l'accès:
 // const corsOptions = {
@@ -32,5 +32,6 @@ app.use(express.static(path.join(__dirname, "public")));
 
 app.use("/", indexRouter);
 app.use("/users", usersRouter);
+app.use("/achievements", achievementsRouter);
 
 module.exports = app;

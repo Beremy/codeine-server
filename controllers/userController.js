@@ -43,7 +43,13 @@ const signin = async (req, res) => {
     const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, {
       expiresIn: "24h",
     });
-    res.status(200).json({ message: "User signed in successfully", token });
+
+    const userInfo = user.get({ plain: true });
+    delete userInfo.password;
+
+    res
+      .status(200)
+      .json({ message: "User signed in successfully", token, user: userInfo });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
