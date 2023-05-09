@@ -23,6 +23,14 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.STRING(45),
         allowNull: false,
       },
+      color: {
+        type: DataTypes.STRING(45),
+        allowNull: true,
+      },
+      lib: {
+        type: DataTypes.STRING(45),
+        allowNull: true,
+      },
     },
     {
       sequelize,
