@@ -3,7 +3,7 @@ const { Model } = require("sequelize");
 module.exports = (sequelize, DataTypes) => {
   class Achievement extends Model {}
 
-  User.init(
+  Achievement.init(
     {
       id: {
         type: DataTypes.INTEGER,

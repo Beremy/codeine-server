@@ -10,7 +10,6 @@ const { Achievement } = require("../models");
 /* GET achievements listing. */
 router.get("/", async function (req, res, next) {
   try {
-    console.log("get Achievements");
     const achievements = await Achievement.findAll();
     res.status(200).json(achievements);
   } catch (error) {
