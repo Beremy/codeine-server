@@ -11,14 +11,19 @@ router.get("/protected-route", authMiddleware, (req, res) => {
 /* GET users listing. */
 router.get("/", userController.getAllUsers);
 
-// GET user by ID
-router.get("/:id", userController.getUserById);
-
 // POST new user (signup)
 router.post("/signup", userController.signup);
 
 // POST user login (signin)
 router.post("/signin", userController.signin);
+
+router.get("/getUsersOrderedByPoints", userController.getUsersOrderedByPoints);
+
+// Récupération du rang de l'utilisateur et des joueur les plus proches de lui au score
+router.get("/getUserRanking/:id", userController.getUserRanking);
+
+// GET user by ID
+router.get("/:id", userController.getUserById);
 
 router.post("/", async function (req, res, next) {
   try {
