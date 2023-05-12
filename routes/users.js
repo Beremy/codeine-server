@@ -19,7 +19,7 @@ router.post("/signin", userController.signin);
 
 router.get("/getUsersOrderedByPoints", userController.getUsersOrderedByPoints);
 
-// Récupération du rang de l'utilisateur et des joueur les plus proches de lui au score
+// Récupération du rang de l'utilisateur et des joueurs les plus proches de lui au score
 router.get("/getUserRanking/:id", userController.getUserRanking);
 
 // GET user by ID

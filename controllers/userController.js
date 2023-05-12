@@ -71,7 +71,6 @@ const getAllUsers = async (req, res) => {
   }
 };
 
-
 const getUsersOrderedByPoints = async (req, res) => {
   const limit = 20; // nombre d'utilisateurs par page
   const page = req.query.page || 1; // page actuelle
@@ -89,6 +88,7 @@ const getUsersOrderedByPoints = async (req, res) => {
   }
 };
 
+// Obtenir le rang de l'utilisateur et les joueurs proches de lui
 const getUserRanking = async (req, res) => {
   const userId = req.params.id; // ID de l'utilisateur connecté
 
@@ -109,11 +109,12 @@ const getUserRanking = async (req, res) => {
         where: { points: { [Op.lt]: user.points } },
         order: [["points", "DESC"]],
       });
-      users.push(previousUser);
+      users.push({ position: rank - 1, user: previousUser });
     }
+    delete user.password;
 
     // Ajouter l'utilisateur connecté
-    users.push(user);
+    users.push({ position: rank, user: user });
 
     // Obtenir l'utilisateur suivant si ce n'est pas le dernier
     const nextUser = await User.findOne({
@@ -121,10 +122,11 @@ const getUserRanking = async (req, res) => {
       order: [["points", "ASC"]],
     });
     if (nextUser) {
-      users.push(nextUser);
+      delete nextUser.password;
+      users.push({ position: rank + 1, user: nextUser });
     }
 
-    res.status(200).json({ rank, users });
+    res.status(200).json(users);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -148,5 +150,5 @@ module.exports = {
   getAllUsers,
   getUserById,
   getUsersOrderedByPoints,
-  getUserRanking
+  getUserRanking,
 };
