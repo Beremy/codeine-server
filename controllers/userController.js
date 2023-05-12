@@ -19,7 +19,12 @@ const getUserByUsername = async (username) => {
 const signup = async (req, res) => {
   try {
     const user = await createUser(req.body);
-    res.status(201).json({ message: "User created successfully", user });
+    const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, {
+      expiresIn: "24h",
+    });
+    const userInfo = user.get({ plain: true });
+    delete userInfo.password;
+    res.status(201).json({ message: "User created successfully", token, user: userInfo });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -46,7 +51,6 @@ const signin = async (req, res) => {
 
     const userInfo = user.get({ plain: true });
     delete userInfo.password;
-
     res
       .status(200)
       .json({ message: "User signed in successfully", token, user: userInfo });
