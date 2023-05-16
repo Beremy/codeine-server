@@ -84,11 +84,22 @@ const getUsersOrderedByPoints = async (req, res) => {
       offset,
       attributes: { exclude: ["password"] },
     });
+    let lastPoints = null;
+    let lastRank = 0;
     // Ajouter la position à chaque utilisateur
-    const usersWithRank = users.map((user, index) => ({
-      ...user.get({ plain: true }),
-      ranking: offset + index + 1,
-    }));
+    const usersWithRank = users.map((user, index) => {
+      const userPlain = user.get({ plain: true });
+
+      if (lastPoints !== userPlain.points) {
+        lastRank = offset + index + 1;
+        lastPoints = userPlain.points;
+      }
+
+      return {
+        ...userPlain,
+        ranking: lastRank,
+      };
+    });
 
     res.status(200).json(usersWithRank);
   } catch (error) {
