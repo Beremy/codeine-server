@@ -2,6 +2,7 @@ const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 const { User } = require("../models");
 const { Op } = require("sequelize");
+const { QueryTypes } = require("sequelize");
 
 const createUser = async (user) => {
   try {
@@ -75,58 +76,83 @@ const getUsersOrderedByPoints = async (req, res) => {
   const limit = 20; // nombre d'utilisateurs par page
   const page = req.query.page || 1; // page actuelle
   const offset = (page - 1) * limit;
-  console.log("test");
+
   try {
     const users = await User.findAll({
       order: [["points", "DESC"]],
       limit,
       offset,
+      attributes: { exclude: ["password"] },
     });
-    res.status(200).json(users);
+    // Ajouter la position à chaque utilisateur
+    const usersWithRank = users.map((user, index) => ({
+      ...user.get({ plain: true }),
+      ranking: offset + index + 1,
+    }));
+
+    res.status(200).json(usersWithRank);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 };
 
-// Obtenir le rang de l'utilisateur et les joueurs proches de lui
 const getUserRanking = async (req, res) => {
-  const userId = req.params.id; // ID de l'utilisateur connecté
+  const userId = parseInt(req.params.id); // ID de l'utilisateur
 
   try {
-    const user = await User.findByPk(userId);
-    if (!user) {
+    const rankings = await User.sequelize.query(
+      "SELECT id, username, points, RANK() OVER (ORDER BY points DESC) as ranking FROM users",
+      { type: QueryTypes.SELECT }
+    );
+
+    const userRanking = rankings.find((ranking) => ranking.id === userId);
+
+    if (!userRanking) {
       return res.status(404).json({ error: "User not found" });
     }
 
-    // Obtenir le rang de l'utilisateur
-    const rank =
-      (await User.count({ where: { points: { [Op.gt]: user.points } } })) + 1;
+    res.status(200).json(userRanking);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
 
-    let users = [];
-    // Obtenir l'utilisateur précédent si ce n'est pas le premier
-    if (rank > 1) {
-      const previousUser = await User.findOne({
-        where: { points: { [Op.lt]: user.points } },
-        order: [["points", "DESC"]],
-      });
-      users.push({ position: rank - 1, user: previousUser });
-    }
-    delete user.password;
+const getUserRankingRange = async (req, res) => {
+  const userId = parseInt(req.params.id);
+  const range = 1; // Nombre d'utilisateurs à inclure avant et après l'utilisateur
 
-    // Ajouter l'utilisateur connecté
-    users.push({ position: rank, user: user });
+  try {
+    const rankings = await User.sequelize.query(
+      "SELECT id, username, points, RANK() OVER (ORDER BY points DESC) as ranking FROM users",
+      { type: QueryTypes.SELECT }
+    );
 
-    // Obtenir l'utilisateur suivant si ce n'est pas le dernier
-    const nextUser = await User.findOne({
-      where: { points: { [Op.gt]: user.points } },
-      order: [["points", "ASC"]],
-    });
-    if (nextUser) {
-      delete nextUser.password;
-      users.push({ position: rank + 1, user: nextUser });
+    const userRankingIndex = rankings.findIndex(
+      (ranking) => ranking.id === userId
+    );
+
+    if (userRankingIndex === -1) {
+      return res.status(404).json({ error: "User not found" });
     }
 
-    res.status(200).json(users);
+    let start, end;
+    if (userRankingIndex === 0) {
+      // Si l'utilisateur est en premier rang
+      start = 0;
+      end = start + 2 * range + 1;
+    } else if (userRankingIndex === rankings.length - 1) {
+      // Si l'utilisateur est en dernier rang
+      end = rankings.length;
+      start = end - 2 * range - 1;
+    } else {
+      // Pour tous les autres rangs
+      start = Math.max(0, userRankingIndex - range);
+      end = Math.min(rankings.length, userRankingIndex + range + 1);
+    }
+
+    const rankingRange = rankings.slice(start, end);
+
+    res.status(200).json(rankingRange);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -151,4 +177,5 @@ module.exports = {
   getUserById,
   getUsersOrderedByPoints,
   getUserRanking,
+  getUserRankingRange,
 };
