@@ -8,8 +8,10 @@ const { sequelize, connectToDb } = require("./service/db");
 
 var indexRouter = require("./routes/index");
 var usersRouter = require("./routes/users");
-var adminRouter = require("./routes/admins");
 var achievementsRouter = require("./routes/achievements");
+var adminsRouter = require("./routes/admins");
+var textsRouter = require("./routes/texts");
+var sentencesRouter = require("./routes/sentences");
 
 var app = express();
 app.use(cors());
@@ -33,7 +35,9 @@ app.use(express.static(path.join(__dirname, "public")));
 
 app.use("/", indexRouter);
 app.use("/users", usersRouter);
-app.use("/admins", adminRouter);
 app.use("/achievements", achievementsRouter);
+app.use("/admins", adminsRouter);
+app.use("/texts", textsRouter);
+app.use("/sentences", sentencesRouter);
 
 module.exports = app;

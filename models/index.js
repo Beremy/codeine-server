@@ -5,17 +5,23 @@ const { sequelize } = require("../service/db");
 const AchievementModel = require("./achievement.js");
 const UserModel = require("./user.js");
 const AdminModel = require("./admin.js");
+const TextModel = require("./text.js");
+const SentenceModel = require("./sentence.js");
 
 const UserAchievement = require("./userAchievement.js")(sequelize, Sequelize.DataTypes);
 const Achievement = AchievementModel(sequelize, Sequelize.DataTypes);
 const User = UserModel(sequelize, Sequelize.DataTypes);
 const Admin = AdminModel(sequelize, Sequelize.DataTypes);
+const Text = TextModel(sequelize, Sequelize.DataTypes);
+const Sentence = SentenceModel(sequelize, Sequelize.DataTypes);
 
 const models = {
   User: User,  
   Admin: Admin,  
   Achievement: Achievement,
   UserAchievement: UserAchievement,
+  Text: Text,
+  Sentence: Sentence
 };
 
 // Associations UserAchievement
@@ -37,6 +43,14 @@ UserAchievement.belongsTo(Achievement, {
   targetKey: "id",
 });
 
+Text.hasMany(Sentence, {
+  foreignKey: "text_id",
+  sourceKey: "id",
+});
+Sentence.belongsTo(Text, {
+  foreignKey: "text_id",
+  targetKey: "id",
+});
 
 sequelize.sync();
 
