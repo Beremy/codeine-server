@@ -4,13 +4,16 @@ const { sequelize } = require("../service/db");
 
 const AchievementModel = require("./achievement.js");
 const UserModel = require("./user.js");
+const AdminModel = require("./admin.js");
 
 const UserAchievement = require("./userAchievement.js")(sequelize, Sequelize.DataTypes);
 const Achievement = AchievementModel(sequelize, Sequelize.DataTypes);
 const User = UserModel(sequelize, Sequelize.DataTypes);
+const Admin = AdminModel(sequelize, Sequelize.DataTypes);
 
 const models = {
   User: User,  
+  Admin: Admin,  
   Achievement: Achievement,
   UserAchievement: UserAchievement,
 };
