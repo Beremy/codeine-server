@@ -1,4 +1,4 @@
-const { Text } = require("../models");
+const { Text, Theme } = require("../models");
 
 const getAllTexts = async (req, res) => {
   try {
@@ -23,9 +23,14 @@ const getTextById = async (req, res) => {
 
 const getTextsByTheme = async (req, res) => {
   try {
-    const texts = await Text.findAll({
-      where: { theme: req.params.theme },
-    });
+    const themeId = req.params.theme;
+    const theme = await Theme.findOne({ where: { id: themeId } });
+
+    if (!theme) {
+      return res.status(404).json({ error: "Theme not found" });
+    }
+
+    const texts = await Text.findAll({ where: { id_theme: theme.id } });
     res.status(200).json(texts);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -69,6 +74,16 @@ const deleteText = async (req, res) => {
   }
 };
 
+const getTextsByOrigin = async (req, res) => {
+  try {
+    const origin = req.params.origin;
+    const texts = await Text.findAll({ where: { origin } });
+    res.status(200).json(texts);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
 module.exports = {
   getAllTexts,
   getTextById,
@@ -76,4 +91,5 @@ module.exports = {
   createText,
   updateText,
   deleteText,
+  getTextsByOrigin,
 };

@@ -1,7 +1,11 @@
 const { Model } = require("sequelize");
 
 module.exports = (sequelize, DataTypes) => {
-  class Text extends Model {}
+  class Text extends Model {
+    static associate(models) {
+      this.belongsTo(models.Theme, { foreignKey: "id_theme" });
+    }
+  }
   Text.init(
     {
       id: {
@@ -13,12 +17,16 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.TEXT,
         allowNull: false,
       },
-      theme: {
-        type: DataTypes.STRING(50),
+      id_theme: {
+        type: DataTypes.INTEGER,
         allowNull: true,
       },
       plausibility: {
         type: DataTypes.DECIMAL(50, 0),
+        allowNull: true,
+      },
+      origin: {
+        type: DataTypes.STRING(45),
         allowNull: true,
       },
     },

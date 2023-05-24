@@ -8,5 +8,6 @@ router.get("/theme/:theme", textController.getTextsByTheme);
 router.post("/", textController.createText);
 router.put("/:id", textController.updateText);
 router.delete("/:id", textController.deleteText);
+router.get("/origin/:origin", textController.getTextsByOrigin);
 
 module.exports = router;

@@ -11,6 +11,7 @@ var usersRouter = require("./routes/users");
 var achievementsRouter = require("./routes/achievements");
 var adminsRouter = require("./routes/admins");
 var textsRouter = require("./routes/texts");
+// var themeRouter = require("./routes/theme");
 var sentencesRouter = require("./routes/sentences");
 
 var app = express();
@@ -38,6 +39,7 @@ app.use("/users", usersRouter);
 app.use("/achievements", achievementsRouter);
 app.use("/admins", adminsRouter);
 app.use("/texts", textsRouter);
+// app.use("/theme", themeRouter);
 app.use("/sentences", sentencesRouter);
 
 module.exports = app;

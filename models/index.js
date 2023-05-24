@@ -6,6 +6,7 @@ const AchievementModel = require("./achievement.js");
 const UserModel = require("./user.js");
 const AdminModel = require("./admin.js");
 const TextModel = require("./text.js");
+const ThemeModel = require("./theme.js");
 const SentenceModel = require("./sentence.js");
 
 const UserAchievement = require("./userAchievement.js")(sequelize, Sequelize.DataTypes);
@@ -13,6 +14,7 @@ const Achievement = AchievementModel(sequelize, Sequelize.DataTypes);
 const User = UserModel(sequelize, Sequelize.DataTypes);
 const Admin = AdminModel(sequelize, Sequelize.DataTypes);
 const Text = TextModel(sequelize, Sequelize.DataTypes);
+const Theme = ThemeModel(sequelize, Sequelize.DataTypes);
 const Sentence = SentenceModel(sequelize, Sequelize.DataTypes);
 
 const models = {
@@ -21,6 +23,7 @@ const models = {
   Achievement: Achievement,
   UserAchievement: UserAchievement,
   Text: Text,
+  Theme: Theme,
   Sentence: Sentence
 };
 
