@@ -3,7 +3,7 @@ const { Text, Theme } = require("../models");
 const getAllTexts = async (req, res) => {
   try {
     const texts = await Text.findAll();
-    res.status(200).json(texts);
+    res.status(200).json(texts.reverse());
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
