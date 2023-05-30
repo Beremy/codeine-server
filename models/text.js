@@ -16,18 +16,22 @@ module.exports = (sequelize, DataTypes) => {
       content: {
         type: DataTypes.TEXT,
         allowNull: false,
+        defaultValue: "",
       },
       id_theme: {
         type: DataTypes.INTEGER,
         allowNull: true,
+        defaultValue: 1,
       },
       plausibility: {
         type: DataTypes.DECIMAL(50, 0),
         allowNull: true,
+        defaultValue: 0,
       },
       origin: {
         type: DataTypes.STRING(45),
         allowNull: true,
+        defaultValue: "generated",
       },
     },
     {
