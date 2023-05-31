@@ -26,6 +26,17 @@ const models = {
   Theme: Theme,
   Sentence: Sentence
 };
+// Associations UserAchievement
+User.belongsToMany(Achievement, {
+  through: UserAchievement,
+  foreignKey: 'user_id',
+  otherKey: 'achievement_id'
+});
+Achievement.belongsToMany(User, {
+  through: UserAchievement,
+  foreignKey: 'achievement_id',
+  otherKey: 'user_id'
+});
 
 // Associations UserAchievement
 User.hasMany(UserAchievement, {

@@ -23,6 +23,10 @@ module.exports = (sequelize, DataTypes) => {
           key: "id",
         },
       },
+      notifications_enabled: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: false,
+      },
     },
     {
       sequelize,

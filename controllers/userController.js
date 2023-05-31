@@ -1,6 +1,6 @@
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
-const { User } = require("../models");
+const { User, Achievement } = require("../models");
 const { Op } = require("sequelize");
 const { QueryTypes } = require("sequelize");
 
@@ -181,6 +181,63 @@ const getUserById = async (req, res) => {
   }
 };
 
+async function checkAchievements(user) {
+  try {
+    const scoreAchievements = [
+      { id: "2", score: 100 },
+      { id: "3", score: 500 },
+      { id: "4", score: 1000 },
+      { id: "5", score: 5000 },
+      // Ajouter les autres hauts faits liés au score ici
+    ];
+
+    for (const achievement of scoreAchievements) {
+      // Vérifiez si l'utilisateur a déjà obtenu ce haut fait
+      const existingAchievement = await user.getAchievements({
+        where: { id: achievement.id },
+      });
+      // Si l'utilisateur n'a pas encore obtenu ce haut fait et que son score est suffisant, on ajoute le haut fait à user_achievement
+      if (
+        existingAchievement.length === 0 &&
+        user.points >= achievement.score
+      ) {
+        console.log(
+          `User is eligible for achievement with id ${achievement.id}`
+        );
+        const newAchievement = await Achievement.findByPk(achievement.id);
+        if (newAchievement) {
+          await user.addAchievement(newAchievement, {
+            through: { notified: false },
+          });
+        }
+      }
+    }
+  } catch (err) {
+    console.error("An error occurred while checking achievements:", err);
+  }
+}
+
+const incrementUserPoints = async (req, res) => {
+  const { id } = req.params;
+  const { pointsToAdd } = req.body.points;
+
+  try {
+    const user = await User.findOne({ where: { id } });
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    user.points = req.body.points;
+    await user.save();
+
+    await checkAchievements(user); // Vérifiez les hauts faits après l'incrément des points
+
+    res.status(200).json(user);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
 module.exports = {
   signup,
   signin,
@@ -189,4 +246,5 @@ module.exports = {
   getUsersOrderedByPoints,
   getUserRanking,
   getUserRankingRange,
+  incrementUserPoints,
 };

@@ -28,6 +28,9 @@ router.get("/getUserRankingRange/:id", userController.getUserRankingRange);
 // GET user by ID
 router.get("/:id", userController.getUserById);
 
+// Incrémente points
+router.put("/:id/points", userController.incrementUserPoints);
+
 router.post("/", async function (req, res, next) {
   try {
     const newUser = await User.create(req.body);
