@@ -191,6 +191,7 @@ async function checkAchievements(user) {
       // Ajouter les autres hauts faits liés au score ici
     ];
 
+    let newAchievements = [];
     for (const achievement of scoreAchievements) {
       // Vérifiez si l'utilisateur a déjà obtenu ce haut fait
       const existingAchievement = await user.getAchievements({
@@ -201,19 +202,19 @@ async function checkAchievements(user) {
         existingAchievement.length === 0 &&
         user.points >= achievement.score
       ) {
-        console.log(
-          `User is eligible for achievement with id ${achievement.id}`
-        );
         const newAchievement = await Achievement.findByPk(achievement.id);
         if (newAchievement) {
           await user.addAchievement(newAchievement, {
             through: { notified: false },
           });
+          newAchievements.push(newAchievement);
         }
       }
     }
+    return newAchievements;
   } catch (err) {
     console.error("An error occurred while checking achievements:", err);
+    throw err;
   }
 }
 
@@ -230,9 +231,8 @@ const incrementUserPoints = async (req, res) => {
     user.points = req.body.points;
     await user.save();
 
-    await checkAchievements(user); // Vérifiez les hauts faits après l'incrément des points
-
-    res.status(200).json(user);
+    const newAchievements = await checkAchievements(user);
+    return res.status(200).json({ newAchievements });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
