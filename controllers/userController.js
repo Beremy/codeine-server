@@ -30,7 +30,11 @@ const signup = async (req, res) => {
       .status(201)
       .json({ message: "User created successfully", token, user: userInfo });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    if (error.name === "SequelizeUniqueConstraintError") {
+      res.status(409).json({ error: "Ce nom d'utilisateur est déjà pris." });
+    } else {
+      res.status(500).json({ error: error.message });
+    }
   }
 };
 
