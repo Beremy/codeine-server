@@ -13,6 +13,7 @@ var adminsRouter = require("./routes/admins");
 var textsRouter = require("./routes/texts");
 var themeRouter = require("./routes/themes");
 var sentencesRouter = require("./routes/sentences");
+var userSentenceSpecificationRouter = require("./routes/userSentenceSpecifications");
 
 var app = express();
 app.use(cors());
@@ -41,5 +42,6 @@ app.use("/admins", adminsRouter);
 app.use("/texts", textsRouter);
 app.use("/themes", themeRouter);
 app.use("/sentences", sentencesRouter);
+app.use("/userSentenceSpecifications", userSentenceSpecificationRouter);
 
 module.exports = app;

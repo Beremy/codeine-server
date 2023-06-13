@@ -61,6 +61,7 @@ const updateText = async (req, res) => {
 };
 
 const deleteText = async (req, res) => {
+  // TODO Vérifier les id et que les réponses enregistrées poitent vers le bon id, ou sont supprimées
   const textId = req.params.id;
   try {
     await Text.destroy({

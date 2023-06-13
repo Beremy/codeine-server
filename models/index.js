@@ -8,6 +8,7 @@ const AdminModel = require("./admin.js");
 const TextModel = require("./text.js");
 const ThemeModel = require("./theme.js");
 const SentenceModel = require("./sentence.js");
+const UserSentenceSpecificationModel = require("./userSentenceSpecification");
 
 const UserAchievement = require("./userAchievement.js")(sequelize, Sequelize.DataTypes);
 const Achievement = AchievementModel(sequelize, Sequelize.DataTypes);
@@ -16,6 +17,7 @@ const Admin = AdminModel(sequelize, Sequelize.DataTypes);
 const Text = TextModel(sequelize, Sequelize.DataTypes);
 const Theme = ThemeModel(sequelize, Sequelize.DataTypes);
 const Sentence = SentenceModel(sequelize, Sequelize.DataTypes);
+const UserSentenceSpecification = UserSentenceSpecificationModel(sequelize, Sequelize.DataTypes);
 
 const models = {
   User: User,  
@@ -24,7 +26,9 @@ const models = {
   UserAchievement: UserAchievement,
   Text: Text,
   Theme: Theme,
-  Sentence: Sentence
+  Sentence: Sentence,
+  UserSentenceSpecification: UserSentenceSpecification
+
 };
 // Associations UserAchievement
 User.belongsToMany(Achievement, {
@@ -62,6 +66,23 @@ Text.hasMany(Sentence, {
   sourceKey: "id",
 });
 Sentence.belongsTo(Text, {
+  foreignKey: "text_id",
+  targetKey: "id",
+});
+User.hasMany(UserSentenceSpecification, {
+  foreignKey: "user_id",
+  sourceKey: "id",
+});
+UserSentenceSpecification.belongsTo(User, {
+  foreignKey: "user_id",
+  targetKey: "id",
+});
+
+Text.hasMany(UserSentenceSpecification, {
+  foreignKey: "text_id",
+  sourceKey: "id",
+});
+UserSentenceSpecification.belongsTo(Text, {
   foreignKey: "text_id",
   targetKey: "id",
 });
