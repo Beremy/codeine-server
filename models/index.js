@@ -8,6 +8,7 @@ const AdminModel = require("./admin.js");
 const TextModel = require("./text.js");
 const ThemeModel = require("./theme.js");
 const SentenceModel = require("./sentence.js");
+const MessageMenuModel = require("./messageMenu.js");
 const UserSentenceSpecificationModel = require("./userSentenceSpecification");
 
 const UserAchievement = require("./userAchievement.js")(sequelize, Sequelize.DataTypes);
@@ -18,6 +19,7 @@ const Text = TextModel(sequelize, Sequelize.DataTypes);
 const Theme = ThemeModel(sequelize, Sequelize.DataTypes);
 const Sentence = SentenceModel(sequelize, Sequelize.DataTypes);
 const UserSentenceSpecification = UserSentenceSpecificationModel(sequelize, Sequelize.DataTypes);
+const MessageMenu = MessageMenuModel(sequelize, Sequelize.DataTypes);
 
 const models = {
   User: User,  
@@ -27,8 +29,8 @@ const models = {
   Text: Text,
   Theme: Theme,
   Sentence: Sentence,
-  UserSentenceSpecification: UserSentenceSpecification
-
+  UserSentenceSpecification: UserSentenceSpecification,
+  MessageMenu: MessageMenu,
 };
 // Associations UserAchievement
 User.belongsToMany(Achievement, {

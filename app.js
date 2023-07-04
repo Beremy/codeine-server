@@ -14,6 +14,7 @@ var textsRouter = require("./routes/texts");
 var themeRouter = require("./routes/themes");
 var sentencesRouter = require("./routes/sentences");
 var userSentenceSpecificationRouter = require("./routes/userSentenceSpecifications");
+var utilsRouter = require("./routes/utils");
 
 var app = express();
 app.use(cors());
@@ -43,5 +44,6 @@ app.use("/texts", textsRouter);
 app.use("/themes", themeRouter);
 app.use("/sentences", sentencesRouter);
 app.use("/userSentenceSpecifications", userSentenceSpecificationRouter);
+app.use("/utils", utilsRouter);
 
 module.exports = app;

@@ -12,8 +12,6 @@ router.get("/", async function (req, res, next) {
 });
 
 router.post("/", async function (req, res, next) {
-  console.log("post");
-  console.log(req);
   try {
     const newUserSentenceSpecification = await UserSentenceSpecification.create(req.body);
     res.status(201).json(newUserSentenceSpecification);
