@@ -224,19 +224,17 @@ async function checkAchievements(user) {
 
 const incrementUserPoints = async (req, res) => {
   const { id } = req.params;
-  const { pointsToAdd } = req.body.points;
 
   try {
     const user = await User.findOne({ where: { id } });
     if (!user) {
       return res.status(404).json({ error: "User not found" });
     }
-
-    user.points = req.body.points;
+    user.points += req.body.points;
     await user.save();
-
+    const newPoints = user.points;
     const newAchievements = await checkAchievements(user);
-    return res.status(200).json({ newAchievements });
+    return res.status(200).json({ newPoints, newAchievements });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
