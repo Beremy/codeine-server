@@ -54,6 +54,7 @@ router.put("/:id", async function (req, res, next) {
   }
 });
 
+// TODO Mettre les options de suppression à set null dans la bdd
 router.delete("/:id", async function (req, res, next) {
   const userId = req.params.id;
   try {

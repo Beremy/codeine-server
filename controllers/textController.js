@@ -36,9 +36,10 @@ const getTextsByTheme = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
-
 const createText = async (req, res) => {
   try {
+    // Standardisation des apostrophes dans le contenu du texte
+    req.body.content = req.body.content.replace(/[\u2018\u2019\u201A\u201B\u2032\u2035]/g, "'");
     const text = await Text.create(req.body);
     res.status(201).json(text);
   } catch (error) {
