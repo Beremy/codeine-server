@@ -23,15 +23,33 @@ module.exports = (sequelize, DataTypes) => {
         allowNull: true,
         defaultValue: 1,
       },
-      plausibility: {
-        type: DataTypes.DECIMAL(50, 0),
-        allowNull: true,
-        defaultValue: 0,
-      },
       origin: {
         type: DataTypes.STRING(45),
         allowNull: true,
         defaultValue: "generated",
+      },
+      is_plausibility_test: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: true,
+      },
+      test_plausibility: {
+        type: DataTypes.DECIMAL(5, 2),
+        allowNull: true,
+        defaultValue: 0,
+      },
+      avg_weighted_plausibility: {
+        type: DataTypes.DECIMAL(5, 2),
+        allowNull: true,
+        defaultValue: 0,
+      },
+      is_specification_test: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: true,
+      },
+      nb_of_treatments: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        defaultValue: 0,
       },
     },
     {

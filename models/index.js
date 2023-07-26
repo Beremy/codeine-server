@@ -3,6 +3,7 @@ const { Sequelize } = require("sequelize");
 const { sequelize } = require("../service/db");
 
 const AchievementModel = require("./achievement.js");
+const SkinModel = require("./skin.js");
 const UserModel = require("./user.js");
 const AdminModel = require("./admin.js");
 const TextModel = require("./text.js");
@@ -12,7 +13,9 @@ const MessageMenuModel = require("./messageMenu.js");
 const UserSentenceSpecificationModel = require("./userSentenceSpecification");
 
 const UserAchievement = require("./userAchievement.js")(sequelize, Sequelize.DataTypes);
+const UserSkin = require("./userSkin.js")(sequelize, Sequelize.DataTypes);
 const Achievement = AchievementModel(sequelize, Sequelize.DataTypes);
+const Skin = SkinModel(sequelize, Sequelize.DataTypes);
 const User = UserModel(sequelize, Sequelize.DataTypes);
 const Admin = AdminModel(sequelize, Sequelize.DataTypes);
 const Text = TextModel(sequelize, Sequelize.DataTypes);
@@ -26,12 +29,45 @@ const models = {
   Admin: Admin,  
   Achievement: Achievement,
   UserAchievement: UserAchievement,
+  Skin: Skin,
+  UserSkin: UserSkin,
   Text: Text,
   Theme: Theme,
   Sentence: Sentence,
   UserSentenceSpecification: UserSentenceSpecification,
   MessageMenu: MessageMenu,
 };
+
+// Associations UserSkin
+User.belongsToMany(Skin, {
+  through: UserSkin,
+  foreignKey: 'user_id',
+  otherKey: 'skin_id'
+});
+Skin.belongsToMany(User, {
+  through: UserAchievement,
+  foreignKey: 'skin_id',
+  otherKey: 'user_id'
+});
+
+User.hasMany(UserSkin, {
+  foreignKey: "user_id",
+  sourceKey: "id",
+});
+UserSkin.belongsTo(User, {
+  foreignKey: "user_id",
+  targetKey: "id",
+});
+
+Skin.hasMany(UserSkin, {
+  foreignKey: "skin_id",
+  sourceKey: "id",
+});
+UserSkin.belongsTo(Skin, {
+  foreignKey: "skin_id",
+  targetKey: "id",
+});
+
 // Associations UserAchievement
 User.belongsToMany(Achievement, {
   through: UserAchievement,
@@ -44,7 +80,6 @@ Achievement.belongsToMany(User, {
   otherKey: 'user_id'
 });
 
-// Associations UserAchievement
 User.hasMany(UserAchievement, {
   foreignKey: "user_id",
   sourceKey: "id",
