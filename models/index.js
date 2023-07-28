@@ -45,7 +45,7 @@ User.belongsToMany(Skin, {
   otherKey: 'skin_id'
 });
 Skin.belongsToMany(User, {
-  through: UserAchievement,
+  through: UserSkin,
   foreignKey: 'skin_id',
   otherKey: 'user_id'
 });
