@@ -19,3 +19,6 @@ logs/
 # Misc
 .DS_Store
 Thumbs.db
+
+# Env python
+hostomythoenv/

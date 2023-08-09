@@ -3,7 +3,7 @@ var router = express.Router();
 const textController = require("../controllers/textController");
 
 router.get("/", textController.getAllTexts);
-router.get("/getTextWithTokens/", textController.getTextWithTokens);
+router.get("/getTextWithTokens/:userId/:gameType", textController.getTextWithTokens);
 router.get("/:id", textController.getTextById);
 router.get("/theme/:theme", textController.getTextsByTheme);
 router.post("/", textController.createText);

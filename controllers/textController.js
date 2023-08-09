@@ -1,4 +1,5 @@
 const { Text, Theme, Token, UserGameText } = require("../models");
+const { exec } = require("child_process");
 // TODO Voir si je stocke une liste de position pour les specifications, oue si je crée encore une nouvelle table.
 
 const { Sequelize } = require("sequelize");
@@ -7,7 +8,7 @@ const Op = Sequelize.Op;
 const getTextWithTokens = async (req, res) => {
   try {
     // récupérer l'id de l'utilisateur et le type de jeu du corps de la requête ou de l'URL
-    const { userId, gameType } = req.body; // ou req.params si vous les transmettez via l'URL
+    const { userId, gameType } = req.params;
     // chercher tous les textes déjà joués par cet utilisateur pour ce type de jeu
     const userGameTexts = await UserGameText.findAll({
       where: {
@@ -91,14 +92,46 @@ const getTextsByTheme = async (req, res) => {
   }
 };
 
+// const createText = async (req, res) => {
+//   try {
+//     req.body.content = req.body.content.replace(
+//       /[\u2018\u2019\u201A\u201B\u2032\u2035]/g,
+//       "'"
+//     );
+//     const text = await Text.create(req.body);
+//     res.status(201).json(text);
+//   } catch (error) {
+//     res.status(500).json({ error: error.message });
+//   }
+// };
+
 const createText = async (req, res) => {
   try {
-    req.body.content = req.body.content.replace(
-      /[\u2018\u2019\u201A\u201B\u2032\u2035]/g,
-      "'"
+
+    // Appel de Spacy pour séparer le texte en token
+    exec(
+      `./hostomythoenv/bin/python ./scripts/spacyToken.py "${req.body.content}"`,
+      async (error, stdout, stderr) => {
+        if (error) {
+          console.error(`exec error: ${error}`);
+          return res.status(500).json({ error: error.message });
+        }
+        const tokensArray = JSON.parse(stdout);
+
+        // Insérer le texte dans la base de données et récupérer l'ID inséré
+        const text = await Text.create(req.body);
+
+        // Créer des entrées pour chaque token dans la table tokens
+        for (let i = 0; i < tokensArray.length; i++) {
+          await Token.create({
+            text_id: text.id,
+            content: tokensArray[i],
+            position: i + 1,
+          });
+        }
+        res.status(201).json(text);
+      }
     );
-    const text = await Text.create(req.body);
-    res.status(201).json(text);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
