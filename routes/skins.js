@@ -1,7 +1,16 @@
 var express = require("express");
 var router = express.Router();
-const { Skin, UserSkin } = require("../models");
-const skinOrder = ['personnage', 'visage', 'lunettes', 'veste', 'cheveux', 'chapeau'];
+const { Skin, UserSkin, User } = require("../models");
+const { Op } = require("sequelize");
+const skinOrder = [
+  "personnage",
+  "face",
+  "veste",
+  "pilosité",
+  "chapeau",
+  "yeux/nez",
+  "lunettes",
+];
 
 const organizeSkinsByType = (skins) => {
   return skins.reduce((result, skin) => {
@@ -25,11 +34,24 @@ router.get("/", async function (req, res, next) {
 router.get("/byUserId/:userId", async function (req, res, next) {
   try {
     const userId = req.params.userId;
+    // Récupération du genre de l'utilisateur
+    const user = await User.findByPk(userId);
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+    const userGender = user.gender;
+
+    // Récupération des skins en fonction du genre de l'utilisateur
     const userSkins = await UserSkin.findAll({
       where: { user_id: userId },
       include: [
         {
           model: Skin,
+          where: {
+            gender: {
+              [Op.or]: [userGender, "unisexe"],
+            },
+          },
         },
       ],
     });

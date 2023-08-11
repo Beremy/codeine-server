@@ -12,11 +12,19 @@ const SentenceModel = require("./sentence.js");
 const MessageMenuModel = require("./messageMenu.js");
 const UserSentenceSpecificationModel = require("./userSentenceSpecification");
 const TokenModel = require("./token.js");
+const TestPlausibilityErrorModel = require("./testPlausibilityError.js");
 
+const TestPlausibilityError = TestPlausibilityErrorModel(
+  sequelize,
+  Sequelize.DataTypes
+);
 const UserGameTextModel = require("./userGameText.js");
 const UserGameText = UserGameTextModel(sequelize, Sequelize.DataTypes);
 const Token = TokenModel(sequelize, Sequelize.DataTypes);
-const UserAchievement = require("./userAchievement.js")(sequelize, Sequelize.DataTypes);
+const UserAchievement = require("./userAchievement.js")(
+  sequelize,
+  Sequelize.DataTypes
+);
 const UserSkin = require("./userSkin.js")(sequelize, Sequelize.DataTypes);
 const Achievement = AchievementModel(sequelize, Sequelize.DataTypes);
 const Skin = SkinModel(sequelize, Sequelize.DataTypes);
@@ -25,12 +33,15 @@ const Admin = AdminModel(sequelize, Sequelize.DataTypes);
 const Text = TextModel(sequelize, Sequelize.DataTypes);
 const Theme = ThemeModel(sequelize, Sequelize.DataTypes);
 const Sentence = SentenceModel(sequelize, Sequelize.DataTypes);
-const UserSentenceSpecification = UserSentenceSpecificationModel(sequelize, Sequelize.DataTypes);
+const UserSentenceSpecification = UserSentenceSpecificationModel(
+  sequelize,
+  Sequelize.DataTypes
+);
 const MessageMenu = MessageMenuModel(sequelize, Sequelize.DataTypes);
 
 const models = {
-  User: User,  
-  Admin: Admin,  
+  User: User,
+  Admin: Admin,
   Achievement: Achievement,
   UserAchievement: UserAchievement,
   Skin: Skin,
@@ -40,9 +51,20 @@ const models = {
   Sentence: Sentence,
   UserSentenceSpecification: UserSentenceSpecification,
   Token: Token,
-  MessageMenu: MessageMenu,  
+  MessageMenu: MessageMenu,
   UserGameText: UserGameText,
+  TestPlausibilityError: TestPlausibilityError,
 };
+
+// *************** Associations TestPlausibilityError *******************
+Text.hasMany(TestPlausibilityError, {
+  foreignKey: "text_id",
+  sourceKey: "id",
+});
+TestPlausibilityError.belongsTo(Text, {
+  foreignKey: "text_id",
+  targetKey: "id",
+});
 
 // *************** Associations User_Game_Texts *******************
 User.hasMany(UserGameText, {
@@ -76,13 +98,13 @@ Token.belongsTo(Text, {
 // *************** Associations UserSkin *******************
 User.belongsToMany(Skin, {
   through: UserSkin,
-  foreignKey: 'user_id',
-  otherKey: 'skin_id'
+  foreignKey: "user_id",
+  otherKey: "skin_id",
 });
 Skin.belongsToMany(User, {
   through: UserSkin,
-  foreignKey: 'skin_id',
-  otherKey: 'user_id'
+  foreignKey: "skin_id",
+  otherKey: "user_id",
 });
 
 User.hasMany(UserSkin, {
@@ -106,13 +128,13 @@ UserSkin.belongsTo(Skin, {
 // *************** Associations UserAchievement *******************
 User.belongsToMany(Achievement, {
   through: UserAchievement,
-  foreignKey: 'user_id',
-  otherKey: 'achievement_id'
+  foreignKey: "user_id",
+  otherKey: "achievement_id",
 });
 Achievement.belongsToMany(User, {
   through: UserAchievement,
-  foreignKey: 'achievement_id',
-  otherKey: 'user_id'
+  foreignKey: "achievement_id",
+  otherKey: "user_id",
 });
 
 User.hasMany(UserAchievement, {

@@ -2,7 +2,7 @@ import spacy
 import sys
 
 def process_text(text):
-    # Chargement du modèle de langue français
+    # # Chargement du modèle de langue français
     nlp = spacy.load('fr_dep_news_trf')
 
     # Traitement du texte
@@ -16,7 +16,7 @@ def process_text(text):
 
     return sentences, tokens
 
-text = sys.argv[1]  # récupérer le texte depuis l'argument de la ligne de commande
+text = sys.argv[1]  
 
 sentences, tokens = process_text(text)
 

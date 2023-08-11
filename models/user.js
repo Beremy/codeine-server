@@ -44,6 +44,12 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.BOOLEAN,
         defaultValue: true,
       },
+      gender: {
+        type: DataTypes.ENUM,
+        values: ["homme", "femme"],
+        allowNull: false,
+        defaultValue: 'homme',
+      },
     },
     {
       sequelize,

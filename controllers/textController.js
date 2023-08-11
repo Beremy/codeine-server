@@ -1,4 +1,4 @@
-const { Text, Theme, Token, UserGameText } = require("../models");
+const { Text, Theme, Token, UserGameText, TestPlausibilityError } = require("../models");
 const { exec } = require("child_process");
 // TODO Voir si je stocke une liste de position pour les specifications, oue si je crée encore une nouvelle table.
 
@@ -92,23 +92,8 @@ const getTextsByTheme = async (req, res) => {
   }
 };
 
-// const createText = async (req, res) => {
-//   try {
-//     req.body.content = req.body.content.replace(
-//       /[\u2018\u2019\u201A\u201B\u2032\u2035]/g,
-//       "'"
-//     );
-//     const text = await Text.create(req.body);
-//     res.status(201).json(text);
-//   } catch (error) {
-//     res.status(500).json({ error: error.message });
-//   }
-// };
-
 const createText = async (req, res) => {
   try {
-
-    // Appel de Spacy pour séparer le texte en token
     exec(
       `./hostomythoenv/bin/python ./scripts/spacyToken.py "${req.body.content}"`,
       async (error, stdout, stderr) => {
@@ -116,26 +101,48 @@ const createText = async (req, res) => {
           console.error(`exec error: ${error}`);
           return res.status(500).json({ error: error.message });
         }
-        const tokensArray = JSON.parse(stdout);
 
-        // Insérer le texte dans la base de données et récupérer l'ID inséré
-        const text = await Text.create(req.body);
+        try {
+          const tokensArray = JSON.parse(stdout);
+          const textData = {
+            content: req.body.content,
+            is_plausibility_test: req.body.is_plausibility_test || false,
+            test_plausibility: req.body.is_plausibility_test ? req.body.test_plausibility : null
+          };
 
-        // Créer des entrées pour chaque token dans la table tokens
-        for (let i = 0; i < tokensArray.length; i++) {
-          await Token.create({
-            text_id: text.id,
-            content: tokensArray[i],
-            position: i + 1,
-          });
+          const text = await Text.create(textData);
+
+          for (let i = 0; i < tokensArray.length; i++) {
+            await Token.create({
+              text_id: text.id,
+              content: tokensArray[i],
+              position: i + 1,
+            });
+          }
+
+          if (req.body.is_plausibility_test && req.body.errors) {
+            for (const error of req.body.errors) {
+              await TestPlausibilityError.create({
+                text_id: text.id,
+                content: error.content,
+                word_position: error.word_position
+              });
+            }
+          }
+
+          res.status(201).json(text);
+        } catch (innerError) {
+          console.error(`Database or data error: ${innerError}`);
+          res.status(500).json({ error: innerError.message });
         }
-        res.status(201).json(text);
       }
     );
-  } catch (error) {
-    res.status(500).json({ error: error.message });
+  } catch (outerError) {
+    console.error(`Outer error: ${outerError}`);
+    res.status(500).json({ error: outerError.message });
   }
 };
+
 
 const updateText = async (req, res) => {
   const textId = req.params.id;
