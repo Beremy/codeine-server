@@ -1,9 +1,9 @@
 const { Model } = require("sequelize");
 
 module.exports = (sequelize, DataTypes) => {
-  class TestPlausibilityError extends Model {}
+  class TestSpecification extends Model {}
 
-  TestPlausibilityError.init(
+  TestSpecification.init(
     {
       id: {
         type: DataTypes.INTEGER,
@@ -19,6 +19,11 @@ module.exports = (sequelize, DataTypes) => {
           key: "id",
         },
       },
+      type: {
+        type: DataTypes.ENUM,
+        values: ['hypothesis', 'condition', 'negation'],
+        allowNull: false,
+      },
       content: {
         type: DataTypes.STRING,
         allowNull: false,
@@ -30,10 +35,10 @@ module.exports = (sequelize, DataTypes) => {
     },
     {
       sequelize,
-      modelName: "test_plausibility_errors",
+      modelName: "test_specifications",
       timestamps: false,
     }
   );
 
-  return TestPlausibilityError;
+  return TestSpecification;
 };

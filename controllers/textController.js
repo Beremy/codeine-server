@@ -33,7 +33,9 @@ const getTextWithTokens = async (req, res) => {
         "id_theme",
         "is_plausibility_test",
         "test_plausibility",
-        "is_specification_test",
+        "is_hypothesis_specification_test",
+        "is_condition_specification_test",
+        "is_negation_specification_test",
       ],
       order: Sequelize.literal("RAND()"),
       include: [
@@ -93,6 +95,7 @@ const getTextsByTheme = async (req, res) => {
 };
 
 const createText = async (req, res) => {
+  console.log(req.body);
   try {
     exec(
       `./hostomythoenv/bin/python ./scripts/spacyToken.py "${req.body.content}"`,
@@ -107,7 +110,10 @@ const createText = async (req, res) => {
           const textData = {
             content: req.body.content,
             is_plausibility_test: req.body.is_plausibility_test || false,
-            test_plausibility: req.body.is_plausibility_test ? req.body.test_plausibility : null
+            test_plausibility: req.body.is_plausibility_test ? req.body.test_plausibility : null,
+            is_hypothesis_specification_test: req.body.is_hypothesis_specification_test || false,
+            is_condition_specification_test: req.body.is_condition_specification_test || false,
+            is_negation_specification_test: req.body.is_negation_specification_test || false,
           };
 
           const text = await Text.create(textData);
@@ -125,7 +131,7 @@ const createText = async (req, res) => {
               await TestPlausibilityError.create({
                 text_id: text.id,
                 content: error.content,
-                word_position: error.word_position
+                word_positions: error.word_positions
               });
             }
           }

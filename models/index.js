@@ -2,6 +2,7 @@ require("dotenv").config();
 const { Sequelize } = require("sequelize");
 const { sequelize } = require("../service/db");
 
+const UserGameTextModel = require("./userGameText.js");
 const AchievementModel = require("./achievement.js");
 const SkinModel = require("./skin.js");
 const UserModel = require("./user.js");
@@ -14,18 +15,21 @@ const UserSentenceSpecificationModel = require("./userSentenceSpecification");
 const TokenModel = require("./token.js");
 const TestPlausibilityErrorModel = require("./testPlausibilityError.js");
 
-const TestPlausibilityError = TestPlausibilityErrorModel(
+const TestSpecification = require("./testSpecification")(
   sequelize,
   Sequelize.DataTypes
 );
-const UserGameTextModel = require("./userGameText.js");
-const UserGameText = UserGameTextModel(sequelize, Sequelize.DataTypes);
-const Token = TokenModel(sequelize, Sequelize.DataTypes);
 const UserAchievement = require("./userAchievement.js")(
   sequelize,
   Sequelize.DataTypes
 );
 const UserSkin = require("./userSkin.js")(sequelize, Sequelize.DataTypes);
+const TestPlausibilityError = TestPlausibilityErrorModel(
+  sequelize,
+  Sequelize.DataTypes
+);
+const UserGameText = UserGameTextModel(sequelize, Sequelize.DataTypes);
+const Token = TokenModel(sequelize, Sequelize.DataTypes);
 const Achievement = AchievementModel(sequelize, Sequelize.DataTypes);
 const Skin = SkinModel(sequelize, Sequelize.DataTypes);
 const User = UserModel(sequelize, Sequelize.DataTypes);
@@ -54,7 +58,18 @@ const models = {
   MessageMenu: MessageMenu,
   UserGameText: UserGameText,
   TestPlausibilityError: TestPlausibilityError,
+  TestSpecification: TestSpecification,
 };
+
+// *************** Associations TestSpecification *******************
+Text.hasMany(TestSpecification, {
+  foreignKey: "text_id",
+  sourceKey: "id",
+});
+TestSpecification.belongsTo(Text, {
+  foreignKey: "text_id",
+  targetKey: "id",
+});
 
 // *************** Associations TestPlausibilityError *******************
 Text.hasMany(TestPlausibilityError, {

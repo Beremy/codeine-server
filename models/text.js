@@ -42,9 +42,17 @@ module.exports = (sequelize, DataTypes) => {
         allowNull: true,
         defaultValue: 0,
       },
-      is_specification_test: {
+      is_hypothesis_specification_test: {
         type: DataTypes.BOOLEAN,
-        defaultValue: true,
+        defaultValue: false,
+      },
+      is_condition_specification_test: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: false,
+      },
+      is_negation_specification_test: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: false,
       },
       nb_of_treatments: {
         type: DataTypes.INTEGER,
