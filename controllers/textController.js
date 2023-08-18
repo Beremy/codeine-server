@@ -95,6 +95,7 @@ const getTextsByTheme = async (req, res) => {
 };
 
 const createText = async (req, res) => {
+  // TODO Gérer les sauts de lignes
   console.log(req.body);
   try {
     exec(
@@ -109,6 +110,7 @@ const createText = async (req, res) => {
           const tokensArray = JSON.parse(stdout);
           const textData = {
             content: req.body.content,
+            origin: req.body.origin,
             is_plausibility_test: req.body.is_plausibility_test || false,
             test_plausibility: req.body.is_plausibility_test ? req.body.test_plausibility : null,
             is_hypothesis_specification_test: req.body.is_hypothesis_specification_test || false,
