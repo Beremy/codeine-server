@@ -1,18 +1,42 @@
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
-const { User, Achievement } = require("../models");
-const { Op } = require("sequelize");
+const { User, Achievement, UserSkin } = require("../models");
 const { QueryTypes } = require("sequelize");
+const { sequelize } = require("../service/db.js");
+
 
 const createUser = async (user) => {
+  // Utiliser 'sequelize' au lieu de 'Sequelize'
+  const transaction = await sequelize.transaction();
   try {
     user.password = await bcrypt.hash(user.password, 10);
-    return await User.create(user);
+    const newUser = await User.create(user, { transaction });
+
+    let faceId, noseEyesId;
+
+    if (user.gender === 'homme') {
+      faceId = 23
+      noseEyesId = 55
+    } else {
+      faceId = 29;
+      noseEyesId = 48;
+    }
+
+    await UserSkin.bulkCreate([
+      { user_id: newUser.id, skin_id: faceId, equipped: true },
+      { user_id: newUser.id, skin_id: noseEyesId, equipped: true }
+    ], { transaction });
+
+    await transaction.commit();
+
+    return newUser;
   } catch (error) {
+    await transaction.rollback();
     console.error(error);
     throw error;
   }
 };
+
 
 const getUserByUsername = async (username) => {
   return await User.findOne({ where: { username } });

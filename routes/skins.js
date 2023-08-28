@@ -20,6 +20,48 @@ const organizeSkinsByType = (skins) => {
   }, {});
 };
 
+/* GET randomSkin */
+router.post("/randomSkin/:userId", async function (req, res, next) {
+  try {
+    const userId = req.params.userId;
+    const allSkins = await Skin.findAll();
+    const user = await User.findByPk(userId);
+    const ownedSkins = await UserSkin.findAll({ where: { user_id: userId } });
+    const ownedSkinIds = ownedSkins.map((s) => s.skin_id);
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    let skinPool = [];
+
+    for (let skin of allSkins) {
+      if (!ownedSkinIds.includes(skin.id)) {
+        // Vérification si le skin est déjà possédé
+        skinPool = skinPool.concat(Array(11 - skin.rarity).fill(skin));
+      }
+    }
+
+    if (skinPool.length === 0) {
+      return res.status(400).json({ error: "No more skins to unlock" });
+    }
+
+    const randomIndex = Math.floor(Math.random() * skinPool.length);
+    const selectedSkin = skinPool[randomIndex];
+
+    // Associer ce skin à l'utilisateur
+    const newSkin = await UserSkin.create({
+      user_id: userId,
+      skin_id: selectedSkin.id,
+      equipped: false,
+    });
+
+    res.status(200).json(newSkin);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 /* GET skins listing. */
 router.get("/", async function (req, res, next) {
   try {

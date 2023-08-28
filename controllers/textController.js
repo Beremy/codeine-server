@@ -1,7 +1,5 @@
 const { Text, Theme, Token, UserGameText, TestPlausibilityError } = require("../models");
 const { exec } = require("child_process");
-// TODO Voir si je stocke une liste de position pour les specifications, oue si je crée encore une nouvelle table.
-
 const { Sequelize } = require("sequelize");
 const Op = Sequelize.Op;
 
