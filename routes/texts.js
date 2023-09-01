@@ -10,5 +10,6 @@ router.post("/", textController.createText);
 router.put("/:id", textController.updateText);
 router.delete("/:id", textController.deleteText);
 router.get("/origin/:origin", textController.getTextsByOrigin);
+// TODO get test plausibility
 
 module.exports = router;

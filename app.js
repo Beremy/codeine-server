@@ -17,6 +17,7 @@ var userSentenceSpecificationRouter = require("./routes/userSentenceSpecificatio
 var utilsRouter = require("./routes/utils");
 var skinsRouter = require("./routes/skins");
 var testSpecificationsRouter = require("./routes/testSpecifications");
+var plausibility = require("./routes/plausibility");
 
 var app = express();
 app.use(cors());
@@ -49,5 +50,6 @@ app.use("/userSentenceSpecifications", userSentenceSpecificationRouter);
 app.use("/utils", utilsRouter);
 app.use("/skins", skinsRouter);
 app.use("/testSpecifications", testSpecificationsRouter);
+app.use("/plausibility", plausibility);
 
 module.exports = app;

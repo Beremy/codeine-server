@@ -1,16 +1,22 @@
-// TODO Faire les liaisons dans index.js
 const { Model } = require("sequelize");
 
 module.exports = (sequelize, DataTypes) => {
-  class TestPlausibilityError extends Model {}
+  class UserTextRating extends Model {}
 
-  TestPlausibilityError.init(
+  UserTextRating.init(
     {
       id: {
         type: DataTypes.INTEGER,
-        allowNull: false,
         primaryKey: true,
         autoIncrement: true,
+      },
+      user_id: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        references: {
+          model: "users",
+          key: "id",
+        },
       },
       text_id: {
         type: DataTypes.INTEGER,
@@ -20,24 +26,23 @@ module.exports = (sequelize, DataTypes) => {
           key: "id",
         },
       },
-      content: {
-        type: DataTypes.STRING,
+      plausibility: {
+        type: DataTypes.DECIMAL,
         allowNull: false,
       },
-      word_positions: {
-        type: DataTypes.STRING,
+      vote_weight: {
+        type: DataTypes.INTEGER,
         allowNull: false,
-      },
-      type: {
-        type: DataTypes.STRING,
       },
     },
     {
       sequelize,
-      modelName: "test_plausibility_errors",
-      timestamps: false,
+      modelName: "user_text_rating",
+      timestamps: true,
+      createdAt: 'created_at',
+      updatedAt: false,
     }
   );
 
-  return TestPlausibilityError;
+  return UserTextRating;
 };

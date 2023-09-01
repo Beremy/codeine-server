@@ -14,6 +14,8 @@ const MessageMenuModel = require("./messageMenu.js");
 const UserSentenceSpecificationModel = require("./userSentenceSpecification");
 const TokenModel = require("./token.js");
 const TestPlausibilityErrorModel = require("./testPlausibilityError.js");
+const ErrorVoteModel = require("./errorVote.js");
+const UserTextRatingModel = require("./userTextRating.js");
 
 const TestSpecification = require("./testSpecification")(
   sequelize,
@@ -42,6 +44,8 @@ const UserSentenceSpecification = UserSentenceSpecificationModel(
   Sequelize.DataTypes
 );
 const MessageMenu = MessageMenuModel(sequelize, Sequelize.DataTypes);
+const ErrorVote = ErrorVoteModel(sequelize, Sequelize.DataTypes);
+const UserTextRating = UserTextRatingModel(sequelize, Sequelize.DataTypes);
 
 const models = {
   User: User,
@@ -59,7 +63,39 @@ const models = {
   UserGameText: UserGameText,
   TestPlausibilityError: TestPlausibilityError,
   TestSpecification: TestSpecification,
+  ErrorVote: ErrorVote,
+  UserTextRating: UserTextRating,
 };
+
+
+// *************** Associations ErrorVote *******************
+UserTextRating.hasMany(ErrorVote, {
+  foreignKey: "user_text_rating_id",
+  sourceKey: "id",
+});
+ErrorVote.belongsTo(UserTextRating, {
+  foreignKey: "user_text_rating_id",
+  targetKey: "id",
+});
+
+// *************** Associations UserTextRating *******************
+User.hasMany(UserTextRating, {
+  foreignKey: "user_id",
+  sourceKey: "id",
+});
+UserTextRating.belongsTo(User, {
+  foreignKey: "user_id",
+  targetKey: "id",
+});
+
+Text.hasMany(UserTextRating, {
+  foreignKey: "text_id",
+  sourceKey: "id",
+});
+UserTextRating.belongsTo(Text, {
+  foreignKey: "text_id",
+  targetKey: "id",
+});
 
 // *************** Associations TestSpecification *******************
 Text.hasMany(TestSpecification, {
