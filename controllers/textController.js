@@ -189,6 +189,49 @@ const getTextsByOrigin = async (req, res) => {
   }
 };
 
+const getTextWithTokensById = async (req, res) => {
+  try {
+    // récupérer l'id du texte depuis le corps de la requête ou de l'URL
+    const { textId } = req.params;
+
+    // trouver le texte correspondant à cet ID
+    const text = await Text.findOne({
+      where: {
+        id: textId
+      },
+      attributes: [
+        "id",
+        "id_theme",
+        "is_plausibility_test",
+        "test_plausibility",
+        "is_hypothesis_specification_test",
+        "is_condition_specification_test",
+        "is_negation_specification_test"
+      ],
+      include: [
+        {
+          model: Token,
+          attributes: ["id", "content", "position"]
+        }
+      ]
+    });
+
+    // Vérifier si le texte a été trouvé
+    if (!text) {
+      return res.status(404).json({ error: "Text not found" });
+    }
+
+    // Trier les tokens par leur position
+    text.tokens.sort((a, b) => a.position - b.position);
+
+    // Renvoyer le texte trouvé et ses tokens
+    res.status(200).json(text);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+
 module.exports = {
   getAllTexts,
   getTextById,
@@ -198,4 +241,5 @@ module.exports = {
   deleteText,
   getTextsByOrigin,
   getTextWithTokens,
+  getTextWithTokensById
 };
