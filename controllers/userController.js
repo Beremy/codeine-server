@@ -4,9 +4,7 @@ const { User, Achievement, UserSkin } = require("../models");
 const { QueryTypes } = require("sequelize");
 const { sequelize } = require("../service/db.js");
 
-
 const createUser = async (user) => {
-  // Utiliser 'sequelize' au lieu de 'Sequelize'
   const transaction = await sequelize.transaction();
   try {
     user.password = await bcrypt.hash(user.password, 10);
@@ -15,11 +13,39 @@ const createUser = async (user) => {
     let faceId, noseEyesId;
 
     if (user.gender === 'homme') {
-      faceId = 23
-      noseEyesId = 55
+      switch(user.color_skin) {
+        case 'clear':
+          faceId = 23; 
+          noseEyesId = 55; 
+          break;
+        case 'medium':
+          faceId = 24;
+          noseEyesId = 56; 
+          break;
+        case 'dark':
+          faceId = 25; 
+          noseEyesId = 57; 
+          break;
+        default:
+          break;
+      }
     } else {
-      faceId = 29;
-      noseEyesId = 48;
+      switch(user.color_skin) {
+        case 'clear':
+          faceId = 29; 
+          noseEyesId = 48; 
+          break;
+        case 'medium':
+          faceId = 30; 
+          noseEyesId = 49; 
+          break;
+        case 'dark':
+          faceId = 31; 
+          noseEyesId = 50; 
+          break;
+        default:
+          break;
+      }
     }
 
     await UserSkin.bulkCreate([
@@ -61,6 +87,7 @@ const signup = async (req, res) => {
     }
   }
 };
+
 
 const signin = async (req, res) => {
   try {

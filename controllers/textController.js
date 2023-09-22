@@ -39,7 +39,7 @@ const getTextWithTokens = async (req, res) => {
       include: [
         {
           model: Token,
-          attributes: ["id", "content", "position"],
+          attributes: ["id", "content", "position", "is_punctuation"],
         },
       ],
     });
@@ -105,7 +105,8 @@ const createText = async (req, res) => {
         }
 
         try {
-          const tokensArray = JSON.parse(stdout);
+          const tokensInfoArray = JSON.parse(stdout); // Récupérer les informations sur les tokens, y compris les ponctuations
+
           const textData = {
             content: req.body.content,
             origin: req.body.origin,
@@ -118,11 +119,15 @@ const createText = async (req, res) => {
 
           const text = await Text.create(textData);
 
-          for (let i = 0; i < tokensArray.length; i++) {
+          for (let i = 0; i < tokensInfoArray.length; i++) {
+            const tokenInfo = tokensInfoArray[i];
+            
+            // Créer une entrée dans la base de données pour chaque token avec ses informations
             await Token.create({
               text_id: text.id,
-              content: tokensArray[i],
+              content: tokenInfo.text,
               position: i + 1,
+              is_punctuation: tokenInfo.is_punctuation  // Ajouter l'indicateur si le token est une ponctuation
             });
           }
 
@@ -148,6 +153,7 @@ const createText = async (req, res) => {
     res.status(500).json({ error: outerError.message });
   }
 };
+
 
 
 const updateText = async (req, res) => {
@@ -211,7 +217,7 @@ const getTextWithTokensById = async (req, res) => {
       include: [
         {
           model: Token,
-          attributes: ["id", "content", "position"]
+          attributes: ["id", "content", "position", "is_punctuation"]
         }
       ]
     });

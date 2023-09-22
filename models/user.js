@@ -21,12 +21,12 @@ module.exports = (sequelize, DataTypes) => {
       },
       status: {
         type: DataTypes.ENUM,
-        values: ["etudiant", "medecin", "autre"],
+        values: ["inconnu", "medecin", "autre"],
         allowNull: false,
       },
       email: {
         type: DataTypes.STRING(255),
-        defaultValue: '',
+        defaultValue: "",
       },
       points: {
         type: DataTypes.INTEGER,
@@ -48,7 +48,12 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.ENUM,
         values: ["homme", "femme"],
         allowNull: false,
-        defaultValue: 'homme',
+        defaultValue: "homme",
+      },
+      color_skin: {
+        type: DataTypes.ENUM,
+        values: ["clear", "medium", "dark"],
+        allowNull: false,
       },
     },
     {

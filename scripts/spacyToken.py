@@ -9,10 +9,19 @@ def tokenize_french_text(text):
     # Traitement du texte
     doc = nlp(text)
 
-    # Affichage des tokens
-    tokens = [token.text for token in doc]
-    return tokens
+    # Créer une liste de dictionnaires pour stocker les informations des tokens
+    tokens_info = []
+    
+    # Parcourir les tokens
+    for token in doc:
+        token_info = {
+            "text": token.text,
+            "is_punctuation": token.is_punct  # Vérifie si le token est une ponctuation
+        }
+        tokens_info.append(token_info)
+
+    return tokens_info
 
 text = sys.argv[1]
-tokens = tokenize_french_text(text)
-print(json.dumps(tokens))
+tokens_info = tokenize_french_text(text)
+print(json.dumps(tokens_info))
