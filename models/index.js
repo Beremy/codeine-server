@@ -14,8 +14,11 @@ const MessageMenuModel = require("./messageMenu.js");
 const UserSentenceSpecificationModel = require("./userSentenceSpecification");
 const TokenModel = require("./token.js");
 const TestPlausibilityErrorModel = require("./testPlausibilityError.js");
-const ErrorVoteModel = require("./errorVote.js");
 const UserTextRatingModel = require("./userTextRating.js");
+const ErrorAggregationModel = require("./errorAggregation.js");
+const UserPlayedErrorsModel = require("./userPlayedErrors.js");
+const ErrorTypeModel = require("./errorType.js");
+const UserTypingResponsesModel = require("./userTypingResponses.js");
 
 const TestSpecification = require("./testSpecification")(
   sequelize,
@@ -44,8 +47,11 @@ const UserSentenceSpecification = UserSentenceSpecificationModel(
   Sequelize.DataTypes
 );
 const MessageMenu = MessageMenuModel(sequelize, Sequelize.DataTypes);
-const ErrorVote = ErrorVoteModel(sequelize, Sequelize.DataTypes);
 const UserTextRating = UserTextRatingModel(sequelize, Sequelize.DataTypes);
+const ErrorAggregation = ErrorAggregationModel(sequelize, Sequelize.DataTypes); 
+const UserPlayedErrors = UserPlayedErrorsModel(sequelize, Sequelize.DataTypes);
+const ErrorType = ErrorTypeModel(sequelize, Sequelize.DataTypes);
+const UserTypingResponses = UserTypingResponsesModel(sequelize, Sequelize.DataTypes);
 
 const models = {
   User: User,
@@ -63,19 +69,65 @@ const models = {
   UserGameText: UserGameText,
   TestPlausibilityError: TestPlausibilityError,
   TestSpecification: TestSpecification,
-  ErrorVote: ErrorVote,
   UserTextRating: UserTextRating,
+  ErrorAggregation: ErrorAggregation,
+  UserPlayedErrors: UserPlayedErrors,
+  ErrorType: ErrorType,
+  UserTypingResponses: UserTypingResponses,
 };
 
+// *************** Associations UserTypingResponses *******************
+User.belongsToMany(ErrorType, {
+  through: UserTypingResponses,
+  foreignKey: "user_id",
+});
+ErrorType.belongsToMany(User, {
+  through: UserTypingResponses,
+  foreignKey: "error_type_id",
+});
 
-// *************** Associations ErrorVote *******************
-UserTextRating.hasMany(ErrorVote, {
-  foreignKey: "user_text_rating_id",
+ErrorAggregation.hasMany(UserTypingResponses, {
+  foreignKey: "error_aggregation_id",
   sourceKey: "id",
 });
-ErrorVote.belongsTo(UserTextRating, {
-  foreignKey: "user_text_rating_id",
+UserTypingResponses.belongsTo(ErrorAggregation, {
+  foreignKey: "error_aggregation_id",
   targetKey: "id",
+});
+
+
+// *************** Associations UserPlayedErrors *******************
+ErrorAggregation.hasMany(UserPlayedErrors, {
+  foreignKey: "error_aggregation_id",
+  sourceKey: "id",
+});
+UserPlayedErrors.belongsTo(ErrorAggregation, {
+  foreignKey: "error_aggregation_id",
+  targetKey: "id",
+});
+
+// *************** Associations ErrorAggregation *******************
+ErrorAggregation.belongsTo(Text, {
+  foreignKey: "text_id",
+  targetKey: "id",
+});
+Text.hasMany(ErrorAggregation, {
+  foreignKey: "text_id",
+  sourceKey: "id",
+});
+ErrorAggregation.hasMany(UserPlayedErrors, {
+  foreignKey: "error_aggregation_id",
+  sourceKey: "id",
+});
+
+ErrorAggregation.belongsTo(ErrorType, {
+  foreignKey: 'error_type_id',
+  targetKey: 'id'
+});
+
+ErrorType.hasMany(ErrorAggregation, {
+  foreignKey: 'error_type_id',
+  sourceKey: 'id'
 });
 
 // *************** Associations UserTextRating *******************

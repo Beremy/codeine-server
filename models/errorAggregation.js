@@ -1,9 +1,9 @@
 const { Model } = require("sequelize");
 
 module.exports = (sequelize, DataTypes) => {
-  class TestPlausibilityError extends Model {}
+  class ErrorAggregation extends Model {}
 
-  TestPlausibilityError.init(
+  ErrorAggregation.init(
     {
       id: {
         type: DataTypes.INTEGER,
@@ -23,20 +23,29 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.STRING,
         allowNull: false,
       },
+      error_type_id: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        references: {
+          model: "error_types",
+          key: "id",
+        },
+      },
       word_positions: {
         type: DataTypes.STRING,
         allowNull: false,
       },
-      type: {
-        type: DataTypes.STRING,
+      total_weight: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
       },
     },
     {
       sequelize,
-      modelName: "test_plausibility_errors",
+      modelName: "error_aggregations",
       timestamps: false,
     }
   );
 
-  return TestPlausibilityError;
+  return ErrorAggregation;
 };

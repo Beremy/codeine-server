@@ -1,41 +1,47 @@
 const { Model } = require("sequelize");
 
 module.exports = (sequelize, DataTypes) => {
-  class errorVote extends Model {}
+  class UserTypingResponses extends Model {}
 
-  errorVote.init(
+  UserTypingResponses.init(
     {
       id: {
         type: DataTypes.INTEGER,
+        allowNull: false,
         primaryKey: true,
         autoIncrement: true,
       },
-      error_details_id: {
+      user_id: {
         type: DataTypes.INTEGER,
         allowNull: false,
         references: {
-          model: "error_details",
+          model: "users",
           key: "id",
         },
       },
-      user_text_rating_id: {
+      error_aggregation_id: {
         type: DataTypes.INTEGER,
         allowNull: false,
         references: {
-          model: "user_text_rating", 
+          model: "error_aggregations",
           key: "id",
         },
       },
-      vote_weight: {
+      error_type_id: {
         type: DataTypes.INTEGER,
         allowNull: false,
+        references: {
+          model: "error_types",
+          key: "id",
+        },
       },
     },
     {
       sequelize,
-      modelName: "error_votes",
+      modelName: "user_typing_responses",
+      timestamps: false,
     }
   );
 
-  return errorVote;
+  return UserTypingResponses;
 };

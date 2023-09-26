@@ -1,4 +1,12 @@
-const { Text, Theme, Token, UserGameText, TestPlausibilityError } = require("../models");
+const {
+  Text,
+  Theme,
+  Token,
+  UserGameText,
+  TestPlausibilityError,
+  ErrorAggregation,
+  UserPlayedErrors,
+} = require("../models");
 const { exec } = require("child_process");
 const { Sequelize } = require("sequelize");
 const Op = Sequelize.Op;
@@ -94,7 +102,6 @@ const getTextsByTheme = async (req, res) => {
 
 const createText = async (req, res) => {
   // TODO Gérer les sauts de lignes
-  console.log(req.body);
   try {
     exec(
       `./hostomythoenv/bin/python ./scripts/spacyToken.py "${req.body.content}"`,
@@ -111,23 +118,28 @@ const createText = async (req, res) => {
             content: req.body.content,
             origin: req.body.origin,
             is_plausibility_test: req.body.is_plausibility_test || false,
-            test_plausibility: req.body.is_plausibility_test ? req.body.test_plausibility : null,
-            is_hypothesis_specification_test: req.body.is_hypothesis_specification_test || false,
-            is_condition_specification_test: req.body.is_condition_specification_test || false,
-            is_negation_specification_test: req.body.is_negation_specification_test || false,
+            test_plausibility: req.body.is_plausibility_test
+              ? req.body.test_plausibility
+              : null,
+            is_hypothesis_specification_test:
+              req.body.is_hypothesis_specification_test || false,
+            is_condition_specification_test:
+              req.body.is_condition_specification_test || false,
+            is_negation_specification_test:
+              req.body.is_negation_specification_test || false,
           };
 
           const text = await Text.create(textData);
 
           for (let i = 0; i < tokensInfoArray.length; i++) {
             const tokenInfo = tokensInfoArray[i];
-            
+
             // Créer une entrée dans la base de données pour chaque token avec ses informations
             await Token.create({
               text_id: text.id,
               content: tokenInfo.text,
               position: i + 1,
-              is_punctuation: tokenInfo.is_punctuation  // Ajouter l'indicateur si le token est une ponctuation
+              is_punctuation: tokenInfo.is_punctuation, // Ajouter l'indicateur si le token est une ponctuation
             });
           }
 
@@ -136,7 +148,7 @@ const createText = async (req, res) => {
               await TestPlausibilityError.create({
                 text_id: text.id,
                 content: error.content,
-                word_positions: error.word_positions
+                word_positions: error.word_positions,
               });
             }
           }
@@ -153,8 +165,6 @@ const createText = async (req, res) => {
     res.status(500).json({ error: outerError.message });
   }
 };
-
-
 
 const updateText = async (req, res) => {
   const textId = req.params.id;
@@ -203,7 +213,7 @@ const getTextWithTokensById = async (req, res) => {
     // trouver le texte correspondant à cet ID
     const text = await Text.findOne({
       where: {
-        id: textId
+        id: textId,
       },
       attributes: [
         "id",
@@ -212,14 +222,14 @@ const getTextWithTokensById = async (req, res) => {
         "test_plausibility",
         "is_hypothesis_specification_test",
         "is_condition_specification_test",
-        "is_negation_specification_test"
+        "is_negation_specification_test",
       ],
       include: [
         {
           model: Token,
-          attributes: ["id", "content", "position", "is_punctuation"]
-        }
-      ]
+          attributes: ["id", "content", "position", "is_punctuation"],
+        },
+      ],
     });
 
     // Vérifier si le texte a été trouvé
@@ -237,6 +247,57 @@ const getTextWithTokensById = async (req, res) => {
   }
 };
 
+const getTextWithErrorValidated = async (req, res) => {
+
+  try {
+    const { userId } = req.params;
+
+    // D'abord, obtenir tous les ID d'erreurs agrégées jouées par l'utilisateur
+    const playedErrors = await UserPlayedErrors.findAll({
+      where: { user_id: userId },
+      attributes: ['error_aggregation_id']
+    });
+
+    const playedErrorIds = playedErrors.map(error => error.error_aggregation_id);
+
+    // Ensuite, recherche d'une erreur agrégée qui n'a pas été jouée par l'utilisateur et qui a un total_weight supérieur à 50
+    const errorAggregation = await ErrorAggregation.findOne({
+      where: {
+        total_weight: { [Op.gte]: 50 },
+        id: { [Op.notIn]: playedErrorIds }  // cela exclut les erreurs déjà jouées
+      },
+      include: {
+        model: Text,
+        include: [
+          {
+            model: Token,
+            attributes: ["id", "content", "position", "is_punctuation"]
+          }
+        ]
+      },
+      order: Sequelize.literal('RAND()')
+    });
+
+    if (!errorAggregation) {
+      return res.status(404).json({ error: "No text with unplayed errors found" });
+    }
+
+    errorAggregation.text.tokens.sort((a, b) => a.position - b.position);
+
+    // Renvoyer le texte avec une erreur validée
+    res.status(200).json({
+      text: errorAggregation.Text,
+      error: {
+        content: errorAggregation.content,
+        word_positions: errorAggregation.word_positions
+      }
+    });
+
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ error: error.message });
+  }
+};
 
 module.exports = {
   getAllTexts,
@@ -247,5 +308,6 @@ module.exports = {
   deleteText,
   getTextsByOrigin,
   getTextWithTokens,
-  getTextWithTokensById
+  getTextWithTokensById,
+  getTextWithErrorValidated,
 };

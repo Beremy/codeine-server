@@ -1,9 +1,9 @@
 const { Model } = require("sequelize");
 
 module.exports = (sequelize, DataTypes) => {
-  class TestPlausibilityError extends Model {}
+  class UserPlayedErrors extends Model {}
 
-  TestPlausibilityError.init(
+  UserPlayedErrors.init(
     {
       id: {
         type: DataTypes.INTEGER,
@@ -11,32 +11,34 @@ module.exports = (sequelize, DataTypes) => {
         primaryKey: true,
         autoIncrement: true,
       },
-      text_id: {
+      user_id: {
         type: DataTypes.INTEGER,
         allowNull: false,
         references: {
-          model: "texts",
+          model: "users",
           key: "id",
         },
       },
-      content: {
-        type: DataTypes.STRING,
+      error_aggregation_id: {
+        type: DataTypes.INTEGER,
         allowNull: false,
+        references: {
+          model: "error_aggregations",
+          key: "id",
+        },
       },
-      word_positions: {
-        type: DataTypes.STRING,
+      played_at: {
+        type: DataTypes.DATE,
         allowNull: false,
-      },
-      type: {
-        type: DataTypes.STRING,
+        defaultValue: DataTypes.NOW,
       },
     },
     {
       sequelize,
-      modelName: "test_plausibility_errors",
+      modelName: "user_played_errors",
       timestamps: false,
     }
   );
 
-  return TestPlausibilityError;
+  return UserPlayedErrors;
 };
