@@ -248,51 +248,51 @@ const getTextWithTokensById = async (req, res) => {
 };
 
 const getTextWithErrorValidated = async (req, res) => {
-
   try {
     const { userId } = req.params;
 
     // D'abord, obtenir tous les ID d'erreurs agrégées jouées par l'utilisateur
     const playedErrors = await UserPlayedErrors.findAll({
       where: { user_id: userId },
-      attributes: ['error_aggregation_id']
+      attributes: ["error_aggregation_id"],
     });
 
-    const playedErrorIds = playedErrors.map(error => error.error_aggregation_id);
+    const playedErrorIds = playedErrors.map(
+      (error) => error.error_aggregation_id
+    );
 
     // Ensuite, recherche d'une erreur agrégée qui n'a pas été jouée par l'utilisateur et qui a un total_weight supérieur à 50
     const errorAggregation = await ErrorAggregation.findOne({
       where: {
         total_weight: { [Op.gte]: 50 },
-        id: { [Op.notIn]: playedErrorIds }  // cela exclut les erreurs déjà jouées
+        id: { [Op.notIn]: playedErrorIds }, // cela exclut les erreurs déjà jouées
       },
       include: {
         model: Text,
         include: [
           {
             model: Token,
-            attributes: ["id", "content", "position", "is_punctuation"]
-          }
-        ]
+            attributes: ["id", "content", "position", "is_punctuation"],
+          },
+        ],
       },
-      order: Sequelize.literal('RAND()')
+      order: Sequelize.literal("RAND()"),
     });
 
     if (!errorAggregation) {
-      return res.status(404).json({ error: "No text with unplayed errors found" });
+      return res
+        .status(404)
+        .json({ error: "No text with unplayed errors found" });
     }
 
     errorAggregation.text.tokens.sort((a, b) => a.position - b.position);
 
     // Renvoyer le texte avec une erreur validée
     res.status(200).json({
-      text: errorAggregation.Text,
-      error: {
-        content: errorAggregation.content,
-        word_positions: errorAggregation.word_positions
-      }
+      id: errorAggregation.text.id,
+      tokens: errorAggregation.text.tokens,
+      positionErrorTokens: errorAggregation.word_positions,
     });
-
   } catch (error) {
     console.log(error);
     res.status(500).json({ error: error.message });

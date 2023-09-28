@@ -13,6 +13,4 @@ router.delete("/:id", textController.deleteText);
 router.get("/origin/:origin", textController.getTextsByOrigin);
 router.get("/getTextWithErrorValidated/:userId", textController.getTextWithErrorValidated);
 
-
-
 module.exports = router;
