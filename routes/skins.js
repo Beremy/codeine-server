@@ -4,12 +4,12 @@ const { Skin, UserSkin, User } = require("../models");
 const { Op } = require("sequelize");
 const skinOrder = [
   "personnage",
-  "face",
+  "visage",
   "veste",
-  "pilosité",
+  "cheveux",
   "chapeau",
-  "yeux/nez",
   "lunettes",
+  "stetho",
 ];
 
 const organizeSkinsByType = (skins) => {

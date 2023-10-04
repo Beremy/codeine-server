@@ -10,48 +10,51 @@ const createUser = async (user) => {
     user.password = await bcrypt.hash(user.password, 10);
     const newUser = await User.create(user, { transaction });
 
-    let faceId, noseEyesId;
+    let faceId, hairId;
 
-    if (user.gender === 'homme') {
-      switch(user.color_skin) {
-        case 'clear':
-          faceId = 23; 
-          noseEyesId = 55; 
+    if (user.gender === "homme") {
+      switch (user.color_skin) {
+        case "medium":
+          faceId = 170;
+          hairId = 215;
           break;
-        case 'medium':
-          faceId = 24;
-          noseEyesId = 56; 
+        case "dark":
+          faceId = 171;
+          hairId = 216;
           break;
-        case 'dark':
-          faceId = 25; 
-          noseEyesId = 57; 
+        case "clear":
+          faceId = 172;
+          hairId = 217;
           break;
         default:
           break;
       }
     } else {
-      switch(user.color_skin) {
-        case 'clear':
-          faceId = 29; 
-          noseEyesId = 48; 
+      switch (user.color_skin) {
+        case "medium":
+          faceId = 187;
+          hairId = 221;
           break;
-        case 'medium':
-          faceId = 30; 
-          noseEyesId = 49; 
+        case "dark":
+          faceId = 188;
+          hairId = 222;
           break;
-        case 'dark':
-          faceId = 31; 
-          noseEyesId = 50; 
+        case "clear":
+          faceId = 189;
+          hairId = 223;
           break;
         default:
           break;
       }
     }
 
-    await UserSkin.bulkCreate([
-      { user_id: newUser.id, skin_id: faceId, equipped: true },
-      { user_id: newUser.id, skin_id: noseEyesId, equipped: true }
-    ], { transaction });
+    await UserSkin.bulkCreate(
+      [
+        { user_id: newUser.id, skin_id: faceId, equipped: true },
+        { user_id: newUser.id, skin_id: hairId, equipped: true },
+      ],
+      { transaction }
+    );
 
     await transaction.commit();
 
@@ -62,7 +65,6 @@ const createUser = async (user) => {
     throw error;
   }
 };
-
 
 const getUserByUsername = async (username) => {
   return await User.findOne({ where: { username } });
@@ -87,7 +89,6 @@ const signup = async (req, res) => {
     }
   }
 };
-
 
 const signin = async (req, res) => {
   try {
