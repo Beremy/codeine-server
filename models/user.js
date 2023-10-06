@@ -36,10 +36,6 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.INTEGER,
         defaultValue: 0,
       },
-      theme: {
-        type: DataTypes.STRING(50),
-        defaultValue: "default",
-      },
       notifications_enabled: {
         type: DataTypes.BOOLEAN,
         defaultValue: true,
@@ -54,6 +50,10 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.ENUM,
         values: ["clear", "medium", "dark"],
         allowNull: false,
+      },
+      moderator: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: false,
       },
     },
     {

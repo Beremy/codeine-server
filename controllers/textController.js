@@ -36,7 +36,9 @@ const getTextWithTokens = async (req, res) => {
       },
       attributes: [
         "id",
+        "num",
         "id_theme",
+        "origin",
         "is_plausibility_test",
         "test_plausibility",
         "is_hypothesis_specification_test",
@@ -115,6 +117,7 @@ const createText = async (req, res) => {
           const tokensInfoArray = JSON.parse(stdout); // Récupérer les informations sur les tokens, y compris les ponctuations
 
           const textData = {
+            num: req.body.num,
             content: req.body.content,
             origin: req.body.origin,
             is_plausibility_test: req.body.is_plausibility_test || false,
@@ -217,6 +220,7 @@ const getTextWithTokensById = async (req, res) => {
       },
       attributes: [
         "id",
+        "num",
         "id_theme",
         "is_plausibility_test",
         "test_plausibility",

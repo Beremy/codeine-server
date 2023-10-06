@@ -2,7 +2,6 @@ var express = require("express");
 var router = express.Router();
 const { Skin, UserSkin, User } = require("../models");
 const { Op } = require("sequelize");
-// TODO Changer ordre
 const skinOrder = [
   "personnage",
   "veste",

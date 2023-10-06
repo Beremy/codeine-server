@@ -13,6 +13,11 @@ module.exports = (sequelize, DataTypes) => {
         autoIncrement: true,
         primaryKey: true,
       },
+      num: {
+        type: DataTypes.TEXT,
+        allowNull: false,
+        defaultValue: "",
+      },
       content: {
         type: DataTypes.TEXT,
         allowNull: false,
