@@ -6,17 +6,13 @@ def tokenize_french_text(text):
     # Chargement du modèle de langue français
     nlp = spacy.load('fr_dep_news_trf')
     
-    # Traitement du texte
     doc = nlp(text)
 
-    # Créer une liste de dictionnaires pour stocker les informations des tokens
     tokens_info = []
-    
-    # Parcourir les tokens
     for token in doc:
         token_info = {
-            "text": token.text,
-            "is_punctuation": token.is_punct  # Vérifie si le token est une ponctuation
+            "text": token.text_with_ws,
+            "is_punctuation": token.is_punct 
         }
         tokens_info.append(token_info)
 

@@ -103,10 +103,15 @@ const getTextsByTheme = async (req, res) => {
 };
 
 const createText = async (req, res) => {
-  // TODO Gérer les sauts de lignes
   try {
+    const { content } = req.body;
+
+    if (!content) {
+      return res.status(400).json({ error: "Content is required" });
+    }
+
     exec(
-      `./hostomythoenv/bin/python ./scripts/spacyToken.py "${req.body.content}"`,
+      `./hostomythoenv/bin/python ./scripts/spacyToken.py "${content}"`,
       async (error, stdout, stderr) => {
         if (error) {
           console.error(`exec error: ${error}`);
@@ -114,8 +119,7 @@ const createText = async (req, res) => {
         }
 
         try {
-          const tokensInfoArray = JSON.parse(stdout); // Récupérer les informations sur les tokens, y compris les ponctuations
-
+          const tokensInfoArray = JSON.parse(stdout);
           const textData = {
             num: req.body.num,
             content: req.body.content,
@@ -294,8 +298,10 @@ const getTextWithErrorValidated = async (req, res) => {
     // Renvoyer le texte avec une erreur validée
     res.status(200).json({
       id: errorAggregation.text.id,
+      num: errorAggregation.text.num,
       tokens: errorAggregation.text.tokens,
       positionErrorTokens: errorAggregation.word_positions,
+      origin: errorAggregation.text.origin,
     });
   } catch (error) {
     console.log(error);
