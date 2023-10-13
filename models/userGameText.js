@@ -36,7 +36,7 @@ module.exports = (sequelize, DataTypes) => {
       sequelize,
       modelName: "user_game_texts",
       timestamps: true,
-      createdAt: 'created_at', // Rename createdAt field
+      createdAt: 'created_at',
       updatedAt: false, 
     }
   );

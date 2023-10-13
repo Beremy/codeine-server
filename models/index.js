@@ -19,6 +19,8 @@ const ErrorAggregationModel = require("./errorAggregation.js");
 const UserPlayedErrorsModel = require("./userPlayedErrors.js");
 const ErrorTypeModel = require("./errorType.js");
 const UserTypingResponsesModel = require("./userTypingResponses.js");
+const CriminalModel = require("./criminal.js");
+const UserCriminalModel = require("./userCriminal");
 
 const TestSpecification = require("./testSpecification")(
   sequelize,
@@ -48,10 +50,15 @@ const UserSentenceSpecification = UserSentenceSpecificationModel(
 );
 const MessageMenu = MessageMenuModel(sequelize, Sequelize.DataTypes);
 const UserTextRating = UserTextRatingModel(sequelize, Sequelize.DataTypes);
-const ErrorAggregation = ErrorAggregationModel(sequelize, Sequelize.DataTypes); 
+const ErrorAggregation = ErrorAggregationModel(sequelize, Sequelize.DataTypes);
 const UserPlayedErrors = UserPlayedErrorsModel(sequelize, Sequelize.DataTypes);
 const ErrorType = ErrorTypeModel(sequelize, Sequelize.DataTypes);
-const UserTypingResponses = UserTypingResponsesModel(sequelize, Sequelize.DataTypes);
+const UserTypingResponses = UserTypingResponsesModel(
+  sequelize,
+  Sequelize.DataTypes
+);
+const Criminal = CriminalModel(sequelize, Sequelize.DataTypes);
+const UserCriminal = UserCriminalModel(sequelize, Sequelize.DataTypes);
 
 const models = {
   User: User,
@@ -74,7 +81,59 @@ const models = {
   UserPlayedErrors: UserPlayedErrors,
   ErrorType: ErrorType,
   UserTypingResponses: UserTypingResponses,
+  Criminal: Criminal,
+  UserCriminal: UserCriminal,
 };
+
+// *************** Associations User & Criminal via UserCriminal *******************
+
+User.belongsToMany(Criminal, {
+  through: UserCriminal,
+  foreignKey: "user_id",
+});
+Criminal.belongsToMany(User, {
+  through: UserCriminal,
+  foreignKey: "criminal_id",
+});
+
+UserCriminal.belongsTo(User, {
+  foreignKey: "user_id",
+  targetKey: "id",
+});
+UserCriminal.belongsTo(Criminal, {
+  foreignKey: "criminal_id",
+  targetKey: "id",
+});
+
+// *************** Associations UserAchievement *******************
+User.belongsToMany(Achievement, {
+  through: UserAchievement,
+  foreignKey: "user_id",
+  otherKey: "achievement_id",
+});
+Achievement.belongsToMany(User, {
+  through: UserAchievement,
+  foreignKey: "achievement_id",
+  otherKey: "user_id",
+});
+
+User.hasMany(UserAchievement, {
+  foreignKey: "user_id",
+  sourceKey: "id",
+});
+UserAchievement.belongsTo(User, {
+  foreignKey: "user_id",
+  targetKey: "id",
+});
+
+Achievement.hasMany(UserAchievement, {
+  foreignKey: "achievement_id",
+  sourceKey: "id",
+});
+UserAchievement.belongsTo(Achievement, {
+  foreignKey: "achievement_id",
+  targetKey: "id",
+});
 
 // *************** Associations UserTypingResponses *******************
 User.belongsToMany(ErrorType, {
@@ -94,7 +153,6 @@ UserTypingResponses.belongsTo(ErrorAggregation, {
   foreignKey: "error_aggregation_id",
   targetKey: "id",
 });
-
 
 // *************** Associations UserPlayedErrors *******************
 ErrorAggregation.hasMany(UserPlayedErrors, {
@@ -121,13 +179,13 @@ ErrorAggregation.hasMany(UserPlayedErrors, {
 });
 
 ErrorAggregation.belongsTo(ErrorType, {
-  foreignKey: 'error_type_id',
-  targetKey: 'id'
+  foreignKey: "error_type_id",
+  targetKey: "id",
 });
 
 ErrorType.hasMany(ErrorAggregation, {
-  foreignKey: 'error_type_id',
-  sourceKey: 'id'
+  foreignKey: "error_type_id",
+  sourceKey: "id",
 });
 
 // *************** Associations UserTextRating *******************
@@ -225,36 +283,6 @@ Skin.hasMany(UserSkin, {
 });
 UserSkin.belongsTo(Skin, {
   foreignKey: "skin_id",
-  targetKey: "id",
-});
-
-// *************** Associations UserAchievement *******************
-User.belongsToMany(Achievement, {
-  through: UserAchievement,
-  foreignKey: "user_id",
-  otherKey: "achievement_id",
-});
-Achievement.belongsToMany(User, {
-  through: UserAchievement,
-  foreignKey: "achievement_id",
-  otherKey: "user_id",
-});
-
-User.hasMany(UserAchievement, {
-  foreignKey: "user_id",
-  sourceKey: "id",
-});
-UserAchievement.belongsTo(User, {
-  foreignKey: "user_id",
-  targetKey: "id",
-});
-
-Achievement.hasMany(UserAchievement, {
-  foreignKey: "achievement_id",
-  sourceKey: "id",
-});
-UserAchievement.belongsTo(Achievement, {
-  foreignKey: "achievement_id",
   targetKey: "id",
 });
 

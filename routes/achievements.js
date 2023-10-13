@@ -33,6 +33,4 @@ router.get("/byUserId/:userId", async function (req, res, next) {
   }
 });
 
-
-
 module.exports = router;

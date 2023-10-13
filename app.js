@@ -19,6 +19,7 @@ var skinsRouter = require("./routes/skins");
 var testSpecificationsRouter = require("./routes/testSpecifications");
 var plausibility = require("./routes/plausibility");
 var errors = require("./routes/errors");
+var criminals = require("./routes/criminals");
 
 var app = express();
 app.use(cors());
@@ -29,7 +30,7 @@ app.use(cors());
 // };
 // app.use(cors(corsOptions));
 
-app.listen(PORT, '0.0.0.0', async () => {
+app.listen(PORT, "0.0.0.0", async () => {
   console.log(`Server is running at http://localhost:${PORT}`);
   await connectToDb();
 });
@@ -53,5 +54,6 @@ app.use("/skins", skinsRouter);
 app.use("/testSpecifications", testSpecificationsRouter);
 app.use("/plausibility", plausibility);
 app.use("/errors", errors);
+app.use("/criminals", criminals);
 
 module.exports = app;

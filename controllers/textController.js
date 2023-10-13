@@ -225,6 +225,7 @@ const getTextWithTokensById = async (req, res) => {
       attributes: [
         "id",
         "num",
+        "origin",
         "id_theme",
         "is_plausibility_test",
         "test_plausibility",
