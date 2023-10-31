@@ -256,6 +256,40 @@ const getTextWithTokensById = async (req, res) => {
   }
 };
 
+const getTextTestNegation = async (req, res) => {
+  try {
+    // trouver un texte qui a le champ is_negation_specification à true
+    const text = await Text.findOne({
+      where: {
+        is_negation_specification_test: true
+      },
+      attributes: [
+        "id",
+        "num",
+        "origin",
+        "is_negation_specification_test",
+      ],
+      order: Sequelize.literal("RAND()"),
+      include: [
+        {
+          model: Token,
+          attributes: ["id", "content", "position", "is_punctuation"],
+        },
+      ],
+    });
+
+    if (!text) {
+      return res.status(404).json({ error: "No more texts to process" });
+    }
+    text.tokens.sort((a, b) => a.position - b.position);
+
+    res.status(200).json(text);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+
 const getTextWithErrorValidated = async (req, res) => {
   try {
     const { userId } = req.params;
@@ -321,4 +355,5 @@ module.exports = {
   getTextWithTokens,
   getTextWithTokensById,
   getTextWithErrorValidated,
+  getTextTestNegation,
 };

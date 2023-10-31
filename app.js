@@ -20,6 +20,7 @@ var testSpecificationsRouter = require("./routes/testSpecifications");
 var plausibility = require("./routes/plausibility");
 var errors = require("./routes/errors");
 var criminals = require("./routes/criminals");
+var games = require("./routes/games");
 
 var app = express();
 app.use(cors());
@@ -55,5 +56,6 @@ app.use("/testSpecifications", testSpecificationsRouter);
 app.use("/plausibility", plausibility);
 app.use("/errors", errors);
 app.use("/criminals", criminals);
+app.use("/games", games);
 
 module.exports = app;

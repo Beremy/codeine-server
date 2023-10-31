@@ -22,19 +22,12 @@ const UserTypingResponsesModel = require("./userTypingResponses.js");
 const CriminalModel = require("./criminal.js");
 const UserCriminalModel = require("./userCriminal");
 
-const TestSpecification = require("./testSpecification")(
-  sequelize,
-  Sequelize.DataTypes
-);
-const UserAchievement = require("./userAchievement.js")(
-  sequelize,
-  Sequelize.DataTypes
-);
+const Game = require("./games.js")(sequelize, Sequelize.DataTypes);
+const UserTutorial = require("./userTutorial.js")(sequelize, Sequelize.DataTypes);
+const TestSpecification = require("./testSpecification")(sequelize,Sequelize.DataTypes);
+const UserAchievement = require("./userAchievement.js")(sequelize,Sequelize.DataTypes);
 const UserSkin = require("./userSkin.js")(sequelize, Sequelize.DataTypes);
-const TestPlausibilityError = TestPlausibilityErrorModel(
-  sequelize,
-  Sequelize.DataTypes
-);
+const TestPlausibilityError = TestPlausibilityErrorModel(sequelize,Sequelize.DataTypes);
 const UserGameText = UserGameTextModel(sequelize, Sequelize.DataTypes);
 const Token = TokenModel(sequelize, Sequelize.DataTypes);
 const Achievement = AchievementModel(sequelize, Sequelize.DataTypes);
@@ -44,19 +37,13 @@ const Admin = AdminModel(sequelize, Sequelize.DataTypes);
 const Text = TextModel(sequelize, Sequelize.DataTypes);
 const Theme = ThemeModel(sequelize, Sequelize.DataTypes);
 const Sentence = SentenceModel(sequelize, Sequelize.DataTypes);
-const UserSentenceSpecification = UserSentenceSpecificationModel(
-  sequelize,
-  Sequelize.DataTypes
-);
+const UserSentenceSpecification = UserSentenceSpecificationModel(sequelize,Sequelize.DataTypes);
 const MessageMenu = MessageMenuModel(sequelize, Sequelize.DataTypes);
 const UserTextRating = UserTextRatingModel(sequelize, Sequelize.DataTypes);
 const ErrorAggregation = ErrorAggregationModel(sequelize, Sequelize.DataTypes);
 const UserPlayedErrors = UserPlayedErrorsModel(sequelize, Sequelize.DataTypes);
 const ErrorType = ErrorTypeModel(sequelize, Sequelize.DataTypes);
-const UserTypingResponses = UserTypingResponsesModel(
-  sequelize,
-  Sequelize.DataTypes
-);
+const UserTypingResponses = UserTypingResponsesModel(sequelize,Sequelize.DataTypes);
 const Criminal = CriminalModel(sequelize, Sequelize.DataTypes);
 const UserCriminal = UserCriminalModel(sequelize, Sequelize.DataTypes);
 
@@ -83,7 +70,28 @@ const models = {
   UserTypingResponses: UserTypingResponses,
   Criminal: Criminal,
   UserCriminal: UserCriminal,
+  Game: Game,
+  UserTutorial: UserTutorial,
 };
+
+// *************** Associations User & Game via UserTutorial *******************
+User.belongsToMany(Game, {
+  through: UserTutorial,
+  foreignKey: "user_id",
+});
+Game.belongsToMany(User, {
+  through: UserTutorial,
+  foreignKey: "game_id",
+});
+
+UserTutorial.belongsTo(User, {
+  foreignKey: "user_id",
+  targetKey: "id",
+});
+UserTutorial.belongsTo(Game, {
+  foreignKey: "game_id",
+  targetKey: "id",
+});
 
 // *************** Associations User & Criminal via UserCriminal *******************
 
