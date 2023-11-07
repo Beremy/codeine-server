@@ -11,7 +11,7 @@ const { exec } = require("child_process");
 const { Sequelize } = require("sequelize");
 const Op = Sequelize.Op;
 
-const getTextWithTokens = async (req, res) => {
+const getTextWithTokensNotPlayed = async (req, res) => {
   try {
     // récupérer l'id de l'utilisateur et le type de jeu du corps de la requête ou de l'URL
     const { userId, gameType } = req.params;
@@ -34,6 +34,40 @@ const getTextWithTokens = async (req, res) => {
       where: {
         id: { [Op.notIn]: playedTextIds },
       },
+      attributes: [
+        "id",
+        "num",
+        "id_theme",
+        "origin",
+        "is_plausibility_test",
+        "test_plausibility",
+        "is_hypothesis_specification_test",
+        "is_condition_specification_test",
+        "is_negation_specification_test",
+      ],
+      order: Sequelize.literal("RAND()"),
+      include: [
+        {
+          model: Token,
+          attributes: ["id", "content", "position", "is_punctuation"],
+        },
+      ],
+    });
+
+    if (!text) {
+      return res.status(404).json({ error: "No more texts to process" });
+    }
+    text.tokens.sort((a, b) => a.position - b.position);
+
+    res.status(200).json(text);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+const getTextWithTokensByGameType = async (req, res) => {
+  try {
+    const text = await Text.findOne({
       attributes: [
         "id",
         "num",
@@ -127,7 +161,7 @@ const createText = async (req, res) => {
             is_plausibility_test: req.body.is_plausibility_test || false,
             test_plausibility: req.body.is_plausibility_test
               ? req.body.test_plausibility
-              : null,
+              : 0,
             is_hypothesis_specification_test:
               req.body.is_hypothesis_specification_test || false,
             is_condition_specification_test:
@@ -261,14 +295,9 @@ const getTextTestNegation = async (req, res) => {
     // trouver un texte qui a le champ is_negation_specification à true
     const text = await Text.findOne({
       where: {
-        is_negation_specification_test: true
+        is_negation_specification_test: true,
       },
-      attributes: [
-        "id",
-        "num",
-        "origin",
-        "is_negation_specification_test",
-      ],
+      attributes: ["id", "num", "origin", "is_negation_specification_test"],
       order: Sequelize.literal("RAND()"),
       include: [
         {
@@ -289,8 +318,7 @@ const getTextTestNegation = async (req, res) => {
   }
 };
 
-
-const getTextWithErrorValidated = async (req, res) => {
+const getTextWithErrorValidatedNotPlayed = async (req, res) => {
   try {
     const { userId } = req.params;
 
@@ -344,6 +372,46 @@ const getTextWithErrorValidated = async (req, res) => {
   }
 };
 
+const getTextWithErrorValidated = async (req, res) => {
+  try {
+    // Recherche d'une erreur agrégée qui a un total_weight supérieur à 50
+    const errorAggregation = await ErrorAggregation.findOne({
+      where: {
+        total_weight: { [Op.gte]: 50 }
+      },
+      include: {
+        model: Text,
+        include: [
+          {
+            model: Token,
+            attributes: ["id", "content", "position", "is_punctuation"],
+          },
+        ],
+      },
+      order: Sequelize.literal("RAND()"),
+    });
+
+    if (!errorAggregation) {
+      return res.status(404).json({ error: "No text with validated errors found" });
+    }
+
+    errorAggregation.text.tokens.sort((a, b) => a.position - b.position);
+
+    // Renvoyer le texte avec une erreur validée
+    res.status(200).json({
+      id: errorAggregation.text.id,
+      num: errorAggregation.text.num,
+      tokens: errorAggregation.text.tokens,
+      positionErrorTokens: errorAggregation.word_positions,
+      origin: errorAggregation.text.origin,
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ error: error.message });
+  }
+};
+
+
 module.exports = {
   getAllTexts,
   getTextById,
@@ -352,8 +420,10 @@ module.exports = {
   updateText,
   deleteText,
   getTextsByOrigin,
-  getTextWithTokens,
-  getTextWithTokensById,
+  getTextWithTokensNotPlayed,
   getTextWithErrorValidated,
+  getTextWithTokensById,
+  getTextWithErrorValidatedNotPlayed,
   getTextTestNegation,
+  getTextWithTokensByGameType,
 };
