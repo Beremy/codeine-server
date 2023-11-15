@@ -25,11 +25,17 @@ router.get("/getUserRanking/:id", userController.getUserRanking);
 // Récupération du rang de l'utilisateur et des joueurs les plus proches de lui au score
 router.get("/getUserRankingRange/:id", userController.getUserRankingRange);
 
+// Incrémente points
+router.put("/:id/points", userController.incrementUserPoints);
+
+router.put("/:id/catchProbability", userController.incrementCatchProbability);
+
+router.put("/:id/resetCatchProbability", userController.resetCatchProbability);
+
 // GET user by ID
 router.get("/:id", userController.getUserById);
 
-// Incrémente points
-router.put("/:id/points", userController.incrementUserPoints);
+
 
 router.post("/", async function (req, res, next) {
   try {

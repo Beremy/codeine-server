@@ -276,7 +276,6 @@ async function checkAchievements(user) {
 
 const incrementUserPoints = async (req, res) => {
   const { id } = req.params;
-
   try {
     const user = await User.findOne({ where: { id } });
     if (!user) {
@@ -292,6 +291,44 @@ const incrementUserPoints = async (req, res) => {
   }
 };
 
+const incrementCatchProbability = async (req, res) => {
+  const { id } = req.params;
+  const { catch_probability } = req.body;
+  try {
+    const user = await User.findOne({ where: { id } });
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+   user.catch_probability  = Math.min(100, Math.max(0, user.catch_probability + catch_probability));
+
+    await user.save();
+
+    return res
+      .status(200)
+      .json({ newCatchProbability: user.catch_probability });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+const resetCatchProbability = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const user = await User.findByPk(id);
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+    user.catch_probability = 0;
+    await user.save();
+
+    return res.status(200).json({ catchProbability: user.catchProbability });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
 module.exports = {
   signup,
   signin,
@@ -301,4 +338,6 @@ module.exports = {
   getUserRanking,
   getUserRankingRange,
   incrementUserPoints,
+  incrementCatchProbability,
+  resetCatchProbability,
 };
