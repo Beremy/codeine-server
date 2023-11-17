@@ -23,6 +23,10 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.TEXT('long'),
         allowNull: true,
       },
+      descriptionArrest: {
+        type: DataTypes.TEXT('long'),
+        allowNull: true,
+      },
     },
     {
       sequelize,
