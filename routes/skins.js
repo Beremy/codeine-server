@@ -43,7 +43,7 @@ router.post("/randomSkin/:userId", async function (req, res, next) {
     }
 
     if (skinPool.length === 0) {
-      return res.status(400).json({ error: "No more skins to unlock" });
+      return res.status(200).json({ allSkinsUnlocked: true });
     }
 
     const randomIndex = Math.floor(Math.random() * skinPool.length);
@@ -56,7 +56,11 @@ router.post("/randomSkin/:userId", async function (req, res, next) {
       equipped: false,
     });
 
-    res.status(200).json(newSkin);
+    res.status(200).json({
+      skin_id: selectedSkin.id,
+      name: selectedSkin.name,
+      image_url: selectedSkin.image_url,
+    });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
