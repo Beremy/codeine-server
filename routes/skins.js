@@ -20,7 +20,6 @@ const organizeSkinsByType = (skins) => {
   }, {});
 };
 
-/* GET randomSkin */
 router.post("/randomSkin/:userId", async function (req, res, next) {
   try {
     const userId = req.params.userId;
@@ -34,10 +33,16 @@ router.post("/randomSkin/:userId", async function (req, res, next) {
     }
 
     let skinPool = [];
+    const userGender = user.gender;
 
     for (let skin of allSkins) {
-      if (!ownedSkinIds.includes(skin.id)) {
-        // Vérification si le skin est déjà possédé
+      if (
+        !ownedSkinIds.includes(skin.id) &&
+        (skin.gender === userGender ||
+          skin.gender === "unisexe" ||
+          !skin.gender)
+      ) {
+        // Vérification si le skin est déjà possédé et correspond au genre de l'utilisateur ou est unisexe
         skinPool = skinPool.concat(Array(11 - skin.rarity).fill(skin));
       }
     }
@@ -49,7 +54,6 @@ router.post("/randomSkin/:userId", async function (req, res, next) {
     const randomIndex = Math.floor(Math.random() * skinPool.length);
     const selectedSkin = skinPool[randomIndex];
 
-    // Associer ce skin à l'utilisateur
     const newSkin = await UserSkin.create({
       user_id: userId,
       skin_id: selectedSkin.id,
@@ -60,6 +64,7 @@ router.post("/randomSkin/:userId", async function (req, res, next) {
       skin_id: selectedSkin.id,
       name: selectedSkin.name,
       image_url: selectedSkin.image_url,
+      type: selectedSkin.type,
     });
   } catch (error) {
     res.status(500).json({ error: error.message });
