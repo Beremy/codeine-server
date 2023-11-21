@@ -28,7 +28,11 @@ router.get("/getUserRankingRange/:id", userController.getUserRankingRange);
 // Incrémente points
 router.put("/:id/points", userController.incrementUserPoints);
 
+// Incrémente proba
 router.put("/:id/catchProbability", userController.incrementCatchProbability);
+
+// Incrémente les 2
+router.put("/:id/updateUserStats", userController.updateUserStats);
 
 router.put("/:id/resetCatchProbability", userController.resetCatchProbability);
 

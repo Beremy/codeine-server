@@ -312,6 +312,38 @@ const incrementCatchProbability = async (req, res) => {
   }
 };
 
+const updateUserStats = async (req, res) => {
+  const { id } = req.params;
+  const { points, catch_probability } = req.body;
+  
+  try {
+    const user = await User.findOne({ where: { id } });
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+    
+    // Mettre à jour les points et la probabilité de capture
+    user.points += points;
+    user.catch_probability = Math.min(100, Math.max(0, user.catch_probability + catch_probability));
+    
+    await user.save();
+
+    // Vérifier les nouvelles réalisations après l'augmentation des points
+    const newAchievements = await checkAchievements(user);
+
+    return res
+      .status(200)
+      .json({ 
+        newPoints: user.points,
+        newCatchProbability: user.catch_probability,
+        newAchievements 
+      });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+
 const resetCatchProbability = async (req, res) => {
   const { id } = req.params;
 
@@ -340,4 +372,5 @@ module.exports = {
   incrementUserPoints,
   incrementCatchProbability,
   resetCatchProbability,
+  updateUserStats
 };
