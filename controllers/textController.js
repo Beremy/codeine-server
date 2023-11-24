@@ -362,9 +362,9 @@ const getTextWithErrorValidatedNotPlayed = async (req, res) => {
     res.status(200).json({
       id: errorAggregation.text.id,
       num: errorAggregation.text.num,
-      tokens: errorAggregation.text.tokens,
+      idErrorAggregation: errorAggregation.id,
       positionErrorTokens: errorAggregation.word_positions,
-      origin: errorAggregation.text.origin,
+      tokens: errorAggregation.text.tokens,
     });
   } catch (error) {
     console.log(error);
@@ -401,9 +401,9 @@ const getTextWithErrorValidated = async (req, res) => {
     res.status(200).json({
       id: errorAggregation.text.id,
       num: errorAggregation.text.num,
-      tokens: errorAggregation.text.tokens,
+      idErrorAggregation: errorAggregation.id,
       positionErrorTokens: errorAggregation.word_positions,
-      origin: errorAggregation.text.origin,
+      tokens: errorAggregation.text.tokens,
     });
   } catch (error) {
     console.log(error);
