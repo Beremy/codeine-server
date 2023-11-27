@@ -301,7 +301,6 @@ const incrementCatchProbability = async (req, res) => {
     }
 
    user.catch_probability  = Math.min(100, Math.max(0, user.catch_probability + catch_probability));
-
     await user.save();
 
     return res
@@ -312,9 +311,30 @@ const incrementCatchProbability = async (req, res) => {
   }
 };
 
+
+const incrementTrustIndex = async (req, res) => {
+  const { id } = req.params;
+  const { trust_index } = req.body;
+  try {
+    const user = await User.findOne({ where: { id } });
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+   user.trust_index  = Math.min(100, Math.max(0, user.trust_index + trust_index));
+    await user.save();
+
+    return res
+      .status(200)
+      .json({ newTrustIndex: user.trust_index });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
 const updateUserStats = async (req, res) => {
   const { id } = req.params;
-  const { points, catch_probability } = req.body;
+  const { points, catch_probability, trust_index } = req.body;
   
   try {
     const user = await User.findOne({ where: { id } });
@@ -322,9 +342,10 @@ const updateUserStats = async (req, res) => {
       return res.status(404).json({ error: "User not found" });
     }
     
-    // Mettre à jour les points et la probabilité de capture
+    // Mise à jour des points, de la probabilité de capture, et du trust_index
     user.points += points;
     user.catch_probability = Math.min(100, Math.max(0, user.catch_probability + catch_probability));
+    user.trust_index = Math.min(100, Math.max(0, user.trust_index + trust_index));
     
     await user.save();
 
@@ -336,6 +357,7 @@ const updateUserStats = async (req, res) => {
       .json({ 
         newPoints: user.points,
         newCatchProbability: user.catch_probability,
+        newTrustIndex: user.trust_index,
         newAchievements 
       });
   } catch (error) {
@@ -371,6 +393,7 @@ module.exports = {
   getUserRankingRange,
   incrementUserPoints,
   incrementCatchProbability,
+  incrementTrustIndex,
   resetCatchProbability,
   updateUserStats
 };
