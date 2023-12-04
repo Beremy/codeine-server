@@ -13,7 +13,6 @@ const Op = Sequelize.Op;
 
 const getTextWithTokensNotPlayed = async (req, res) => {
   try {
-    // récupérer l'id de l'utilisateur et le type de jeu du corps de la requête ou de l'URL
     const { userId, gameType } = req.params;
     // chercher tous les textes déjà joués par cet utilisateur pour ce type de jeu
     const userGameTexts = await UserGameText.findAll({
@@ -248,10 +247,8 @@ const getTextsByOrigin = async (req, res) => {
 
 const getTextWithTokensById = async (req, res) => {
   try {
-    // récupérer l'id du texte depuis le corps de la requête ou de l'URL
     const { textId } = req.params;
 
-    // trouver le texte correspondant à cet ID
     const text = await Text.findOne({
       where: {
         id: textId,
@@ -275,7 +272,6 @@ const getTextWithTokensById = async (req, res) => {
       ],
     });
 
-    // Vérifier si le texte a été trouvé
     if (!text) {
       return res.status(404).json({ error: "Text not found" });
     }
@@ -283,7 +279,34 @@ const getTextWithTokensById = async (req, res) => {
     // Trier les tokens par leur position
     text.tokens.sort((a, b) => a.position - b.position);
 
-    // Renvoyer le texte trouvé et ses tokens
+    res.status(200).json(text);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+const getTextTestPlausibility = async (req, res) => {
+  try {
+    // trouver un texte qui a le champ is_plausibility_test à true
+    const text = await Text.findOne({
+      where: {
+        is_plausibility_test: true,
+      },
+      attributes: ["id", "num", "origin", "is_plausibility_test"],
+      order: Sequelize.literal("RAND()"),
+      include: [
+        {
+          model: Token,
+          attributes: ["id", "content", "position", "is_punctuation"],
+        },
+      ],
+    });
+
+    if (!text) {
+      return res.status(404).json({ error: "No more texts to process" });
+    }
+    text.tokens.sort((a, b) => a.position - b.position);
+
     res.status(200).json(text);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -332,11 +355,11 @@ const getTextWithErrorValidatedNotPlayed = async (req, res) => {
       (error) => error.error_aggregation_id
     );
 
-    // Ensuite, recherche d'une erreur agrégée qui n'a pas été jouée par l'utilisateur et qui a un total_weight supérieur à 50
+    // Recherche d'une erreur agrégée qui n'a pas été jouée par l'utilisateur et qui a un total_weight supérieur à 50
     const errorAggregation = await ErrorAggregation.findOne({
       where: {
         total_weight: { [Op.gte]: 50 },
-        id: { [Op.notIn]: playedErrorIds }, // cela exclut les erreurs déjà jouées
+        id: { [Op.notIn]: playedErrorIds },
       },
       include: {
         model: Text,
@@ -377,7 +400,7 @@ const getTextWithErrorValidated = async (req, res) => {
     // Recherche d'une erreur agrégée qui a un total_weight supérieur à 50
     const errorAggregation = await ErrorAggregation.findOne({
       where: {
-        total_weight: { [Op.gte]: 50 }
+        total_weight: { [Op.gte]: 50 },
       },
       include: {
         model: Text,
@@ -392,7 +415,9 @@ const getTextWithErrorValidated = async (req, res) => {
     });
 
     if (!errorAggregation) {
-      return res.status(404).json({ error: "No text with validated errors found" });
+      return res
+        .status(404)
+        .json({ error: "No text with validated errors found" });
     }
 
     errorAggregation.text.tokens.sort((a, b) => a.position - b.position);
@@ -411,6 +436,42 @@ const getTextWithErrorValidated = async (req, res) => {
   }
 };
 
+const getTextTestWithErrorValidated = async (req, res) => {
+  try {
+    const errorAggregation = await ErrorAggregation.findOne({
+      where: {
+        is_test: true,
+      },
+      include: {
+        model: Text,
+        include: [
+          {
+            model: Token,
+            attributes: ["id", "content", "position", "is_punctuation"],
+          },
+        ],
+      },
+      order: Sequelize.literal("RAND()"),
+    });
+
+    if (!errorAggregation) {
+      return res.status(404).json({ error: "No text with test errors found" });
+    }
+
+    errorAggregation.text.tokens.sort((a, b) => a.position - b.position);
+
+    res.status(200).json({
+      id: errorAggregation.text.id,
+      num: errorAggregation.text.num,
+      idErrorAggregation: errorAggregation.id,
+      positionErrorTokens: errorAggregation.word_positions,
+      tokens: errorAggregation.text.tokens,
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ error: error.message });
+  }
+};
 
 module.exports = {
   getAllTexts,
@@ -424,6 +485,8 @@ module.exports = {
   getTextWithErrorValidated,
   getTextWithTokensById,
   getTextWithErrorValidatedNotPlayed,
+  getTextTestPlausibility,
   getTextTestNegation,
   getTextWithTokensByGameType,
+  getTextTestWithErrorValidated,
 };

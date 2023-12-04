@@ -2,6 +2,7 @@ import spacy
 import sys
 import json
 
+# TODO Ajouter la récupération de la longueur du texte pour le mettre dans la bdd
 def tokenize_french_text(text):
     # Chargement du modèle de langue français
     nlp = spacy.load('fr_dep_news_trf')
