@@ -152,10 +152,14 @@ const createText = async (req, res) => {
         }
 
         try {
-          const tokensInfoArray = JSON.parse(stdout);
+          const output = JSON.parse(stdout);
+          const tokensInfoArray = output.tokens;
+          const textLength = output.length;
+
           const textData = {
             num: req.body.num,
             content: req.body.content,
+            length: textLength,
             origin: req.body.origin,
             is_plausibility_test: req.body.is_plausibility_test || false,
             test_plausibility: req.body.is_plausibility_test
@@ -174,12 +178,11 @@ const createText = async (req, res) => {
           for (let i = 0; i < tokensInfoArray.length; i++) {
             const tokenInfo = tokensInfoArray[i];
 
-            // Créer une entrée dans la base de données pour chaque token avec ses informations
             await Token.create({
               text_id: text.id,
               content: tokenInfo.text,
               position: i + 1,
-              is_punctuation: tokenInfo.is_punctuation, // Ajouter l'indicateur si le token est une ponctuation
+              is_punctuation: tokenInfo.is_punctuation,
             });
           }
 
