@@ -43,6 +43,7 @@ const getTextWithTokensNotPlayed = async (req, res) => {
         "is_hypothesis_specification_test",
         "is_condition_specification_test",
         "is_negation_specification_test",
+        "length"
       ],
       order: Sequelize.literal("RAND()"),
       include: [
@@ -77,6 +78,7 @@ const getTextWithTokensByGameType = async (req, res) => {
         "is_hypothesis_specification_test",
         "is_condition_specification_test",
         "is_negation_specification_test",
+        "length"
       ],
       order: Sequelize.literal("RAND()"),
       include: [

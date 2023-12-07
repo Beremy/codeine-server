@@ -59,6 +59,14 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.INTEGER,
         defaultValue: 0,
       },
+      consecutiveDaysPlayed: {
+        type: DataTypes.INTEGER,
+        defaultValue: 0,
+      },
+      coeffMulti: {
+        type: DataTypes.DECIMAL(2, 1),
+        defaultValue: 0,
+      },
     },
     {
       sequelize,
