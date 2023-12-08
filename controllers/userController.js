@@ -244,16 +244,22 @@ async function checkAchievements(user) {
       { id: "3", score: 500 },
       { id: "4", score: 1000 },
       { id: "5", score: 5000 },
-      // Ajouter les autres hauts faits liés au score ici
+      { id: "6", score: 10000 },
+    ];
+
+    const consecutiveDayAchievements = [
+      { id: "15", days: 7 },
+      { id: "16", days: 30 },
+      { id: "17", days: 60 },
     ];
 
     let newAchievements = [];
+
+    // Vérification des hauts faits liés au score
     for (const achievement of scoreAchievements) {
-      // Vérifiez si l'utilisateur a déjà obtenu ce haut fait
       const existingAchievement = await user.getAchievements({
         where: { id: achievement.id },
       });
-      // Si l'utilisateur n'a pas encore obtenu ce haut fait et que son score est suffisant, on ajoute le haut fait à user_achievement
       if (
         existingAchievement.length === 0 &&
         user.points >= achievement.score
@@ -267,6 +273,26 @@ async function checkAchievements(user) {
         }
       }
     }
+
+    // Vérification des hauts faits liés aux jours consécutifs
+    for (const achievement of consecutiveDayAchievements) {
+      const existingAchievement = await user.getAchievements({
+        where: { id: achievement.id },
+      });
+      if (
+        existingAchievement.length === 0 &&
+        user.consecutiveDaysPlayed >= achievement.days
+      ) {
+        const newAchievement = await Achievement.findByPk(achievement.id);
+        if (newAchievement) {
+          await user.addAchievement(newAchievement, {
+            through: { notified: false },
+          });
+          newAchievements.push(newAchievement);
+        }
+      }
+    }
+
     return newAchievements;
   } catch (err) {
     console.error("An error occurred while checking achievements:", err);
@@ -275,6 +301,7 @@ async function checkAchievements(user) {
 }
 
 const incrementUserPoints = async (req, res) => {
+  // Pas utile pour le moment
   const { id } = req.params;
   try {
     const user = await User.findOne({ where: { id } });
@@ -300,7 +327,10 @@ const incrementCatchProbability = async (req, res) => {
       return res.status(404).json({ error: "User not found" });
     }
 
-   user.catch_probability  = Math.min(100, Math.max(0, user.catch_probability + catch_probability));
+    user.catch_probability = Math.min(
+      100,
+      Math.max(0, user.catch_probability + catch_probability)
+    );
     await user.save();
 
     return res
@@ -311,8 +341,8 @@ const incrementCatchProbability = async (req, res) => {
   }
 };
 
-
 const incrementTrustIndex = async (req, res) => {
+  // Pas utile pour le moment
   const { id } = req.params;
   const { trust_index } = req.body;
   try {
@@ -321,12 +351,13 @@ const incrementTrustIndex = async (req, res) => {
       return res.status(404).json({ error: "User not found" });
     }
 
-   user.trust_index  = Math.min(100, Math.max(0, user.trust_index + trust_index));
+    user.trust_index = Math.min(
+      100,
+      Math.max(0, user.trust_index + trust_index)
+    );
     await user.save();
 
-    return res
-      .status(200)
-      .json({ newTrustIndex: user.trust_index });
+    return res.status(200).json({ newTrustIndex: user.trust_index });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -335,36 +366,63 @@ const incrementTrustIndex = async (req, res) => {
 const updateUserStats = async (req, res) => {
   const { id } = req.params;
   const { points, catch_probability, trust_index } = req.body;
-  
+
   try {
     const user = await User.findOne({ where: { id } });
     if (!user) {
       return res.status(404).json({ error: "User not found" });
     }
-    
     // Mise à jour des points, de la probabilité de capture, et du trust_index
     user.points += points;
-    user.catch_probability = Math.min(100, Math.max(0, user.catch_probability + catch_probability));
-    user.trust_index = Math.min(100, Math.max(0, user.trust_index + trust_index));
-    
+    user.catch_probability = Math.min(
+      100,
+      Math.max(0, user.catch_probability + catch_probability)
+    );
+    user.trust_index = Math.min(
+      100,
+      Math.max(0, user.trust_index + trust_index)
+    );
+
+    // Mise à jour de lastPlayedDate et gestion des jours consécutifs joués
+    const today = new Date();
+    const lastPlayedDate = user.lastPlayedDate
+      ? new Date(user.lastPlayedDate)
+      : null;
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+
+    const formatDate = (date) => date.toISOString().slice(0, 10);
+
+    if (
+      lastPlayedDate &&
+      formatDate(lastPlayedDate) === formatDate(yesterday)
+    ) {
+      user.consecutiveDaysPlayed = (user.consecutiveDaysPlayed || 0) + 1;
+    } else if (
+      !lastPlayedDate ||
+      formatDate(lastPlayedDate) !== formatDate(today)
+    ) {
+      // Réinitialiser le compteur seulement si la dernière connexion n'est ni aujourd'hui ni hier
+      user.consecutiveDaysPlayed = 1;
+    }
+
+    user.lastPlayedDate = formatDate(today);
+
     await user.save();
 
     // Vérifier les nouvelles réalisations après l'augmentation des points
     const newAchievements = await checkAchievements(user);
 
-    return res
-      .status(200)
-      .json({ 
-        newPoints: user.points,
-        newCatchProbability: user.catch_probability,
-        newTrustIndex: user.trust_index,
-        newAchievements 
-      });
+    return res.status(200).json({
+      newPoints: user.points,
+      newCatchProbability: user.catch_probability,
+      newTrustIndex: user.trust_index,
+      newAchievements,
+    });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 };
-
 
 const resetCatchProbability = async (req, res) => {
   const { id } = req.params;
@@ -395,5 +453,5 @@ module.exports = {
   incrementCatchProbability,
   incrementTrustIndex,
   resetCatchProbability,
-  updateUserStats
+  updateUserStats,
 };
