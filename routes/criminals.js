@@ -1,6 +1,7 @@
 var express = require("express");
 var router = express.Router();
 const { Criminal, UserCriminal } = require("../models");
+const { User, Achievement } = require("../models");
 // const authMiddleware = require("../middleware/authMiddleware");
 
 // router.get("/protected-route", authMiddleware, (req, res) => {
@@ -42,9 +43,50 @@ router.get("/caughtByUserId/:userId", async function (req, res) {
   }
 });
 
+async function checkCriminalAchievements(user, caughtCriminalsCount) {
+  try {
+    const criminalAchievements = [
+      { id: "7", count: 1 },
+      { id: "8", count: 3 },
+      { id: "9", count: 6 },
+      { id: "10", count: 9 },
+    ];
+
+    let newAchievements = [];
+
+    // Vérification des hauts faits liés aux criminels
+    for (const achievement of criminalAchievements) {
+      const existingAchievement = await user.getAchievements({
+        where: { id: achievement.id },
+      });
+      if (
+        existingAchievement.length === 0 &&
+        caughtCriminalsCount >= achievement.count
+      ) {
+        const newAchievement = await Achievement.findByPk(achievement.id);
+        if (newAchievement) {
+          await user.addAchievement(newAchievement, {
+            through: { notified: false },
+          });
+          newAchievements.push(newAchievement);
+        }
+      }
+    }
+    return newAchievements;
+  } catch (err) {
+    console.error("An error occurred while checking achievements:", err);
+    throw err;
+  }
+}
+
 router.post("/catchCriminal", async function (req, res) {
   const { userId } = req.body;
+
   try {
+    const user = await User.findOne({ where: { id: userId } });
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
     // Sélection du dernier criminel attrapé par l'utilisateur
     const lastCaught = await UserCriminal.findOne({
       where: { user_id: userId },
@@ -57,12 +99,10 @@ router.post("/catchCriminal", async function (req, res) {
     const totalCriminalsCount = await Criminal.count();
     if (nextCriminalId > totalCriminalsCount) {
       // Cas où tous les criminels ont été attrapés
-      return res
-        .status(200)
-        .json({
-          message: "No more criminals to catch",
-          allCriminalsCaught: true,
-        });
+      return res.status(200).json({
+        message: "No more criminals to catch",
+        allCriminalsCaught: true,
+      });
     }
 
     const alreadyCaught = await UserCriminal.findOne({
@@ -91,11 +131,13 @@ router.post("/catchCriminal", async function (req, res) {
     });
 
     // Détails de l'arrestation avec un drapeau indiquant si tous les criminels ont été attrapés
+    const newAchievements = await checkCriminalAchievements(user,caughtCriminalsCount);
     const allCriminalsCaught = caughtCriminalsCount >= totalCriminalsCount;
     return res.status(200).json({
       catchEntry,
       descriptionArrest: criminalDetails.descriptionArrest,
       allCriminalsCaught,
+      newAchievements,
     });
   } catch (error) {
     res.status(500).json({ error: error.message });

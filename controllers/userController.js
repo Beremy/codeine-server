@@ -237,6 +237,20 @@ const getUserById = async (req, res) => {
   }
 };
 
+async function updateUserCoeffMulti(user) {
+  try {
+    const userAchievements = await user.getAchievements();
+    const achievementCount = userAchievements.length;
+
+    const newCoeffMulti = 1.0 + achievementCount * 0.1;
+
+    await user.update({ coeffMulti: newCoeffMulti });
+  } catch (err) {
+    console.error("An error occurred while updating user coeffMulti:", err);
+    throw err;
+  }
+}
+
 async function checkAchievements(user) {
   try {
     const scoreAchievements = [
@@ -291,6 +305,9 @@ async function checkAchievements(user) {
           newAchievements.push(newAchievement);
         }
       }
+    }
+    if (newAchievements.length > 0) {
+      await updateUserCoeffMulti(user);
     }
 
     return newAchievements;

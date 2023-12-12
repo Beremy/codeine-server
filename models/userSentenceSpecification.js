@@ -34,21 +34,20 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.STRING,
         allowNull: false,
       },
-      startPosition: {
-        type: DataTypes.INTEGER,
+      word_positions: {
+        type: DataTypes.STRING,
         allowNull: false,
       },
-      endPosition: {
+      specification_weight: {
         type: DataTypes.INTEGER,
-        allowNull: false,
       },
     },
     {
       sequelize,
       modelName: "user_sentence_specification",
       timestamps: true,
-      createdAt: 'created_at',
-      updatedAt: false, 
+      createdAt: "created_at",
+      updatedAt: false,
     }
   );
 
