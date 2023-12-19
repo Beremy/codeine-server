@@ -32,6 +32,10 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.INTEGER,
         defaultValue: 0,
       },
+      monthly_points: {
+        type: DataTypes.INTEGER,
+        defaultValue: 0,
+      },
       trust_index: {
         type: DataTypes.INTEGER,
         defaultValue: 0,

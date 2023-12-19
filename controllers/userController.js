@@ -391,6 +391,7 @@ const updateUserStats = async (req, res) => {
     }
     // Mise à jour des points, de la probabilité de capture, et du trust_index
     user.points += points;
+    user.monthly_points += points;
     user.catch_probability = Math.min(
       100,
       Math.max(0, user.catch_probability + catch_probability)
