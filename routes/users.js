@@ -17,13 +17,19 @@ router.post("/signup", userController.signup);
 // POST user login (signin)
 router.post("/signin", userController.signin);
 
-router.get("/getUsersOrderedByPoints", userController.getUsersOrderedByPoints);
 
 // Récupération du rang de l'utilisateur
-router.get("/getUserRanking/:id", userController.getUserRanking);
+// router.get("/getUserRanking/:id", userController.getUserRanking);
+
+router.get("/getUsersOrderedByPoints", userController.getUsersOrderedByPoints);
 
 // Récupération du rang de l'utilisateur et des joueurs les plus proches de lui au score
 router.get("/getUserRankingRange/:id", userController.getUserRankingRange);
+
+
+// Classement mensuel 
+router.get("/getUsersOrderedByPointsInMonthly", userController.getUsersOrderedByPointsInMonthly);
+router.get("/getUserRankingRangeInMonthly/:id", userController.getUserRankingRangeInMonthly);
 
 // Incrémente points
 router.put("/:id/points", userController.incrementUserPoints);

@@ -129,8 +129,8 @@ const getAllUsers = async (req, res) => {
 };
 
 const getUsersOrderedByPoints = async (req, res) => {
-  const limit = 20; // nombre d'utilisateurs par page
-  const page = req.query.page || 1; // page actuelle
+  const limit = 20;
+  const page = req.query.page || 1;
   const offset = (page - 1) * limit;
 
   try {
@@ -138,17 +138,58 @@ const getUsersOrderedByPoints = async (req, res) => {
       order: [["points", "DESC"]],
       limit,
       offset,
-      attributes: { exclude: ["password"] },
+      attributes: [
+        "id",
+        "username",
+        "points",
+      ],
     });
     let lastPoints = null;
     let lastRank = 0;
     // Ajouter la position à chaque utilisateur
     const usersWithRank = users.map((user, index) => {
       const userPlain = user.get({ plain: true });
-
       if (lastPoints !== userPlain.points) {
         lastRank = offset + index + 1;
         lastPoints = userPlain.points;
+      }
+
+      return {
+        ...userPlain,
+        ranking: lastRank,
+      };
+    });
+
+    res.status(200).json(usersWithRank);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+const getUsersOrderedByPointsInMonthly = async (req, res) => {
+  const limit = 20;
+  const page = req.query.page || 1;
+  const offset = (page - 1) * limit;
+
+  try {
+    const users = await User.findAll({
+      order: [["monthly_points", "DESC"]],
+      limit,
+      offset,
+      attributes: [
+        "id",
+        "username",
+        "monthly_points",
+      ],
+    });
+    let lastPoints = null;
+    let lastRank = 0;
+    // Ajouter la position à chaque utilisateur
+    const usersWithRank = users.map((user, index) => {
+      const userPlain = user.get({ plain: true });
+      if (lastPoints !== userPlain.monthly_points) {
+        lastRank = offset + index + 1;
+        lastPoints = userPlain.monthly_points;
       }
 
       return {
@@ -213,6 +254,44 @@ const getUserRankingRange = async (req, res) => {
       start = end - 2 * range - 1;
     } else {
       // Pour tous les autres rangs
+      start = Math.max(0, userRankingIndex - range);
+      end = Math.min(rankings.length, userRankingIndex + range + 1);
+    }
+
+    const rankingRange = rankings.slice(start, end);
+
+    res.status(200).json(rankingRange);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+const getUserRankingRangeInMonthly = async (req, res) => {
+  const userId = parseInt(req.params.id);
+  const range = 1;
+
+  try {
+    const rankings = await User.sequelize.query(
+      "SELECT id, username, monthly_points, RANK() OVER (ORDER BY monthly_points DESC) as ranking FROM users",
+      { type: QueryTypes.SELECT }
+    );
+
+    const userRankingIndex = rankings.findIndex(
+      (ranking) => ranking.id === userId
+    );
+
+    if (userRankingIndex === -1) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    let start, end;
+    if (userRankingIndex === 0) {
+      start = 0;
+      end = start + 2 * range + 1;
+    } else if (userRankingIndex === rankings.length - 1) {
+      end = rankings.length;
+      start = end - 2 * range - 1;
+    } else {
       start = Math.max(0, userRankingIndex - range);
       end = Math.min(rankings.length, userRankingIndex + range + 1);
     }
@@ -465,8 +544,10 @@ module.exports = {
   getAllUsers,
   getUserById,
   getUsersOrderedByPoints,
+  getUsersOrderedByPointsInMonthly,
   getUserRanking,
   getUserRankingRange,
+  getUserRankingRangeInMonthly,
   incrementUserPoints,
   incrementCatchProbability,
   incrementTrustIndex,
