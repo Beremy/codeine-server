@@ -317,6 +317,7 @@ const getUserById = async (req, res) => {
 };
 
 async function updateUserCoeffMulti(user) {
+  console.log("updateUserCoeffMulti");
   try {
     const userAchievements = await user.getAchievements();
     const achievementCount = userAchievements.length;
@@ -331,6 +332,8 @@ async function updateUserCoeffMulti(user) {
 }
 
 async function checkAchievements(user) {
+  console.log("***************************");
+  console.log("checkAchievements");
   try {
     const scoreAchievements = [
       { id: "2", score: 100 },
@@ -538,6 +541,28 @@ const resetCatchProbability = async (req, res) => {
   }
 };
 
+const getCoeffMultiByUserId = async (req, res) => {
+  const userId = parseInt(req.params.id);
+
+  try {
+    const user = await User.findOne({
+      attributes: ['coeffMulti'],
+      where: { id: userId }
+    });
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    const coeffMulti = parseFloat(user.coeffMulti);
+    res.status(200).json({ coeffMulti });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+
+
 module.exports = {
   signup,
   signin,
@@ -553,4 +578,5 @@ module.exports = {
   incrementTrustIndex,
   resetCatchProbability,
   updateUserStats,
+  getCoeffMultiByUserId
 };

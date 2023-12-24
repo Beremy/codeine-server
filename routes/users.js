@@ -21,6 +21,8 @@ router.post("/signin", userController.signin);
 // Récupération du rang de l'utilisateur
 // router.get("/getUserRanking/:id", userController.getUserRanking);
 
+router.get("/getCoeffMultiByUserId/:id", userController.getCoeffMultiByUserId);
+
 router.get("/getUsersOrderedByPoints", userController.getUsersOrderedByPoints);
 
 // Récupération du rang de l'utilisateur et des joueurs les plus proches de lui au score
