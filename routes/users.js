@@ -33,6 +33,9 @@ router.get("/getUserRankingRange/:id", userController.getUserRankingRange);
 router.get("/getUsersOrderedByPointsInMonthly", userController.getUsersOrderedByPointsInMonthly);
 router.get("/getUserRankingRangeInMonthly/:id", userController.getUserRankingRangeInMonthly);
 
+// Update email
+router.put("/:id/updateUserEmail",  userController.updateUserEmail);
+
 // Incrémente points
 router.put("/:id/points", userController.incrementUserPoints);
 

@@ -71,6 +71,9 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.STRING(45),
         unique: true,
       },
+      created_at: {
+        type: DataTypes.STRING(45),
+      },
       coeffMulti: {
         type: DataTypes.DECIMAL(2, 1),
         defaultValue: 0,

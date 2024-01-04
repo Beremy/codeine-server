@@ -3,6 +3,7 @@ const bcrypt = require("bcryptjs");
 const { User, Achievement, UserSkin } = require("../models");
 const { QueryTypes } = require("sequelize");
 const { sequelize } = require("../service/db.js");
+const moment = require("moment");
 
 const createUser = async (user) => {
   const transaction = await sequelize.transaction();
@@ -138,11 +139,7 @@ const getUsersOrderedByPoints = async (req, res) => {
       order: [["points", "DESC"]],
       limit,
       offset,
-      attributes: [
-        "id",
-        "username",
-        "points",
-      ],
+      attributes: ["id", "username", "points"],
     });
     let lastPoints = null;
     let lastRank = 0;
@@ -176,11 +173,7 @@ const getUsersOrderedByPointsInMonthly = async (req, res) => {
       order: [["monthly_points", "DESC"]],
       limit,
       offset,
-      attributes: [
-        "id",
-        "username",
-        "monthly_points",
-      ],
+      attributes: ["id", "username", "monthly_points"],
     });
     let lastPoints = null;
     let lastRank = 0;
@@ -310,6 +303,11 @@ const getUserById = async (req, res) => {
     if (!user) {
       return res.status(404).json({ error: "User not found" });
     }
+
+    user.dataValues.created_at = moment(user.created_at)
+      .locale("fr")
+      .format("DD MMMM YYYY");
+
     res.status(200).json(user);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -546,8 +544,8 @@ const getCoeffMultiByUserId = async (req, res) => {
 
   try {
     const user = await User.findOne({
-      attributes: ['coeffMulti'],
-      where: { id: userId }
+      attributes: ["coeffMulti"],
+      where: { id: userId },
     });
 
     if (!user) {
@@ -561,7 +559,41 @@ const getCoeffMultiByUserId = async (req, res) => {
   }
 };
 
+const updateUserEmail = async (req, res) => {
+  const userId = req.params.id;
+  const { email } = req.body;
 
+  if (!email) {
+    return res.status(400).send("Email is required");
+  }
+
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+  if (!emailRegex.test(email)) {
+    return res.status(400).send("Invalid email format");
+  }
+
+  try {
+    // Vérifier si l'e-mail est déjà pris par un autre utilisateur
+    const emailExists = await User.findOne({ where: { email } })
+    if (emailExists) {
+      return res.status(409).send("Email already in use");
+    }
+
+    await User.update(
+      { email },
+      {
+        where: {
+          id: userId,
+        },
+      }
+    );
+
+    res.status(200).send("Email updated");
+  } catch (err) {
+    next(err);
+  }
+};
 
 module.exports = {
   signup,
@@ -578,5 +610,6 @@ module.exports = {
   incrementTrustIndex,
   resetCatchProbability,
   updateUserStats,
-  getCoeffMultiByUserId
+  getCoeffMultiByUserId,
+  updateUserEmail,
 };
