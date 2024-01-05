@@ -21,6 +21,7 @@ var plausibility = require("./routes/plausibility");
 var errors = require("./routes/errors");
 var criminals = require("./routes/criminals");
 var games = require("./routes/games");
+var messages = require("./routes/messages");
 
 var app = express();
 app.use(cors());
@@ -57,5 +58,6 @@ app.use("/plausibility", plausibility);
 app.use("/errors", errors);
 app.use("/criminals", criminals);
 app.use("/games", games);
+app.use("/messages", messages);
 
 module.exports = app;
