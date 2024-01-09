@@ -1,6 +1,11 @@
 var express = require("express");
 var router = express.Router();
-const { ErrorType, ErrorAggregation } = require("../models");
+const { ErrorType, UserErrorDetail } = require("../models");
+
+const errorController = require("../controllers/errorController");
+
+// TODO Créer fonction typing error, avec - weight quand pas erreur
+
 
 router.get("/getTypesError", async function (req, res, next) {
   try {
@@ -11,50 +16,53 @@ router.get("/getTypesError", async function (req, res, next) {
   }
 });
 
-router.get("/getTypeByErrorId/:errorAggregatedId", async (req, res) => {
-  const { errorAggregatedId } = req.params;
+router.get("/getTypeByErrorId/:userErrorDetailId", async (req, res) => {
+  const { userErrorDetailId } = req.params;
   try {
-    const errorAggregation = await ErrorAggregation.findOne({
+    const userErrorDetail = await UserErrorDetail.findOne({
       where: {
-        id: errorAggregatedId
+        id: userErrorDetailId,
       },
-      include: [{
-        model: ErrorType,
-        attributes: ['id', 'name']
-      }]
+      include: [
+        {
+          model: ErrorType,
+          attributes: ["id", "name"],
+          as: 'error_type'
+        },
+      ],
     });
 
-    if (errorAggregation) {
-      const errorTypeData = errorAggregation.error_type;
+    if (userErrorDetail && userErrorDetail.error_type) {
+      const errorTypeData = userErrorDetail.error_type;
       res.status(200).json(errorTypeData);
     } else {
-      res.status(404).json({ message: 'Error aggregation not found' });
+      res.status(404).json({ message: "Error not found" });
     }
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 });
 
-router.get("/isErrorTest/:errorAggregatedId", async (req, res) => {
-  const { errorAggregatedId } = req.params;
+
+router.get("/isErrorTest/:userErrorDetailId", async (req, res) => {
+  const { userErrorDetailId } = req.params;
   try {
-    const errorAggregation = await ErrorAggregation.findOne({
+    const userErrorDetail = await UserErrorDetail.findOne({
       where: {
-        id: errorAggregatedId
+        id: userErrorDetailId,
       },
-      attributes: ['is_test']
+      attributes: ["is_test"],
     });
 
-    if (errorAggregation) {
-      res.status(200).json({ isTest: errorAggregation.is_test });
+    if (userErrorDetail) {
+      res.status(200).json({ isTest: userErrorDetail.is_test });
     } else {
-      res.status(404).json({ message: 'Error aggregation not found' });
+      res.status(404).json({ message: "Error not found" });
     }
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 });
-
 
 
 module.exports = router;

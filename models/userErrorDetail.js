@@ -1,15 +1,23 @@
 const { Model } = require("sequelize");
 
 module.exports = (sequelize, DataTypes) => {
-  class ErrorAggregation extends Model {}
+  class UserErrorDetail extends Model {}
 
-  ErrorAggregation.init(
+  UserErrorDetail.init(
     {
       id: {
         type: DataTypes.INTEGER,
         allowNull: false,
         primaryKey: true,
         autoIncrement: true,
+      },
+      user_id: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        references: {
+          model: "users",
+          key: "id",
+        },
       },
       text_id: {
         type: DataTypes.INTEGER,
@@ -19,37 +27,33 @@ module.exports = (sequelize, DataTypes) => {
           key: "id",
         },
       },
-      content: {
-        type: DataTypes.STRING,
-        allowNull: false,
-      },
-      error_type_id: {
-        type: DataTypes.INTEGER,
-        allowNull: false,
-        references: {
-          model: "error_types",
-          key: "id",
-        },
-      },
       word_positions: {
         type: DataTypes.STRING,
         allowNull: false,
       },
-      total_weight: {
+      vote_weight: {
         type: DataTypes.INTEGER,
+        allowNull: false,
+      },
+      content: {
+        type: DataTypes.STRING,
         allowNull: false,
       },
       is_test: {
         type: DataTypes.BOOLEAN,
         defaultValue: false,
       },
+      test_error_type_id: {
+        type: DataTypes.INTEGER,
+        defaultValue: false,
+      },
     },
     {
       sequelize,
-      modelName: "error_aggregations",
+      modelName: "user_error_details",
       timestamps: false,
     }
   );
 
-  return ErrorAggregation;
+  return UserErrorDetail;
 };

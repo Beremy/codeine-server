@@ -19,11 +19,11 @@ module.exports = (sequelize, DataTypes) => {
           key: "id",
         },
       },
-      error_aggregation_id: {
+      user_error_details_id: {
         type: DataTypes.INTEGER,
         allowNull: false,
         references: {
-          model: "error_aggregations",
+          model: "user_error_details",
           key: "id",
         },
       },

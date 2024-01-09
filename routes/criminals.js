@@ -2,6 +2,8 @@ var express = require("express");
 var router = express.Router();
 const { Criminal, UserCriminal } = require("../models");
 const { User, Achievement } = require("../models");
+const { updateUserCoeffMulti } = require('../controllers/userController');
+
 // const authMiddleware = require("../middleware/authMiddleware");
 
 // router.get("/protected-route", authMiddleware, (req, res) => {
@@ -72,6 +74,9 @@ async function checkCriminalAchievements(user, caughtCriminalsCount) {
         }
       }
     }
+    if (newAchievements.length > 0) {
+      await updateUserCoeffMulti(user);
+    }
     return newAchievements;
   } catch (err) {
     console.error("An error occurred while checking achievements:", err);
@@ -131,7 +136,10 @@ router.post("/catchCriminal", async function (req, res) {
     });
 
     // Détails de l'arrestation avec un drapeau indiquant si tous les criminels ont été attrapés
-    const newAchievements = await checkCriminalAchievements(user,caughtCriminalsCount);
+    const newAchievements = await checkCriminalAchievements(
+      user,
+      caughtCriminalsCount
+    );
     const allCriminalsCaught = caughtCriminalsCount >= totalCriminalsCount;
     return res.status(200).json({
       catchEntry,

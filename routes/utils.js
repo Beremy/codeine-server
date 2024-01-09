@@ -34,15 +34,6 @@ router.put("/messageMenu", async function (req, res, next) {
   }
 });
 
-// router.post("/messageMenu", async function (req, res, next) {
-//   try {
-//     const newMessageMenu = await MessageMenu.create(req.body);
-//     res.json(newMessageMenu);
-//   } catch (err) {
-//     next(err);
-//   }
-// });
-
 router.post("/sendMail", async function (req, res, next) {
   console.log("sendMail");
   // create reusable transporter object using the default SMTP transport

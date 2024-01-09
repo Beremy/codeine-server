@@ -4,8 +4,6 @@ const {
   Token,
   UserGameText,
   TestPlausibilityError,
-  ErrorAggregation,
-  UserPlayedErrors,
 } = require("../models");
 const { exec } = require("child_process");
 const { Sequelize } = require("sequelize");
@@ -43,7 +41,7 @@ const getTextWithTokensNotPlayed = async (req, res) => {
         "is_hypothesis_specification_test",
         "is_condition_specification_test",
         "is_negation_specification_test",
-        "length"
+        "length",
       ],
       order: Sequelize.literal("RAND()"),
       include: [
@@ -78,7 +76,7 @@ const getTextWithTokensByGameType = async (req, res) => {
         "is_hypothesis_specification_test",
         "is_condition_specification_test",
         "is_negation_specification_test",
-        "length"
+        "length",
       ],
       order: Sequelize.literal("RAND()"),
       include: [
@@ -346,137 +344,7 @@ const getTextTestNegation = async (req, res) => {
   }
 };
 
-const getTextWithErrorValidatedNotPlayed = async (req, res) => {
-  try {
-    const { userId } = req.params;
 
-    // D'abord, obtenir tous les ID d'erreurs agrégées jouées par l'utilisateur
-    const playedErrors = await UserPlayedErrors.findAll({
-      where: { user_id: userId },
-      attributes: ["error_aggregation_id"],
-    });
-
-    const playedErrorIds = playedErrors.map(
-      (error) => error.error_aggregation_id
-    );
-
-    // Recherche d'une erreur agrégée qui n'a pas été jouée par l'utilisateur et qui a un total_weight supérieur à 50
-    const errorAggregation = await ErrorAggregation.findOne({
-      where: {
-        total_weight: { [Op.gte]: 50 },
-        id: { [Op.notIn]: playedErrorIds },
-      },
-      include: {
-        model: Text,
-        include: [
-          {
-            model: Token,
-            attributes: ["id", "content", "position", "is_punctuation"],
-          },
-        ],
-      },
-      order: Sequelize.literal("RAND()"),
-    });
-
-    if (!errorAggregation) {
-      return res
-        .status(404)
-        .json({ error: "No text with unplayed errors found" });
-    }
-
-    errorAggregation.text.tokens.sort((a, b) => a.position - b.position);
-
-    // Renvoyer le texte avec une erreur validée
-    res.status(200).json({
-      id: errorAggregation.text.id,
-      num: errorAggregation.text.num,
-      idErrorAggregation: errorAggregation.id,
-      positionErrorTokens: errorAggregation.word_positions,
-      tokens: errorAggregation.text.tokens,
-    });
-  } catch (error) {
-    console.log(error);
-    res.status(500).json({ error: error.message });
-  }
-};
-
-const getTextWithErrorValidated = async (req, res) => {
-  try {
-    // Recherche d'une erreur agrégée qui a un total_weight supérieur à 50
-    const errorAggregation = await ErrorAggregation.findOne({
-      where: {
-        total_weight: { [Op.gte]: 50 },
-      },
-      include: {
-        model: Text,
-        include: [
-          {
-            model: Token,
-            attributes: ["id", "content", "position", "is_punctuation"],
-          },
-        ],
-      },
-      order: Sequelize.literal("RAND()"),
-    });
-
-    if (!errorAggregation) {
-      return res
-        .status(404)
-        .json({ error: "No text with validated errors found" });
-    }
-
-    errorAggregation.text.tokens.sort((a, b) => a.position - b.position);
-
-    // Renvoyer le texte avec une erreur validée
-    res.status(200).json({
-      id: errorAggregation.text.id,
-      num: errorAggregation.text.num,
-      idErrorAggregation: errorAggregation.id,
-      positionErrorTokens: errorAggregation.word_positions,
-      tokens: errorAggregation.text.tokens,
-    });
-  } catch (error) {
-    console.log(error);
-    res.status(500).json({ error: error.message });
-  }
-};
-
-const getTextTestWithErrorValidated = async (req, res) => {
-  try {
-    const errorAggregation = await ErrorAggregation.findOne({
-      where: {
-        is_test: true,
-      },
-      include: {
-        model: Text,
-        include: [
-          {
-            model: Token,
-            attributes: ["id", "content", "position", "is_punctuation"],
-          },
-        ],
-      },
-      order: Sequelize.literal("RAND()"),
-    });
-
-    if (!errorAggregation) {
-      return res.status(404).json({ error: "No text with test errors found" });
-    }
-
-    errorAggregation.text.tokens.sort((a, b) => a.position - b.position);
-
-    res.status(200).json({
-      id: errorAggregation.text.id,
-      num: errorAggregation.text.num,
-      idErrorAggregation: errorAggregation.id,
-      positionErrorTokens: errorAggregation.word_positions,
-      tokens: errorAggregation.text.tokens,
-    });
-  } catch (error) {
-    console.log(error);
-    res.status(500).json({ error: error.message });
-  }
-};
 
 module.exports = {
   getAllTexts,
@@ -487,11 +355,8 @@ module.exports = {
   deleteText,
   getTextsByOrigin,
   getTextWithTokensNotPlayed,
-  getTextWithErrorValidated,
   getTextWithTokensById,
-  getTextWithErrorValidatedNotPlayed,
   getTextTestPlausibility,
   getTextTestNegation,
   getTextWithTokensByGameType,
-  getTextTestWithErrorValidated,
 };

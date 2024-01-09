@@ -15,10 +15,10 @@ const UserSentenceSpecificationModel = require("./userSentenceSpecification");
 const TokenModel = require("./token.js");
 const TestPlausibilityErrorModel = require("./testPlausibilityError.js");
 const UserTextRatingModel = require("./userTextRating.js");
-const ErrorAggregationModel = require("./errorAggregation.js");
+const UserErrorDetailModel = require("./userErrorDetail.js");
 const UserPlayedErrorsModel = require("./userPlayedErrors.js");
 const ErrorTypeModel = require("./errorType.js");
-const UserTypingResponsesModel = require("./userTypingResponses.js");
+const UserTypingErrorsModel = require("./userTypingErrors.js");
 const CriminalModel = require("./criminal.js");
 const UserCriminalModel = require("./userCriminal");
 const MessageContactModel = require("./messageContact.js");
@@ -56,10 +56,10 @@ const UserSentenceSpecification = UserSentenceSpecificationModel(
 );
 const MessageMenu = MessageMenuModel(sequelize, Sequelize.DataTypes);
 const UserTextRating = UserTextRatingModel(sequelize, Sequelize.DataTypes);
-const ErrorAggregation = ErrorAggregationModel(sequelize, Sequelize.DataTypes);
 const UserPlayedErrors = UserPlayedErrorsModel(sequelize, Sequelize.DataTypes);
 const ErrorType = ErrorTypeModel(sequelize, Sequelize.DataTypes);
-const UserTypingResponses = UserTypingResponsesModel(
+const UserErrorDetail = UserErrorDetailModel(sequelize, Sequelize.DataTypes);
+const UserTypingErrors = UserTypingErrorsModel(
   sequelize,
   Sequelize.DataTypes
 );
@@ -84,10 +84,10 @@ const models = {
   TestPlausibilityError: TestPlausibilityError,
   TestSpecification: TestSpecification,
   UserTextRating: UserTextRating,
-  ErrorAggregation: ErrorAggregation,
   UserPlayedErrors: UserPlayedErrors,
   ErrorType: ErrorType,
-  UserTypingResponses: UserTypingResponses,
+  UserErrorDetail: UserErrorDetail,
+  UserTypingErrors: UserTypingErrors,
   Criminal: Criminal,
   UserCriminal: UserCriminal,
   Game: Game,
@@ -170,57 +170,52 @@ UserAchievement.belongsTo(Achievement, {
   targetKey: "id",
 });
 
-// *************** Associations UserTypingResponses *******************
+// *************** Associations UserTypingErrors *******************
 User.belongsToMany(ErrorType, {
-  through: UserTypingResponses,
+  through: UserTypingErrors,
   foreignKey: "user_id",
 });
 ErrorType.belongsToMany(User, {
-  through: UserTypingResponses,
+  through: UserTypingErrors,
   foreignKey: "error_type_id",
 });
 
-ErrorAggregation.hasMany(UserTypingResponses, {
-  foreignKey: "error_aggregation_id",
+UserErrorDetail.hasMany(UserTypingErrors, {
+  foreignKey: "user_error_details_id",
   sourceKey: "id",
 });
-UserTypingResponses.belongsTo(ErrorAggregation, {
-  foreignKey: "error_aggregation_id",
+UserTypingErrors.belongsTo(UserErrorDetail, {
+  foreignKey: "user_error_details_id",
   targetKey: "id",
 });
 
 // *************** Associations UserPlayedErrors *******************
-ErrorAggregation.hasMany(UserPlayedErrors, {
-  foreignKey: "error_aggregation_id",
-  sourceKey: "id",
+UserErrorDetail.hasMany(UserPlayedErrors, {
+  foreignKey: 'user_error_details_id',
+  sourceKey: 'id'
 });
-UserPlayedErrors.belongsTo(ErrorAggregation, {
-  foreignKey: "error_aggregation_id",
-  targetKey: "id",
+UserPlayedErrors.belongsTo(UserErrorDetail, { 
+  foreignKey: 'user_error_details_id',
+  targetKey: 'id'
 });
-
-// *************** Associations ErrorAggregation *******************
-ErrorAggregation.belongsTo(Text, {
-  foreignKey: "text_id",
-  targetKey: "id",
-});
-Text.hasMany(ErrorAggregation, {
-  foreignKey: "text_id",
-  sourceKey: "id",
-});
-ErrorAggregation.hasMany(UserPlayedErrors, {
-  foreignKey: "error_aggregation_id",
-  sourceKey: "id",
+// *************** Associations UserErrorDetail *******************
+UserErrorDetail.belongsTo(Text, {
+  foreignKey: 'text_id',
+  targetKey: 'id'
 });
 
-ErrorAggregation.belongsTo(ErrorType, {
-  foreignKey: "error_type_id",
-  targetKey: "id",
+Text.hasMany(UserErrorDetail, {
+  foreignKey: 'text_id',
+  sourceKey: 'id'
+});
+UserErrorDetail.belongsTo(ErrorType, {
+  foreignKey: 'test_error_type_id',
+  targetKey: 'id'
 });
 
-ErrorType.hasMany(ErrorAggregation, {
-  foreignKey: "error_type_id",
-  sourceKey: "id",
+ErrorType.hasMany(UserErrorDetail, {
+  foreignKey: 'test_error_type_id',
+  sourceKey: 'id'
 });
 
 // *************** Associations UserTextRating *******************

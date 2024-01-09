@@ -314,8 +314,8 @@ const getUserById = async (req, res) => {
   }
 };
 
+
 async function updateUserCoeffMulti(user) {
-  console.log("updateUserCoeffMulti");
   try {
     const userAchievements = await user.getAchievements();
     const achievementCount = userAchievements.length;
@@ -330,8 +330,7 @@ async function updateUserCoeffMulti(user) {
 }
 
 async function checkAchievements(user) {
-  console.log("***************************");
-  console.log("checkAchievements");
+
   try {
     const scoreAchievements = [
       { id: "2", score: 100 },
@@ -610,6 +609,7 @@ module.exports = {
   incrementTrustIndex,
   resetCatchProbability,
   updateUserStats,
+  updateUserCoeffMulti,
   getCoeffMultiByUserId,
   updateUserEmail,
 };
