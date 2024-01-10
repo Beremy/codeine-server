@@ -1,7 +1,26 @@
-const { Text, Token, UserErrorDetail, UserPlayedErrors } = require("../models");
+const { Text, Token, UserErrorDetail, UserPlayedErrors, UserTextRating } = require("../models");
 const { exec } = require("child_process");
 const { Sequelize } = require("sequelize");
 const Op = Sequelize.Op;
+
+const createUserTextRating = async (req, res) => {
+  const { user_id, text_id, plausibility, vote_weight } = req.body;
+
+  try {
+    const newUserTextRating = await UserTextRating.create({
+      user_id: user_id,
+      text_id: text_id,
+      plausibility: plausibility,
+      vote_weight: vote_weight,
+    });
+
+    res.status(201).json(newUserTextRating);
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ error: error.message });
+  }
+};
+
 
 const createUserErrorDetail = async (req, res) => {
   const { user_id, text_id, word_positions, vote_weight, content } = req.body;
@@ -165,4 +184,5 @@ module.exports = {
   getTextWithErrorValidatedNotPlayed,
   getTextTestWithErrorValidated,
   createUserErrorDetail,
+  createUserTextRating
 };

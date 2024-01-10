@@ -15,6 +15,7 @@ router.get("/origin/:origin", textController.getTextsByOrigin);
 router.get("/getTextWithErrorValidatedNotPlayed/:userId", errorController.getTextWithErrorValidatedNotPlayed);
 router.get("/getTextWithErrorValidated", errorController.getTextWithErrorValidated);
 router.post("/createUserErrorDetail", errorController.createUserErrorDetail);
+router.post("/createUserTextRating", errorController.createUserTextRating);
 router.get("/getTextTestWithErrorValidated", errorController.getTextTestWithErrorValidated);
 router.get("/:id", textController.getTextById);
 router.post("/", textController.createText);
