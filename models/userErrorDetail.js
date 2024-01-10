@@ -51,7 +51,9 @@ module.exports = (sequelize, DataTypes) => {
     {
       sequelize,
       modelName: "user_error_details",
-      timestamps: false,
+      timestamps: true,
+      createdAt: "created_at",
+      updatedAt: false,
     }
   );
 

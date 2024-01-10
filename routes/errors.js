@@ -1,11 +1,36 @@
 var express = require("express");
 var router = express.Router();
-const { ErrorType, UserErrorDetail } = require("../models");
+const { ErrorType, UserErrorDetail, UserTypingErrors } = require("../models");
 
-const errorController = require("../controllers/errorController");
 
-// TODO Créer fonction typing error, avec - weight quand pas erreur
+router.post('/createUserTypingError', async (req, res) => {
+  const { user_id, user_error_details_id, error_type_id } = req.body;
 
+  try {
+    const newUserTypingError = await UserTypingErrors.create({
+      user_id: user_id,
+      user_error_details_id: user_error_details_id,
+      error_type_id: error_type_id
+    });
+
+    // Diminuer le vote_weight si error_type_id est 10 (ce n'est pas une erreur)
+    if (error_type_id === 10) {
+      const userErrorDetail = await UserErrorDetail.findOne({
+        where: { id: user_error_details_id }
+      });
+
+      if (userErrorDetail) {
+        const newVoteWeight = Math.max(userErrorDetail.vote_weight - 5, 0);
+        await userErrorDetail.update({ vote_weight: newVoteWeight });
+      }
+    }
+
+    res.status(201).json(newUserTypingError);
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ error: error.message });
+  }
+});
 
 router.get("/getTypesError", async function (req, res, next) {
   try {

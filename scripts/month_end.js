@@ -10,6 +10,7 @@ const sequelize = new Sequelize(
   {
     host: process.env.DB_HOST,
     dialect: "mysql",
+    timezone: '+01:00',
     define: {
       timestamps: false,
       freezeTableName: true,

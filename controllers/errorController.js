@@ -4,7 +4,6 @@ const { Sequelize } = require("sequelize");
 const Op = Sequelize.Op;
 
 const createUserErrorDetail = async (req, res) => {
-  console.log("createUserErrorDetail");
   const { user_id, text_id, word_positions, vote_weight, content } = req.body;
 
   try {
