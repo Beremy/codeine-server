@@ -9,16 +9,20 @@ module.exports = (sequelize, DataTypes) => {
         autoIncrement: true,
         primaryKey: true,
       },
-      content: {
-        type: DataTypes.TEXT,
-        allowNull: false,
-      },
       text_id: {
         type: DataTypes.INTEGER,
+        allowNull: false,
         references: {
-          model: 'texts', // 'Texts' refers to table name
-          key: 'id', // 'id' refers to column name in Texts table
+          model: 'texts',
+          key: 'id',
         }
+      },
+      content: {
+        type: DataTypes.TEXT,
+      },
+      position: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
       },
     },
     {

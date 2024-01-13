@@ -29,6 +29,9 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.BOOLEAN,
         defaultValue: false,
       },
+      sentence_id: {
+        type: DataTypes.INTEGER,
+      },
     },
     {
       sequelize,

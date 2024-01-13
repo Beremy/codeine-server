@@ -4,6 +4,7 @@ const {
   Token,
   UserGameText,
   TestPlausibilityError,
+  Sentence
 } = require("../models");
 const { exec } = require("child_process");
 const { Sequelize } = require("sequelize");
@@ -137,14 +138,18 @@ const getTextsByTheme = async (req, res) => {
 
 const createText = async (req, res) => {
   try {
-    const { content } = req.body;
+    const { content, includeSentences } = req.body;
 
     if (!content) {
       return res.status(400).json({ error: "Content is required" });
     }
 
+    const scriptToRun = includeSentences
+      ? "./scripts/spacyTokenAndSentence.py"
+      : "./scripts/spacyToken.py";
+
     exec(
-      `./hostomythoenv/bin/python ./scripts/spacyToken.py "${content}"`,
+      `./hostomythoenv/bin/python ${scriptToRun} "${content}"`,
       async (error, stdout, stderr) => {
         if (error) {
           console.error(`exec error: ${error}`);
@@ -154,12 +159,10 @@ const createText = async (req, res) => {
         try {
           const output = JSON.parse(stdout);
           const tokensInfoArray = output.tokens;
-          const textLength = output.length;
-
           const textData = {
             num: req.body.num,
             content: req.body.content,
-            length: textLength,
+            length: tokensInfoArray.length,
             origin: req.body.origin,
             is_plausibility_test: req.body.is_plausibility_test || false,
             test_plausibility: req.body.is_plausibility_test
@@ -175,17 +178,46 @@ const createText = async (req, res) => {
 
           const text = await Text.create(textData);
 
-          for (let i = 0; i < tokensInfoArray.length; i++) {
-            const tokenInfo = tokensInfoArray[i];
+          if (includeSentences) {
+            const sentencesInfoArray = output.sentences;
+            for (let i = 0; i < sentencesInfoArray.length; i++) {
 
-            await Token.create({
-              text_id: text.id,
-              content: tokenInfo.text,
-              position: i + 1,
-              is_punctuation: tokenInfo.is_punctuation,
-            });
+              const sentenceInfo = sentencesInfoArray[i];
+              console.log("*****************************************************");
+              console.log(sentenceInfo);
+              const sentence = await Sentence.create({
+                text_id: text.id,
+                content: sentenceInfo.content,
+                position: sentenceInfo.position,
+              });
+
+              // Insérer les tokens associés à cette phrase
+              const tokensForThisSentence = tokensInfoArray.filter(
+                (t) => t.sentence_position === sentenceInfo.position
+              );
+              for (const tokenInfo of tokensForThisSentence) {
+
+                await Token.create({
+                  text_id: text.id,
+                  sentence_id: sentence.id,
+                  content: tokenInfo.text,
+                  position: tokenInfo.position,
+                  is_punctuation: tokenInfo.is_punctuation,
+                });
+              }
+            }
+          } else {
+            // Insérer les tokens sans sentences
+            for (const tokenInfo of tokensInfoArray) {
+              await Token.create({
+                text_id: text.id,
+                content: tokenInfo.text,
+                position: tokenInfo.position,
+                is_punctuation: tokenInfo.is_punctuation,
+                sentence_id: null, // Aucune sentence associée
+              });
+            }
           }
-
           if (req.body.is_plausibility_test && req.body.errors) {
             for (const error of req.body.errors) {
               await TestPlausibilityError.create({
@@ -343,8 +375,6 @@ const getTextTestNegation = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
-
-
 
 module.exports = {
   getAllTexts,

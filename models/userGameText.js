@@ -28,7 +28,7 @@ module.exports = (sequelize, DataTypes) => {
       },
       game_type: {
         type: DataTypes.ENUM,
-        values: ['hypothesis', 'condition', 'negation', 'plausibility', 'temporal_entity', 'link_entity'],
+        values: ['hypothesis', 'condition', 'negation', 'plausibility', 'link_entity'],
         allowNull: false,
       },
     },

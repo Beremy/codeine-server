@@ -286,6 +286,26 @@ Token.belongsTo(Text, {
   targetKey: "id",
 });
 
+// Association entre Sentence et Token
+Sentence.hasMany(Token, {
+  foreignKey: "sentence_id",
+  sourceKey: "id",
+});
+Token.belongsTo(Sentence, {
+  foreignKey: "sentence_id",
+  targetKey: "id",
+});
+
+// Association entre Text et Sentence
+Text.hasMany(Sentence, {
+  foreignKey: "text_id",
+  sourceKey: "id",
+});
+Sentence.belongsTo(Text, {
+  foreignKey: "text_id",
+  targetKey: "id",
+});
+
 // *************** Associations UserSkin *******************
 User.belongsToMany(Skin, {
   through: UserSkin,
