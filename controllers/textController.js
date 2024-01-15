@@ -181,10 +181,7 @@ const createText = async (req, res) => {
           if (includeSentences) {
             const sentencesInfoArray = output.sentences;
             for (let i = 0; i < sentencesInfoArray.length; i++) {
-
               const sentenceInfo = sentencesInfoArray[i];
-              console.log("*****************************************************");
-              console.log(sentenceInfo);
               const sentence = await Sentence.create({
                 text_id: text.id,
                 content: sentenceInfo.content,
@@ -196,7 +193,6 @@ const createText = async (req, res) => {
                 (t) => t.sentence_position === sentenceInfo.position
               );
               for (const tokenInfo of tokensForThisSentence) {
-
                 await Token.create({
                   text_id: text.id,
                   sentence_id: sentence.id,

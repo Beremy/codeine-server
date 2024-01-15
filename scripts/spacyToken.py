@@ -12,7 +12,8 @@ def tokenize_french_text(text):
     for token in doc:
         token_info = {
             "text": token.text_with_ws,
-            "is_punctuation": token.is_punct 
+            "is_punctuation": token.is_punct,
+            "position": token.i
         }
         tokens_info.append(token_info)
 
