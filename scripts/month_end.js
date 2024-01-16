@@ -19,11 +19,11 @@ const sequelize = new Sequelize(
 );
 
 const logToFile = (message) => {
-  const logFile = path.join(__dirname, "month_end.log");
-  const frTime = new Date().toLocaleString("fr-FR", {
-    timeZone: "Europe/Paris",
-  });
-  fs.appendFileSync(logFile, `${frTime} - ${message}\n`);
+  // const logFile = path.join(__dirname, "month_end.log");
+  // const frTime = new Date().toLocaleString("fr-FR", {
+  //   timeZone: "Europe/Paris",
+  // });
+  // fs.appendFileSync(logFile, `${frTime} - ${message}\n`);
 };
 
 const resetMonthlyPoints = async () => {
