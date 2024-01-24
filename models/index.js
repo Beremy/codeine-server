@@ -22,6 +22,7 @@ const UserTypingErrorsModel = require("./userTypingErrors.js");
 const CriminalModel = require("./criminal.js");
 const UserCriminalModel = require("./userCriminal");
 const MessageContactModel = require("./messageContact.js");
+const PasswordResetTokenModel = require("./passwordResetToken.js");
 
 const Game = require("./games.js")(sequelize, Sequelize.DataTypes);
 const UserTutorial = require("./userTutorial.js")(
@@ -66,6 +67,7 @@ const UserTypingErrors = UserTypingErrorsModel(
 const Criminal = CriminalModel(sequelize, Sequelize.DataTypes);
 const UserCriminal = UserCriminalModel(sequelize, Sequelize.DataTypes);
 const MessageContact = MessageContactModel(sequelize, Sequelize.DataTypes);
+const PasswordResetToken = PasswordResetTokenModel(sequelize, Sequelize.DataTypes);
 
 const models = {
   User: User,
@@ -93,7 +95,14 @@ const models = {
   Game: Game,
   UserTutorial: UserTutorial,
   MessageContact: MessageContact,
+  PasswordResetToken,
 };
+
+// *************** Associations PasswordResetToken *******************
+PasswordResetToken.belongsTo(models.User, {
+  foreignKey: "userId",
+  targetKey: "id",
+});
 
 // *************** Associations User & MessageContact *******************
 MessageContact.belongsTo(User, {

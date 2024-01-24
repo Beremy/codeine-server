@@ -5,6 +5,8 @@ var cookieParser = require("cookie-parser");
 var logger = require("morgan");
 const PORT = 3001;
 const { sequelize, connectToDb } = require("./service/db");
+const { cleanExpiredTokens } = require("./service/utils");
+var cron = require('node-cron');
 
 var indexRouter = require("./routes/index");
 var usersRouter = require("./routes/users");
@@ -36,6 +38,12 @@ app.listen(PORT, "0.0.0.0", async () => {
   console.log(`Server is running at http://localhost:${PORT}`);
   await connectToDb();
 });
+
+// Nettoyage des tokens expirés une fois par jour à minuit 
+cron.schedule('0 0 * * *', () => {
+  cleanExpiredTokens();
+});
+// TODO Mettre l'appel du script month_end ici
 
 app.use(logger("dev"));
 app.use(express.json());
