@@ -32,12 +32,16 @@ router.get("/getUserRankingRange/:id", userController.getUserRankingRange);
 // Classement mensuel 
 router.get("/getUsersOrderedByPointsInMonthly", userController.getUsersOrderedByPointsInMonthly);
 router.get("/getUserRankingRangeInMonthly/:id", userController.getUserRankingRangeInMonthly);
+router.get("/getTopMonthlyWinners", userController.getTopMonthlyWinners);
 
 // Update email
 router.put("/:id/updateUserEmail",  userController.updateUserEmail);
 
 // Incrémente points
 router.put("/:id/points", userController.incrementUserPoints);
+
+// Incrémente tutoriel principal
+router.put("/:id/incrementTutorialProgress", userController.incrementTutorialProgress);
 
 // Incrémente proba
 router.put("/:id/catchProbability", userController.incrementCatchProbability);

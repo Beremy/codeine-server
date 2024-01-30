@@ -1,6 +1,6 @@
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
-const { User, Achievement, UserSkin } = require("../models");
+const { User, Achievement, UserSkin, MonthlyWinners } = require("../models");
 const { QueryTypes } = require("sequelize");
 const { sequelize } = require("../service/db.js");
 const moment = require("moment");
@@ -297,6 +297,20 @@ const getUserRankingRangeInMonthly = async (req, res) => {
   }
 };
 
+const getTopMonthlyWinners = async (req, res) => {
+  try {
+    const topWinners = await MonthlyWinners.findAll({
+      limit: 3,
+      order: [["ranking", "ASC"]],
+      attributes: ["user_id", "username", "points", "ranking"],
+    });
+
+    res.status(200).json(topWinners);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
 const getUserById = async (req, res) => {
   try {
     const user = await User.findByPk(req.params.id);
@@ -314,7 +328,6 @@ const getUserById = async (req, res) => {
   }
 };
 
-
 async function updateUserCoeffMulti(user) {
   try {
     const userAchievements = await user.getAchievements();
@@ -330,7 +343,6 @@ async function updateUserCoeffMulti(user) {
 }
 
 async function checkAchievements(user) {
-
   try {
     const scoreAchievements = [
       { id: "2", score: 100 },
@@ -395,6 +407,22 @@ async function checkAchievements(user) {
     throw err;
   }
 }
+
+const incrementTutorialProgress = async (req, res) => {
+  const { id } = req.params;
+  try {
+    const user = await User.findOne({ where: { id } });
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+    user.tutorial_progress++;
+    await user.save();
+    const newTutorialProgress = user.tutorial_progress;
+    return res.status(200).json({ newTutorialProgress });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
 
 const incrementUserPoints = async (req, res) => {
   // Pas utile pour le moment
@@ -574,7 +602,7 @@ const updateUserEmail = async (req, res) => {
 
   try {
     // Vérifier si l'e-mail est déjà pris par un autre utilisateur
-    const emailExists = await User.findOne({ where: { email } })
+    const emailExists = await User.findOne({ where: { email } });
     if (emailExists) {
       return res.status(409).send("Email already in use");
     }
@@ -612,4 +640,6 @@ module.exports = {
   updateUserCoeffMulti,
   getCoeffMultiByUserId,
   updateUserEmail,
+  getTopMonthlyWinners,
+  incrementTutorialProgress,
 };

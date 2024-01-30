@@ -23,6 +23,7 @@ const CriminalModel = require("./criminal.js");
 const UserCriminalModel = require("./userCriminal");
 const MessageContactModel = require("./messageContact.js");
 const PasswordResetTokenModel = require("./passwordResetToken.js");
+const MonthlyWinnersModel = require("./monthlyWinners.js");
 
 const Game = require("./games.js")(sequelize, Sequelize.DataTypes);
 const UserTutorial = require("./userTutorial.js")(
@@ -68,6 +69,7 @@ const Criminal = CriminalModel(sequelize, Sequelize.DataTypes);
 const UserCriminal = UserCriminalModel(sequelize, Sequelize.DataTypes);
 const MessageContact = MessageContactModel(sequelize, Sequelize.DataTypes);
 const PasswordResetToken = PasswordResetTokenModel(sequelize, Sequelize.DataTypes);
+const MonthlyWinners = MonthlyWinnersModel(sequelize, Sequelize.DataTypes);
 
 const models = {
   User: User,
@@ -96,7 +98,14 @@ const models = {
   UserTutorial: UserTutorial,
   MessageContact: MessageContact,
   PasswordResetToken,
+  MonthlyWinners
 };
+
+// *************** Associations User & MonthlyWinners *******************
+MonthlyWinners.belongsTo(User, {
+  foreignKey: "user_id",
+  targetKey: "id",
+});
 
 // *************** Associations PasswordResetToken *******************
 PasswordResetToken.belongsTo(models.User, {

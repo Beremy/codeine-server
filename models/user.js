@@ -78,6 +78,14 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.DECIMAL(2, 1),
         defaultValue: 0,
       },
+      nb_first_monthly: {
+        type: DataTypes.INTEGER,
+        defaultValue: 0,
+      },
+      tutorial_progress: {
+        type: DataTypes.INTEGER,
+        defaultValue: 0,
+      },
     },
     {
       sequelize,
