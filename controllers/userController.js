@@ -542,6 +542,7 @@ const updateUserStats = async (req, res) => {
       newPoints: user.points,
       newCatchProbability: user.catch_probability,
       newTrustIndex: user.trust_index,
+      newCoeffMulti: user.coeffMulti,
       newAchievements,
     });
   } catch (error) {
