@@ -333,7 +333,7 @@ async function updateUserCoeffMulti(user) {
     const userAchievements = await user.getAchievements();
     const achievementCount = userAchievements.length;
 
-    const newCoeffMulti = 1.0 + achievementCount * 0.1;
+    const newCoeffMulti = parseFloat((1.0 + achievementCount * 0.1).toFixed(1));
 
     await user.update({ coeffMulti: newCoeffMulti });
   } catch (err) {
