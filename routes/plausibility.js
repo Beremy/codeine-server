@@ -1,20 +1,26 @@
 var express = require("express");
 var router = express.Router();
-const { TestPlausibilityError, Text } = require("../models");
+const { Text, UserErrorDetail } = require("../models");
+const { Op } = require("sequelize");
 
-router.get("/:textId", async function (req, res, next) {
-  const textId = req.params.textId;
-  try {
-    const plausibilityErrors = await TestPlausibilityError.findAll({
-      where: {
-        text_id: textId,
-      },
-    });
-    res.status(200).json(plausibilityErrors);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
+router.get("/getErrorDetailTest/:textId", async function (req, res, next) {
+    const textId = req.params.textId;
+  
+    try {
+      const plausibilityErrors = await UserErrorDetail.findAll({
+        where: {
+          text_id: textId,
+          is_test: true,
+          test_error_type_id: {
+            [Op.ne]: 10 // Enlever les erreurs qui sont typées "non erreur"
+          }
+        },
+      });
+      res.status(200).json(plausibilityErrors);
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  });
 
 router.get("/correctPlausibility/:textId", async function (req, res, next) {
   const textId = req.params.textId;
@@ -33,7 +39,7 @@ router.get("/correctPlausibility/:textId", async function (req, res, next) {
 
 router.post("/", async function (req, res, next) {
   try {
-    const newPlausibilityError = await TestPlausibilityError.create(req.body);
+    const newPlausibilityError = await UserErrorDetail.create(req.body);
     res.status(201).json(newPlausibilityError);
   } catch (error) {
     res.status(500).json({ error: error.message });

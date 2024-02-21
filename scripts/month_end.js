@@ -73,6 +73,8 @@ const resetMonthlyPoints = async () => {
       }
     }
 
+    // TODO Ajouter haut faits aux joueurs concernés
+
     // Réinitialise les monthly_points de tous les utilisateurs
     await sequelize.query("UPDATE users SET monthly_points = 0", {
       type: QueryTypes.UPDATE,

@@ -3,7 +3,6 @@ const {
   Theme,
   Token,
   UserGameText,
-  TestPlausibilityError,
   Sentence
 } = require("../models");
 const { exec } = require("child_process");
@@ -214,15 +213,15 @@ const createText = async (req, res) => {
               });
             }
           }
-          if (req.body.is_plausibility_test && req.body.errors) {
-            for (const error of req.body.errors) {
-              await TestPlausibilityError.create({
-                text_id: text.id,
-                content: error.content,
-                word_positions: error.word_positions,
-              });
-            }
-          }
+          // if (req.body.is_plausibility_test && req.body.errors) {
+          //   for (const error of req.body.errors) {
+          //     await TestPlausibilityError.create({
+          //       text_id: text.id,
+          //       content: error.content,
+          //       word_positions: error.word_positions,
+          //     });
+          //   }
+          // }
 
           res.status(201).json(text);
         } catch (innerError) {

@@ -9,7 +9,7 @@ router.get("/protected-route", authMiddleware, (req, res) => {
 });
 
 /* GET users listing. */
-router.get("/", userController.getAllUsers);
+// router.get("/", userController.getAllUsers);
 
 // POST new user (signup)
 router.post("/signup", userController.signup);
@@ -57,6 +57,7 @@ router.put("/:id/resetCatchProbability", userController.resetCatchProbability);
 // GET user by ID
 router.get("/:id", userController.getUserById);
 
+// Nombre de criminels arrêtés
 
 
 router.post("/", async function (req, res, next) {

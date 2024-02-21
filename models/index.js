@@ -13,7 +13,6 @@ const SentenceModel = require("./sentence.js");
 const MessageMenuModel = require("./messageMenu.js");
 const UserSentenceSpecificationModel = require("./userSentenceSpecification");
 const TokenModel = require("./token.js");
-const TestPlausibilityErrorModel = require("./testPlausibilityError.js");
 const UserTextRatingModel = require("./userTextRating.js");
 const UserErrorDetailModel = require("./userErrorDetail.js");
 const UserPlayedErrorsModel = require("./userPlayedErrors.js");
@@ -39,10 +38,6 @@ const UserAchievement = require("./userAchievement.js")(
   Sequelize.DataTypes
 );
 const UserSkin = require("./userSkin.js")(sequelize, Sequelize.DataTypes);
-const TestPlausibilityError = TestPlausibilityErrorModel(
-  sequelize,
-  Sequelize.DataTypes
-);
 const UserGameText = UserGameTextModel(sequelize, Sequelize.DataTypes);
 const Token = TokenModel(sequelize, Sequelize.DataTypes);
 const Achievement = AchievementModel(sequelize, Sequelize.DataTypes);
@@ -85,7 +80,6 @@ const models = {
   Token: Token,
   MessageMenu: MessageMenu,
   UserGameText: UserGameText,
-  TestPlausibilityError: TestPlausibilityError,
   TestSpecification: TestSpecification,
   UserTextRating: UserTextRating,
   UserPlayedErrors: UserPlayedErrors,
@@ -265,15 +259,6 @@ TestSpecification.belongsTo(Text, {
   targetKey: "id",
 });
 
-// *************** Associations TestPlausibilityError *******************
-Text.hasMany(TestPlausibilityError, {
-  foreignKey: "text_id",
-  sourceKey: "id",
-});
-TestPlausibilityError.belongsTo(Text, {
-  foreignKey: "text_id",
-  targetKey: "id",
-});
 
 // *************** Associations User_Game_Texts *******************
 User.hasMany(UserGameText, {
