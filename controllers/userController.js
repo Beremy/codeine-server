@@ -197,23 +197,23 @@ const getUsersOrderedByPointsInMonthly = async (req, res) => {
   }
 };
 
+async function getUserRankingById(userId) {
+  const rankings = await User.sequelize.query(
+    "SELECT id, RANK() OVER (ORDER BY points DESC) as ranking FROM users",
+    { type: QueryTypes.SELECT }
+  );
+  const userRanking = rankings.find((ranking) => ranking.id === userId);
+  return userRanking.ranking;
+}
+
 const getUserRanking = async (req, res) => {
-  const userId = parseInt(req.params.id); // ID de l'utilisateur
+  const userId = parseInt(req.params.id);
 
   try {
-    const rankings = await User.sequelize.query(
-      "SELECT id, username, points, RANK() OVER (ORDER BY points DESC) as ranking FROM users",
-      { type: QueryTypes.SELECT }
-    );
-
-    const userRanking = rankings.find((ranking) => ranking.id === userId);
-
-    if (!userRanking) {
-      return res.status(404).json({ error: "User not found" });
-    }
-
-    res.status(200).json(userRanking);
+    const userRanking = await getUserRankingById(userId);
+    res.status(200).json({ ranking: userRanking });
   } catch (error) {
+    console.error(error);
     res.status(500).json({ error: error.message });
   }
 };
@@ -589,6 +589,62 @@ const getCoeffMultiByUserId = async (req, res) => {
   }
 };
 
+const getUserDetailsById = async (req, res) => {
+  const userId = parseInt(req.params.id);
+
+  try {
+    if (isNaN(userId)) {
+      return res.status(400).json({ error: "Invalid user ID" });
+    }
+
+    const generalRanking = await getUserRankingById(userId);
+    const monthlyRankings = await User.sequelize.query(
+      "SELECT id, RANK() OVER (ORDER BY monthly_points DESC) as ranking FROM users",
+      { type: QueryTypes.SELECT }
+    );
+    const monthlyRanking =
+      monthlyRankings.find((r) => r.id === userId)?.ranking || -1;
+
+    // Récupérer le nombre de fois où l'utilisateur a été 1er au classement mensuel
+    const user = await User.findByPk(userId);
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    const userName = user.username;
+    const userPoints = user.points;
+    const nbFirstMonthly = user.nb_first_monthly;
+    const userGender = user.gender;
+    const userColorSkin = user.color_skin;
+    
+
+    // Date de création
+    createdAt = moment(user.created_at).locale("fr").format("DD MMMM YYYY");
+
+    // Récupérer le nombre de hauts faits accomplis par l'utilisateur
+    const userAchievements = await user.getAchievements();
+    const achievementCount = userAchievements.length;
+
+    const userCriminals = await user.getCriminals();
+    const criminalsCount = userCriminals.length;
+
+    res.status(200).json({
+      userName,
+      userPoints,
+      generalRanking: generalRanking,
+      monthlyRanking,
+      nbFirstMonthly,
+      achievementCount,
+      criminalsCount,
+      createdAt,
+      userGender,
+      userColorSkin,
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
 const updateUserEmail = async (req, res) => {
   const userId = req.params.id;
   const { email } = req.body;
@@ -645,4 +701,5 @@ module.exports = {
   updateUserEmail,
   getTopMonthlyWinners,
   incrementTutorialProgress,
+  getUserDetailsById,
 };

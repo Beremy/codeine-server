@@ -48,11 +48,6 @@ router.post("/requestReset", async (req, res) => {
 
       const baseUrl = process.env.APP_BASE_URL || "https://codeine.atilf.fr";
       const resetUrl = `${baseUrl}/NouveauMotDePasse?token=${token}`;
-
-      console.log("baseUrl");
-      console.log(baseUrl);
-      console.log("resetUrl");
-      console.log(resetUrl);
       await sendMail(
         user.email,
         "Réinitialisation de mot de passe",

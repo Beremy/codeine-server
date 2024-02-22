@@ -17,9 +17,8 @@ router.post("/signup", userController.signup);
 // POST user login (signin)
 router.post("/signin", userController.signin);
 
-
 // Récupération du rang de l'utilisateur
-// router.get("/getUserRanking/:id", userController.getUserRanking);
+router.get("/getUserRanking/:id", userController.getUserRanking);
 
 router.get("/getCoeffMultiByUserId/:id", userController.getCoeffMultiByUserId);
 
@@ -28,20 +27,31 @@ router.get("/getUsersOrderedByPoints", userController.getUsersOrderedByPoints);
 // Récupération du rang de l'utilisateur et des joueurs les plus proches de lui au score
 router.get("/getUserRankingRange/:id", userController.getUserRankingRange);
 
+// Infos autre joueur
+router.get("/getUserDetailsById/:id", userController.getUserDetailsById);
 
-// Classement mensuel 
-router.get("/getUsersOrderedByPointsInMonthly", userController.getUsersOrderedByPointsInMonthly);
-router.get("/getUserRankingRangeInMonthly/:id", userController.getUserRankingRangeInMonthly);
+// Classement mensuel
+router.get(
+  "/getUsersOrderedByPointsInMonthly",
+  userController.getUsersOrderedByPointsInMonthly
+);
+router.get(
+  "/getUserRankingRangeInMonthly/:id",
+  userController.getUserRankingRangeInMonthly
+);
 router.get("/getTopMonthlyWinners", userController.getTopMonthlyWinners);
 
 // Update email
-router.put("/:id/updateUserEmail",  userController.updateUserEmail);
+router.put("/:id/updateUserEmail", userController.updateUserEmail);
 
 // Incrémente points
 router.put("/:id/points", userController.incrementUserPoints);
 
 // Incrémente tutoriel principal
-router.put("/:id/incrementTutorialProgress", userController.incrementTutorialProgress);
+router.put(
+  "/:id/incrementTutorialProgress",
+  userController.incrementTutorialProgress
+);
 
 // Incrémente proba
 router.put("/:id/catchProbability", userController.incrementCatchProbability);
@@ -58,7 +68,6 @@ router.put("/:id/resetCatchProbability", userController.resetCatchProbability);
 router.get("/:id", userController.getUserById);
 
 // Nombre de criminels arrêtés
-
 
 router.post("/", async function (req, res, next) {
   try {

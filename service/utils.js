@@ -2,7 +2,6 @@ const { PasswordResetToken } = require('../models');
 const { Op } = require('sequelize');
 
 async function cleanExpiredTokens() {
-    console.log("cleanExpiredTokens");
   try {
     const now = new Date();
     await PasswordResetToken.destroy({
