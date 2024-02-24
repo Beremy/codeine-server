@@ -1,10 +1,4 @@
-const {
-  Text,
-  Theme,
-  Token,
-  UserGameText,
-  Sentence
-} = require("../models");
+const { Text, Theme, Token, UserGameText, Sentence } = require("../models");
 const { exec } = require("child_process");
 const { Sequelize } = require("sequelize");
 const Op = Sequelize.Op;
@@ -316,13 +310,14 @@ const getTextWithTokensById = async (req, res) => {
 };
 
 const getTextTestPlausibility = async (req, res) => {
+
   try {
     // trouver un texte qui a le champ is_plausibility_test à true
     const text = await Text.findOne({
       where: {
         is_plausibility_test: true,
       },
-      attributes: ["id", "num", "origin", "is_plausibility_test"],
+      attributes: ["id", "num", "origin", "is_plausibility_test", "test_plausibility"],
       order: Sequelize.literal("RAND()"),
       include: [
         {

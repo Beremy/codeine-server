@@ -92,7 +92,6 @@ router.post("/requestReset", async (req, res) => {
   }
 });
 router.post("/resetPassword", async (req, res) => {
-  console.log("resetPass");
   const token = req.body.token;
   const newPassword = req.body.newPassword;
 
@@ -196,7 +195,7 @@ async function sendMail(toEmail, subject, textContent, htmlContent) {
     Messages: [
       {
         From: {
-          Email: "bertrand.remy@inria.fr",
+          Email: "hostomytho@mailo.com",
           Name: "HostoMytho",
         },
         To: [
@@ -225,7 +224,7 @@ router.post("/sendMail", async function (req, res, next) {
   const mail = req.body.mail;
 
   sendMail(
-    "remybertrand@hotmail.fr",
+    "hostomytho@mailo.com",
     "Réinitialisation de mot de passe",
     "Votre texte ici",
     "<h3>Votre HTML ici</h3>"
