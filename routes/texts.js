@@ -14,6 +14,7 @@ router.get("/theme/:theme", textController.getTextsByTheme);
 router.get("/origin/:origin", textController.getTextsByOrigin);
 router.get("/getTextWithErrorValidatedNotPlayed/:userId", errorController.getTextWithErrorValidatedNotPlayed);
 router.get("/getTextWithErrorValidated", errorController.getTextWithErrorValidated);
+router.get("/getTextWithErrorValidatedByErrorId/:errorId", errorController.getTextWithErrorValidatedByErrorId);
 router.post("/createUserErrorDetail", errorController.createUserErrorDetail);
 router.post("/createUserTextRating", errorController.createUserTextRating);
 router.get("/getTextTestWithErrorValidated", errorController.getTextTestWithErrorValidated);

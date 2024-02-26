@@ -1,4 +1,10 @@
-const { Text, Token, UserErrorDetail, UserPlayedErrors, UserTextRating } = require("../models");
+const {
+  Text,
+  Token,
+  UserErrorDetail,
+  UserPlayedErrors,
+  UserTextRating,
+} = require("../models");
 const { exec } = require("child_process");
 const { Sequelize } = require("sequelize");
 const Op = Sequelize.Op;
@@ -20,7 +26,6 @@ const createUserTextRating = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
-
 
 const createUserErrorDetail = async (req, res) => {
   const { user_id, text_id, word_positions, vote_weight, content } = req.body;
@@ -142,6 +147,50 @@ const getTextWithErrorValidated = async (req, res) => {
   }
 };
 
+const getTextWithErrorValidatedByErrorId = async (req, res) => {
+  const { errorId } = req.params;
+  try {
+    // Recherche d'une erreur agrégée qui a un total_weight supérieur à 50
+    const userErrorDetail = await UserErrorDetail.findOne({
+      where: {
+        id: errorId,
+      },
+      include: {
+        model: Text,
+        include: [
+          {
+            model: Token,
+            attributes: ["id", "content", "position", "is_punctuation"],
+          },
+        ],
+      },
+      order: Sequelize.literal("RAND()"),
+    });
+
+    if (!userErrorDetail) {
+      return res
+        .status(404)
+        .json({ error: "No text with validated errors found" });
+    }
+
+    userErrorDetail.text.tokens.sort((a, b) => a.position - b.position);
+
+    // Renvoyer le texte avec une erreur validée
+    res.status(200).json({
+      id: userErrorDetail.text.id,
+      num: userErrorDetail.text.num,
+      vote_weight: userErrorDetail.vote_weight,
+      idUserErrorDetail: userErrorDetail.id,
+      userIdUserErrorDetail: userErrorDetail.userId,
+      positionErrorTokens: userErrorDetail.word_positions,
+      tokens: userErrorDetail.text.tokens,
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ error: error.message });
+  }
+};
+
 const getTextTestWithErrorValidated = async (req, res) => {
   try {
     const userErrorDetail = await UserErrorDetail.findOne({
@@ -184,5 +233,6 @@ module.exports = {
   getTextWithErrorValidatedNotPlayed,
   getTextTestWithErrorValidated,
   createUserErrorDetail,
-  createUserTextRating
+  createUserTextRating,
+  getTextWithErrorValidatedByErrorId,
 };
