@@ -166,7 +166,23 @@ router.get("/tokenValidation/:token", async (req, res) => {
 
 router.get("/messageMenu", async function (req, res, next) {
   try {
-    const messageMenu = await MessageMenu.findOne({ where: { active: true } });
+    const messageType = req.query.messageType;
+
+    if (!messageType || (messageType !== 'home_not_connected' && messageType !== 'home_connected')) {
+      return res.status(400).json({ error: "Invalid or missing messageType parameter." });
+    }
+
+    const messageMenu = await MessageMenu.findOne({
+      where: {
+        active: true,
+        message_type: messageType,
+      }
+    });
+
+    if (!messageMenu) {
+      return res.status(404).json({ error: "Message not found." });
+    }
+
     res.json(messageMenu);
   } catch (err) {
     next(err);
