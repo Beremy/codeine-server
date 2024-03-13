@@ -211,7 +211,7 @@ async function sendMail(toEmail, subject, textContent, htmlContent) {
     Messages: [
       {
         From: {
-          Email: "hostomytho@mailo.com",
+          Email: "bertrand.remy@inria.fr",
           Name: "HostoMytho",
         },
         To: [
@@ -240,7 +240,7 @@ router.post("/sendMail", async function (req, res, next) {
   const mail = req.body.mail;
 
   sendMail(
-    "hostomytho@mailo.com",
+    "bertrand.remy@inria.fr",
     "Réinitialisation de mot de passe",
     "Votre texte ici",
     "<h3>Votre HTML ici</h3>"
