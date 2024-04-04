@@ -9,6 +9,8 @@ router.get("/getTextTestPlausibility", textController.getTextTestPlausibility);
 router.get("/getTextTestNegation", textController.getTextTestNegation);
 router.get("/getTextWithTokensByGameType/:gameType", textController.getTextWithTokensByGameType);
 router.get("/getTextWithTokensNotPlayed/:userId/:gameType", textController.getTextWithTokensNotPlayed);
+router.get("/getSmallTextWithTokens/:gameType/:nbToken", textController.getSmallTextWithTokens);
+router.get("/getSmallTextWithTokensNotPlayed/:userId/:gameType/:nbToken", textController.getSmallTextWithTokens);
 router.get("/getTextWithTokensById/:textId", textController.getTextWithTokensById);
 router.get("/theme/:theme", textController.getTextsByTheme);
 router.get("/origin/:origin", textController.getTextsByOrigin);

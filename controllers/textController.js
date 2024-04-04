@@ -3,6 +3,163 @@ const { exec } = require("child_process");
 const { Sequelize } = require("sequelize");
 const Op = Sequelize.Op;
 
+const getSmallTextWithTokens = async (req, res) => {
+  try {
+    // A remettre si on ajoute la mécanique de texte déjà joué
+    // const { userId, gameType } = req.params;
+    const { gameType, nbToken } = req.params;
+    // chercher tous les textes déjà joués par cet utilisateur pour ce type de jeu
+    const userGameTexts = await UserGameText.findAll({
+      where: {
+        // user_id: userId,
+        game_type: gameType,
+      },
+      attributes: ["text_id"],
+    });
+
+    // créer un tableau d'IDs de ces textes
+    const playedTextIds = userGameTexts.map(
+      (userGameText) => userGameText.text_id
+    );
+
+    // trouver un texte qui n'a pas encore été joué par cet utilisateur pour ce type de jeu
+    let text = await Text.findOne({
+      where: {
+        id: { [Op.notIn]: playedTextIds },
+        is_plausibility_test: false,
+        is_hypothesis_specification_test: false,
+        is_condition_specification_test: false,
+        is_negation_specification_test: false
+      },
+      attributes: [
+        "id",
+        "num",
+        "id_theme",
+        "origin",
+        "is_plausibility_test",
+        "test_plausibility",
+        "is_hypothesis_specification_test",
+        "is_condition_specification_test",
+        "is_negation_specification_test",
+        "length",
+        "reasonForRate",
+      ],
+      order: Sequelize.literal("RAND()"),
+    });
+
+    if (!text) {
+      return res.status(404).json({ error: "No more texts to process" });
+    }
+
+    // Récupérer les phrases du texte sélectionné, triées par leur position
+    let sentences = await Sentence.findAll({
+      where: { text_id: text.id },
+      attributes: ["id", "position"],
+      order: [["position", "ASC"]],
+      include: [
+        {
+          model: Token,
+          attributes: ["id", "content", "position", "is_punctuation"],
+          required: true,
+        },
+      ],
+    });
+
+    if (sentences.length === 0) {
+      return res
+        .status(404)
+        .json({ error: "Text " + text.id + " has no sentences" });
+    }
+
+    // Calculer le nombre total de tokens pour chaque phrase
+    let totalTokensBySentence = sentences.map(
+      (sentence) => sentence.tokens.length
+    );
+    // Calculer le total cumulatif de tokens pour identifier les points de départ possibles
+    let cumulativeTokens = totalTokensBySentence.reduce((acc, curr, i) => {
+      acc.push((acc[i - 1] || 0) + curr);
+      return acc;
+    }, []);
+
+    let selectedSentences = [];
+    let totalTokens = 0;
+
+    if (cumulativeTokens[cumulativeTokens.length - 1] < nbToken) {
+      selectedSentences = [...sentences]; // Utiliser toutes les sentences
+      totalTokens = cumulativeTokens[cumulativeTokens.length - 1]; // Total de tokens du texte
+    } else {
+      // Déterminer le maxStartIndex correctement sans utiliser startIndex dans le calcul
+      let validStartIndexes = cumulativeTokens.findIndex(
+        (cumulative) => cumulative >= nbToken
+      );
+      if (validStartIndexes === -1) {
+        // Si aucun index valide n'est trouvé
+        return res
+          .status(404)
+          .json({ error: "Cannot find a suitable start position" });
+      }
+
+      // Le maxStartIndex est maintenant l'index du dernier élément qui peut servir de point de départ valide
+      let maxStartIndex =
+        validStartIndexes < sentences.length
+          ? validStartIndexes
+          : sentences.length - 1;
+
+      let startIndex = Math.floor(Math.random() * (maxStartIndex + 1));
+      let startFromEnd = Math.random() < 0.5; // 50% chance de commencer par la fin
+
+      if (startFromEnd) {
+        // Sélectionner depuis la fin
+        for (
+          let i = sentences.length - 1;
+          i >= 0 && totalTokens < nbToken;
+          i--
+        ) {
+          selectedSentences.unshift(sentences[i]); // Ajouter au début pour conserver l'ordre
+          totalTokens += sentences[i].tokens.length;
+          if (totalTokens >= nbToken) break;
+        }
+      } else {
+        // Sélectionner depuis le début (votre logique actuelle)
+        for (let i = 0; i < sentences.length && totalTokens < nbToken; i++) {
+          selectedSentences.push(sentences[i]);
+          totalTokens += sentences[i].tokens.length;
+          if (totalTokens >= nbToken) break;
+        }
+      }
+    }
+
+    let groupedTokens = selectedSentences.flatMap((sentence) =>
+      sentence.tokens.map((token) => ({
+        id: token.id,
+        content: token.content,
+        position: token.position,
+        is_punctuation: token.is_punctuation,
+      }))
+    );
+
+    // Construire le résultat final
+    let result = {
+      id: text.id,
+      num: text.num,
+      id_theme: text.id_theme,
+      origin: text.origin,
+      is_plausibility_test: text.is_plausibility_test,
+      test_plausibility: text.test_plausibility,
+      is_hypothesis_specification_test: text.is_hypothesis_specification_test,
+      is_condition_specification_test: text.is_condition_specification_test,
+      is_negation_specification_test: text.is_negation_specification_test,
+
+      length: text.length,
+      tokens: groupedTokens, // Les tokens regroupés de toutes les phrases sélectionnées
+    };
+
+    res.status(200).json(result);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
 const getTextWithTokensNotPlayed = async (req, res) => {
   try {
     const { userId, gameType } = req.params;
@@ -24,6 +181,10 @@ const getTextWithTokensNotPlayed = async (req, res) => {
     const text = await Text.findOne({
       where: {
         id: { [Op.notIn]: playedTextIds },
+        is_plausibility_test: false,
+        is_hypothesis_specification_test: false,
+        is_condition_specification_test: false,
+        is_negation_specification_test: false,
       },
       attributes: [
         "id",
@@ -351,7 +512,13 @@ const getTextTestNegation = async (req, res) => {
       where: {
         is_negation_specification_test: true,
       },
-      attributes: ["id", "num", "origin", "is_negation_specification_test", "length"],
+      attributes: [
+        "id",
+        "num",
+        "origin",
+        "is_negation_specification_test",
+        "length",
+      ],
       order: Sequelize.literal("RAND()"),
       include: [
         {
@@ -381,6 +548,7 @@ module.exports = {
   deleteText,
   getTextsByOrigin,
   getTextWithTokensNotPlayed,
+  getSmallTextWithTokens,
   getTextWithTokensById,
   getTextTestPlausibility,
   getTextTestNegation,
