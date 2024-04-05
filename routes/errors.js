@@ -2,27 +2,30 @@ var express = require("express");
 var router = express.Router();
 const { ErrorType, UserErrorDetail, UserTypingErrors } = require("../models");
 
-
-router.post('/createUserTypingError', async (req, res) => {
-  const { user_id, user_error_details_id, error_type_id } = req.body;
+router.post("/createUserTypingError", async (req, res) => {
+  const { user_id, user_error_details_id, error_type_id, sentence_positions } = req.body;
 
   try {
     const newUserTypingError = await UserTypingErrors.create({
       user_id: user_id,
       user_error_details_id: user_error_details_id,
-      error_type_id: error_type_id
+      error_type_id: error_type_id,
     });
 
-    // Diminuer le vote_weight si error_type_id est 10 (ce n'est pas une erreur)
-    if (error_type_id === 10) {
-      const userErrorDetail = await UserErrorDetail.findOne({
-        where: { id: user_error_details_id }
-      });
+    const userErrorDetail = await UserErrorDetail.findOne({
+      where: { id: user_error_details_id },
+    });
 
-      if (userErrorDetail) {
-        const newVoteWeight = Math.max(userErrorDetail.vote_weight - 5, 0);
-        await userErrorDetail.update({ vote_weight: newVoteWeight });
+    if (userErrorDetail) {
+      let newVoteWeight = userErrorDetail.vote_weight;
+
+      if (error_type_id === 10) {
+        newVoteWeight = Math.max(userErrorDetail.vote_weight - 5, 0);
+      } else {
+        newVoteWeight = userErrorDetail.vote_weight + 3;
       }
+
+      await userErrorDetail.update({ vote_weight: newVoteWeight });
     }
 
     res.status(201).json(newUserTypingError);
@@ -52,7 +55,7 @@ router.get("/getTypeByErrorId/:userErrorDetailId", async (req, res) => {
         {
           model: ErrorType,
           attributes: ["id", "name"],
-          as: 'error_type'
+          as: "error_type",
         },
       ],
     });
@@ -67,7 +70,6 @@ router.get("/getTypeByErrorId/:userErrorDetailId", async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 });
-
 
 router.get("/isErrorTest/:userErrorDetailId", async (req, res) => {
   const { userErrorDetailId } = req.params;
@@ -88,6 +90,5 @@ router.get("/isErrorTest/:userErrorDetailId", async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 });
-
 
 module.exports = router;

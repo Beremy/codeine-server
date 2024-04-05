@@ -10,7 +10,8 @@ const { Sequelize } = require("sequelize");
 const Op = Sequelize.Op;
 
 const createUserTextRating = async (req, res) => {
-  const { user_id, text_id, plausibility, vote_weight } = req.body;
+  const { user_id, text_id, plausibility, vote_weight, sentence_positions } =
+    req.body;
 
   try {
     const newUserTextRating = await UserTextRating.create({
@@ -18,8 +19,8 @@ const createUserTextRating = async (req, res) => {
       text_id: text_id,
       plausibility: plausibility,
       vote_weight: vote_weight,
+      sentence_positions: sentence_positions,
     });
-
     res.status(201).json(newUserTextRating);
   } catch (error) {
     console.log(error);

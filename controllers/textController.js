@@ -149,9 +149,9 @@ const getSmallTextWithTokens = async (req, res) => {
       is_hypothesis_specification_test: text.is_hypothesis_specification_test,
       is_condition_specification_test: text.is_condition_specification_test,
       is_negation_specification_test: text.is_negation_specification_test,
-
       length: text.length,
-      tokens: groupedTokens, // Les tokens regroupés de toutes les phrases sélectionnées
+      sentence_positions: selectedSentences.length === sentences.length ? "full" : selectedSentences.map(sentence => sentence.position).join(", "),
+      tokens: groupedTokens,
     };
 
     res.status(200).json(result);

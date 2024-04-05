@@ -30,6 +30,9 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.DECIMAL,
         allowNull: false,
       },
+      sentence_positions: {
+        type: DataTypes.STRING,
+      },
       vote_weight: {
         type: DataTypes.INTEGER,
         allowNull: false,
@@ -39,7 +42,7 @@ module.exports = (sequelize, DataTypes) => {
       sequelize,
       modelName: "user_text_rating",
       timestamps: true,
-      createdAt: 'created_at',
+      createdAt: "created_at",
       updatedAt: false,
     }
   );
