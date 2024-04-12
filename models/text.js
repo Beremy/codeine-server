@@ -69,6 +69,11 @@ module.exports = (sequelize, DataTypes) => {
         allowNull: true,
         defaultValue: 0,
       },
+      reason_for_rate: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+        defaultValue: "",
+      },
     },
     {
       sequelize,

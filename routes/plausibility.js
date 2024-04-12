@@ -46,4 +46,19 @@ router.post("/", async function (req, res, next) {
   }
 });
 
+router.get("/getReasonForRateByTextId/:textId", async function (req, res, next) {
+  const textId = req.params.textId;
+  try {
+    const text = await Text.findOne({
+      where: {
+        id: textId,
+      },
+    });
+
+    res.status(200).json({ reason_for_rate: text.reason_for_rate });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 module.exports = router;

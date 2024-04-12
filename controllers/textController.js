@@ -42,7 +42,6 @@ const getSmallTextWithTokens = async (req, res) => {
         "is_condition_specification_test",
         "is_negation_specification_test",
         "length",
-        "reasonForRate",
       ],
       order: Sequelize.literal("RAND()"),
     });
