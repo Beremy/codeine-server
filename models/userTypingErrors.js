@@ -39,7 +39,9 @@ module.exports = (sequelize, DataTypes) => {
     {
       sequelize,
       modelName: "user_typing_errors",
-      timestamps: false,
+      timestamps: true,
+      createdAt: "created_at",
+      updatedAt: false,
     }
   );
 
