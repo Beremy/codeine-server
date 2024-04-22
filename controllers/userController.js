@@ -1,9 +1,24 @@
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
-const { User, Achievement, UserSkin, MonthlyWinners } = require("../models");
+const {
+  User,
+  Achievement,
+  UserSkin,
+  MonthlyWinners,
+  Skin,
+} = require("../models");
 const { QueryTypes } = require("sequelize");
 const { sequelize } = require("../service/db.js");
 const moment = require("moment");
+const skinOrder = [
+  "personnage",
+  "veste",
+  "stetho",
+  "visage",
+  "cheveux",
+  "chapeau",
+  "lunettes",
+];
 
 const createUser = async (user) => {
   const transaction = await sequelize.transaction();
@@ -303,7 +318,31 @@ const getTopMonthlyWinners = async (req, res) => {
       limit: 3,
       order: [["ranking", "ASC"]],
       attributes: ["user_id", "username", "points", "ranking"],
+      include: [
+        {
+          model: User,
+          attributes: ["gender", "color_skin"],
+        },
+      ],
     });
+
+    // Skins équipés des gagnants
+    for (let winner of topWinners) {
+      const equippedSkins = await UserSkin.findAll({
+        where: { user_id: winner.user_id, equipped: true },
+        include: [
+          {
+            model: Skin,
+          },
+        ],
+      });
+      const sortedSkins = equippedSkins
+        .map((ua) => ua.skin)
+        .sort((a, b) => skinOrder.indexOf(a.type) - skinOrder.indexOf(b.type));
+
+   
+        winner.dataValues.equippedSkins = sortedSkins;
+    }
 
     res.status(200).json(topWinners);
   } catch (error) {
@@ -616,7 +655,6 @@ const getUserDetailsById = async (req, res) => {
     const nbFirstMonthly = user.nb_first_monthly;
     const userGender = user.gender;
     const userColorSkin = user.color_skin;
-    
 
     // Date de création
     createdAt = moment(user.created_at).locale("fr").format("DD MMMM YYYY");

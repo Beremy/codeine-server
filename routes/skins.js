@@ -60,7 +60,7 @@ router.post("/randomSkin/:userId", async function (req, res, next) {
       equipped: false,
     });
 
-// // TODO Faire gain haut fait
+    // // TODO Faire gain haut fait
 
     res.status(200).json({
       skin_id: selectedSkin.id,
@@ -202,5 +202,23 @@ router.put("/unequip/:userId/:skinId", async function (req, res, next) {
     res.status(500).json({ error: error.message });
   }
 });
+
+router.get(
+  "/getImageCharacterByUserId/:userId",
+  async function (req, res, next) {
+    try {
+      const user = await User.findByPk(req.params.id, {
+        attributes: { exclude: ["password"] },
+      });
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+
+      res.status(200).json(user);
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  }
+);
 
 module.exports = router;

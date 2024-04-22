@@ -91,6 +91,7 @@ router.post("/requestReset", async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 });
+
 router.post("/resetPassword", async (req, res) => {
   const token = req.body.token;
   const newPassword = req.body.newPassword;
@@ -138,6 +139,28 @@ router.post("/resetPassword", async (req, res) => {
   }
 });
 
+router.post("/changePassword", async (req, res) => {
+  const userId = req.body.id;
+  const newPassword = req.body.newPassword;
+  try {
+    const transaction = await sequelize.transaction();
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    await User.update(
+      { password: hashedPassword },
+      {
+        where: { id: userId },
+        transaction,
+      }
+    );
+    await transaction.commit();
+    res.status(200).json({ message: "Mot de passe réinitialisé avec succès" });
+  } catch (error) {
+    console.error("Erreur lors de la réinitialisation du mot de passe:", error);
+    res.status(500).json({ error: "Erreur interne du serveur" });
+  }
+});
+
 router.get("/tokenValidation/:token", async (req, res) => {
   const token = req.params.token;
   try {
@@ -168,15 +191,20 @@ router.get("/messageMenu", async function (req, res, next) {
   try {
     const messageType = req.query.messageType;
 
-    if (!messageType || (messageType !== 'home_not_connected' && messageType !== 'home_connected')) {
-      return res.status(400).json({ error: "Invalid or missing messageType parameter." });
+    if (
+      !messageType ||
+      (messageType !== "home_not_connected" && messageType !== "home_connected")
+    ) {
+      return res
+        .status(400)
+        .json({ error: "Invalid or missing messageType parameter." });
     }
 
     const messageMenu = await MessageMenu.findOne({
       where: {
         active: true,
         message_type: messageType,
-      }
+      },
     });
 
     if (!messageMenu) {
