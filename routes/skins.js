@@ -67,6 +67,7 @@ router.post("/randomSkin/:userId", async function (req, res, next) {
       name: selectedSkin.name,
       image_url: selectedSkin.image_url,
       type: selectedSkin.type,
+      rarity: selectedSkin.rarity
     });
   } catch (error) {
     res.status(500).json({ error: error.message });

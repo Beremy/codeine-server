@@ -85,24 +85,31 @@ const createUser = async (user) => {
 
 const signup = async (req, res) => {
   try {
-    const existingUserByEmail = await User.findOne({
-      where: { email: req.body.email }
-    });
+    // Convertit une chaîne vide en null pour éviter le "mail déjà" pris quand l'user ne la précise pas
+    const email = req.body.email && req.body.email.trim() !== '' ? req.body.email.trim() : null;
 
-    if (existingUserByEmail) {
-      return res.status(409).json({ error: "Cette adresse email est déjà utilisée." });
+    if (email) {
+      const existingUserByEmail = await User.findOne({
+        where: { email }
+      });
+
+      if (existingUserByEmail) {
+        return res.status(409).json({ error: "Cette adresse email est déjà utilisée." });
+      }
     }
 
-    // Création de l'utilisateur
-    const user = await createUser(req.body);
+    const newUserDetails = {
+      ...req.body,
+      email: email,
+    };
+
+    const user = await createUser(newUserDetails);
     const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, {
       expiresIn: "24h",
     });
     const userInfo = user.get({ plain: true });
     delete userInfo.password;
-    res
-      .status(201)
-      .json({ message: "User created successfully", token, user: userInfo });
+    res.status(201).json({ message: "User created successfully", token, user: userInfo });
   } catch (error) {
     if (error.name === "SequelizeUniqueConstraintError") {
       res.status(409).json({ error: "Ce nom d'utilisateur est déjà pris." });
@@ -173,7 +180,7 @@ const getUsersOrderedByPoints = async (req, res) => {
       order: [["points", "DESC"]],
       limit,
       offset,
-      attributes: ["id", "username", "points"],
+      attributes: ["id", "username", "points", "nb_first_monthly"],
     });
     let lastPoints = null;
     let lastRank = 0;
@@ -207,7 +214,7 @@ const getUsersOrderedByPointsInMonthly = async (req, res) => {
       order: [["monthly_points", "DESC"]],
       limit,
       offset,
-      attributes: ["id", "username", "monthly_points"],
+      attributes: ["id", "username", "monthly_points", "nb_first_monthly"],
     });
     let lastPoints = null;
     let lastRank = 0;
