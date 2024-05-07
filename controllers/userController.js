@@ -654,6 +654,45 @@ const getCoeffMultiByUserId = async (req, res) => {
   }
 };
 
+const getMessageReadByUserId = async (req, res) => {
+  const userId = parseInt(req.params.id);
+  try {
+    const user = await User.findOne({
+      attributes: ["message_read"],
+      where: { id: userId },
+    });
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+    return res.status(200).json({ hasBeenRead: user.message_read });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+const updateMessageReadByUserId = async (req, res) => {
+  const userId = parseInt(req.params.id);
+  const { readStatus } = req.body; 
+
+  try {
+    const user = await User.findOne({
+      where: { id: userId }
+    });
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    user.message_read = readStatus;
+    await user.save();
+
+    return res.status(200).json({ message: `User read status updated to ${readStatus}.` });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
 const getUserDetailsById = async (req, res) => {
   const userId = parseInt(req.params.id);
 
@@ -763,6 +802,8 @@ module.exports = {
   updateUserStats,
   updateUserCoeffMulti,
   getCoeffMultiByUserId,
+  getMessageReadByUserId,
+  updateMessageReadByUserId,
   updateUserEmail,
   getTopMonthlyWinners,
   incrementTutorialProgress,

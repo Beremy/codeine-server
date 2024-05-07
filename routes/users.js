@@ -22,6 +22,9 @@ router.get("/getUserRanking/:id", userController.getUserRanking);
 
 router.get("/getCoeffMultiByUserId/:id", userController.getCoeffMultiByUserId);
 
+router.get("/getMessageReadByUserId/:id", userController.getMessageReadByUserId);
+router.put("/updateMessageReadByUserId/:id", userController.updateMessageReadByUserId);
+
 router.get("/getUsersOrderedByPoints", userController.getUsersOrderedByPoints);
 
 // Récupération du rang de l'utilisateur et des joueurs les plus proches de lui au score
