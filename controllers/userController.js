@@ -10,6 +10,7 @@ const {
 const { QueryTypes } = require("sequelize");
 const { sequelize } = require("../service/db.js");
 const moment = require("moment");
+const { Op } = require("sequelize");
 const skinOrder = [
   "personnage",
   "veste",
@@ -82,19 +83,23 @@ const createUser = async (user) => {
   }
 };
 
-
 const signup = async (req, res) => {
   try {
     // Convertit une chaîne vide en null pour éviter le "mail déjà" pris quand l'user ne la précise pas
-    const email = req.body.email && req.body.email.trim() !== '' ? req.body.email.trim() : null;
+    const email =
+      req.body.email && req.body.email.trim() !== ""
+        ? req.body.email.trim()
+        : null;
 
     if (email) {
       const existingUserByEmail = await User.findOne({
-        where: { email }
+        where: { email },
       });
 
       if (existingUserByEmail) {
-        return res.status(409).json({ error: "Cette adresse email est déjà utilisée." });
+        return res
+          .status(409)
+          .json({ error: "Cette adresse email est déjà utilisée." });
       }
     }
 
@@ -109,7 +114,9 @@ const signup = async (req, res) => {
     });
     const userInfo = user.get({ plain: true });
     delete userInfo.password;
-    res.status(201).json({ message: "User created successfully", token, user: userInfo });
+    res
+      .status(201)
+      .json({ message: "User created successfully", token, user: userInfo });
   } catch (error) {
     if (error.name === "SequelizeUniqueConstraintError") {
       res.status(409).json({ error: "Ce nom d'utilisateur est déjà pris." });
@@ -119,18 +126,15 @@ const signup = async (req, res) => {
   }
 };
 
-
-
 const getUserByUsername = async (username) => {
   return await User.findOne({ where: { username } });
 };
 
 const getUserByEmail = async (email) => {
   return await User.findOne({
-    where: { email: email }
+    where: { email: email },
   });
 };
-
 
 async function getUserByUsernameOrEmail(identifier) {
   let user = await getUserByUsername(identifier);
@@ -146,16 +150,23 @@ const signin = async (req, res) => {
       return res.status(404).json({ error: "User not found" });
     }
 
-    const isPasswordValid = await bcrypt.compare(req.body.password, user.password);
+    const isPasswordValid = await bcrypt.compare(
+      req.body.password,
+      user.password
+    );
     if (!isPasswordValid) {
       return res.status(401).json({ error: "Invalid password" });
     }
 
-    const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, { expiresIn: "24h" });
+    const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, {
+      expiresIn: "24h",
+    });
 
     const userInfo = user.get({ plain: true });
     delete userInfo.password;
-    res.status(200).json({ message: "User signed in successfully", token, user: userInfo });
+    res
+      .status(200)
+      .json({ message: "User signed in successfully", token, user: userInfo });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -366,8 +377,7 @@ const getTopMonthlyWinners = async (req, res) => {
         .map((ua) => ua.skin)
         .sort((a, b) => skinOrder.indexOf(a.type) - skinOrder.indexOf(b.type));
 
-   
-        winner.dataValues.equippedSkins = sortedSkins;
+      winner.dataValues.equippedSkins = sortedSkins;
     }
 
     res.status(200).json(topWinners);
@@ -464,6 +474,63 @@ async function checkAchievements(user) {
         }
       }
     }
+
+    // Haut fait de déblocage de tous les skins
+    const allSkinsAchievementId = "28";
+    const existingAllSkinsAchievement = await user.getAchievements({
+      where: { id: allSkinsAchievementId },
+    });
+    if (existingAllSkinsAchievement.length === 0) {
+      // Filtrer les skins en fonction du genre de l'utilisateur
+      const genderSpecificConditions = {
+        where: {
+          [Op.or]: [{ gender: user.gender }, { gender: "unisexe" }],
+        },
+      };
+      const totalSkins = await Skin.count(genderSpecificConditions);
+      const userSkins = await user.getUser_skins({
+        distinct: true,
+        col: "skin_id",
+      });
+
+      if (userSkins.length >= totalSkins) {
+        const allSkinsAchievement = await Achievement.findByPk(
+          allSkinsAchievementId
+        );
+        if (allSkinsAchievement) {
+          const achievementPromise = user
+            .addAchievement(allSkinsAchievement, {
+              through: { notified: false },
+            })
+            .then(() => newAchievements.push(allSkinsAchiconsole.logevement));
+          await achievementPromise;
+        }
+      }
+    }
+
+    // Haut fait pour jouer entre minuit et 4h
+    const lateNightAchievementId = "24";
+    const existingLateNightAchievement = await user.getAchievements({
+      where: { id: lateNightAchievementId },
+    });
+    const currentHour = new Date().getHours();
+
+    if (
+      existingLateNightAchievement.length === 0 &&
+      currentHour >= 0 &&
+      currentHour < 4
+    ) {
+      const lateNightAchievement = await Achievement.findByPk(
+        lateNightAchievementId
+      );
+      if (lateNightAchievement) {
+        await user.addAchievement(lateNightAchievement, {
+          through: { notified: false },
+        });
+        newAchievements.push(lateNightAchievement);
+      }
+    }
+
     if (newAchievements.length > 0) {
       await updateUserCoeffMulti(user);
     }
@@ -673,11 +740,11 @@ const getMessageReadByUserId = async (req, res) => {
 
 const updateMessageReadByUserId = async (req, res) => {
   const userId = parseInt(req.params.id);
-  const { readStatus } = req.body; 
+  const { readStatus } = req.body;
 
   try {
     const user = await User.findOne({
-      where: { id: userId }
+      where: { id: userId },
     });
 
     if (!user) {
@@ -687,7 +754,9 @@ const updateMessageReadByUserId = async (req, res) => {
     user.message_read = readStatus;
     await user.save();
 
-    return res.status(200).json({ message: `User read status updated to ${readStatus}.` });
+    return res
+      .status(200)
+      .json({ message: `User read status updated to ${readStatus}.` });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

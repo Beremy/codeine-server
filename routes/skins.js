@@ -60,8 +60,6 @@ router.post("/randomSkin/:userId", async function (req, res, next) {
       equipped: false,
     });
 
-    // // TODO Faire gain haut fait
-
     res.status(200).json({
       skin_id: selectedSkin.id,
       name: selectedSkin.name,
