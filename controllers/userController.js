@@ -420,6 +420,9 @@ async function updateUserCoeffMulti(user) {
 }
 
 async function checkAchievements(user) {
+  console.log(
+    "$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$"
+  );
   try {
     const scoreAchievements = [
       { id: "2", score: 100 },
@@ -488,6 +491,7 @@ async function checkAchievements(user) {
         },
       };
       const totalSkins = await Skin.count(genderSpecificConditions);
+
       const userSkins = await user.getUser_skins({
         distinct: true,
         col: "skin_id",
@@ -502,7 +506,7 @@ async function checkAchievements(user) {
             .addAchievement(allSkinsAchievement, {
               through: { notified: false },
             })
-            .then(() => newAchievements.push(allSkinsAchiconsole.logevement));
+            .then(() => newAchievements.push(allSkinsAchievement));
           await achievementPromise;
         }
       }
