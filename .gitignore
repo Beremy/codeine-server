@@ -23,3 +23,5 @@ Thumbs.db
 # Env python
 hostomythoenv/
 venv_name/
+
+backups/
