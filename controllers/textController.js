@@ -29,7 +29,7 @@ const getSmallTextWithTokens = async (req, res) => {
         is_plausibility_test: false,
         is_hypothesis_specification_test: false,
         is_condition_specification_test: false,
-        is_negation_specification_test: false
+        is_negation_specification_test: false,
       },
       attributes: [
         "id",
@@ -149,7 +149,10 @@ const getSmallTextWithTokens = async (req, res) => {
       is_condition_specification_test: text.is_condition_specification_test,
       is_negation_specification_test: text.is_negation_specification_test,
       length: text.length,
-      sentence_positions: selectedSentences.length === sentences.length ? "full" : selectedSentences.map(sentence => sentence.position).join(", "),
+      sentence_positions:
+        selectedSentences.length === sentences.length
+          ? "full"
+          : selectedSentences.map((sentence) => sentence.position).join(", "),
       tokens: groupedTokens,
     };
 
@@ -327,6 +330,7 @@ const createText = async (req, res) => {
               req.body.is_condition_specification_test || false,
             is_negation_specification_test:
               req.body.is_negation_specification_test || false,
+            reason_for_rate: req.body.reason_for_rate,
           };
 
           const text = await Text.create(textData);
