@@ -9,6 +9,7 @@ const { exec } = require("child_process");
 const { Sequelize } = require("sequelize");
 const Op = Sequelize.Op;
 
+
 const createUserTextRating = async (req, res) => {
   const { user_id, text_id, plausibility, vote_weight, sentence_positions } =
     req.body;
