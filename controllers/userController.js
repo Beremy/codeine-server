@@ -21,6 +21,8 @@ const skinOrder = [
   "lunettes",
 ];
 
+const { getRandomSkin } = require('../controllers/skinsController');
+
 const createUser = async (user) => {
   const transaction = await sequelize.transaction();
   try {
@@ -625,47 +627,33 @@ const incrementTrustIndex = async (req, res) => {
   }
 };
 
-const updateUserStats = async (req, res) => {
-  const { id } = req.params;
-  const { points, catch_probability, trust_index } = req.body;
-
+const updateUserStats = async (userId, pointsToAdd, percentageToAdd, trustIndexIncrement, isBonus = false) => {
   try {
-    const user = await User.findOne({ where: { id } });
+    const user = await User.findOne({ where: { id: userId } });
     if (!user) {
-      return res.status(404).json({ error: "User not found" });
+      throw new Error("User not found");
     }
-    // Mise à jour des points, de la probabilité de capture, et du trust_index
-    user.points += points;
-    user.monthly_points += points;
-    user.catch_probability = Math.min(
-      100,
-      Math.max(0, user.catch_probability + catch_probability)
-    );
-    user.trust_index = Math.min(
-      100,
-      Math.max(0, user.trust_index + trust_index)
-    );
 
-    // Mise à jour de lastPlayedDate et gestion des jours consécutifs joués
+    const oldRewardTier = Math.floor(user.points / 100);
+
+    let coeffTrustIndex = user.trust_index / 80;
+    coeffTrustIndex = Math.max(coeffTrustIndex, 0);
+    const additionalPoints = Math.round(pointsToAdd * coeffTrustIndex * user.coeffMulti);
+    user.points += additionalPoints;
+
+    user.catch_probability = Math.min(100, Math.max(0, user.catch_probability + percentageToAdd));
+    user.trust_index = Math.min(100, Math.max(0, user.trust_index + trustIndexIncrement));
+
     const today = new Date();
-    const lastPlayedDate = user.lastPlayedDate
-      ? new Date(user.lastPlayedDate)
-      : null;
+    const lastPlayedDate = user.lastPlayedDate ? new Date(user.lastPlayedDate) : null;
     const yesterday = new Date();
     yesterday.setDate(yesterday.getDate() - 1);
 
     const formatDate = (date) => date.toISOString().slice(0, 10);
 
-    if (
-      lastPlayedDate &&
-      formatDate(lastPlayedDate) === formatDate(yesterday)
-    ) {
+    if (lastPlayedDate && formatDate(lastPlayedDate) === formatDate(yesterday)) {
       user.consecutiveDaysPlayed = (user.consecutiveDaysPlayed || 0) + 1;
-    } else if (
-      !lastPlayedDate ||
-      formatDate(lastPlayedDate) !== formatDate(today)
-    ) {
-      // Réinitialiser le compteur seulement si la dernière connexion n'est ni aujourd'hui ni hier
+    } else if (!lastPlayedDate || formatDate(lastPlayedDate) !== formatDate(today)) {
       user.consecutiveDaysPlayed = 1;
     }
 
@@ -673,18 +661,34 @@ const updateUserStats = async (req, res) => {
 
     await user.save();
 
-    // Vérifier les nouvelles réalisations après l'augmentation des points
+    const newRewardTier = Math.floor(user.points / 100);
+
+    let showSkinModal = false;
+    let skinData = null;
+
+    if (newRewardTier > oldRewardTier) {
+      const skinResponse = await getRandomSkin(user.id);
+      showSkinModal = true;
+      skinData = skinResponse;
+
+      if (skinResponse.allSkinsUnlocked) {
+        await updateUserStats(userId, 5, 0, 0, true); // Provide additional bonus for unlocking all skins
+      }
+    }
+
     const newAchievements = await checkAchievements(user);
 
-    return res.status(200).json({
+    return {
       newPoints: user.points,
       newCatchProbability: user.catch_probability,
       newTrustIndex: user.trust_index,
       newCoeffMulti: user.coeffMulti,
       newAchievements,
-    });
+      showSkinModal,
+      skinData,
+    };
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    throw new Error('Error updating user stats: ' + error.message);
   }
 };
 
