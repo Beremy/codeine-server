@@ -9,10 +9,8 @@ const { exec } = require("child_process");
 const { Sequelize } = require("sequelize");
 const Op = Sequelize.Op;
 
-
-const createUserTextRating = async (req, res) => {
-  const { user_id, text_id, plausibility, vote_weight, sentence_positions } =
-    req.body;
+const createUserTextRating = async (userTextRating) => {
+  const { user_id, text_id, plausibility, vote_weight, sentence_positions } = userTextRating;
 
   try {
     const newUserTextRating = await UserTextRating.create({
@@ -22,15 +20,15 @@ const createUserTextRating = async (req, res) => {
       vote_weight: vote_weight,
       sentence_positions: sentence_positions,
     });
-    res.status(201).json(newUserTextRating);
+    return newUserTextRating;
   } catch (error) {
-    console.log(error);
-    res.status(500).json({ error: error.message });
+    console.error("Error in createUserTextRating:", error);
+    throw new Error(error.message);
   }
 };
 
-const createUserErrorDetail = async (req, res) => {
-  const { user_id, text_id, word_positions, vote_weight, content } = req.body;
+const createUserErrorDetail = async (userErrorDetail) => {
+  const { user_id, text_id, word_positions, vote_weight, content } = userErrorDetail;
 
   try {
     const newUserErrorDetail = await UserErrorDetail.create({
@@ -42,13 +40,13 @@ const createUserErrorDetail = async (req, res) => {
       is_test: false,
       test_error_type_id: null,
     });
-
-    res.status(201).json(newUserErrorDetail);
+    return newUserErrorDetail;
   } catch (error) {
-    console.log(error);
-    res.status(500).json({ error: error.message });
+    console.error("Error in createUserErrorDetail:", error);
+    throw new Error(error.message);
   }
 };
+
 
 const getTextWithErrorValidatedNotPlayed = async (req, res) => {
   try {

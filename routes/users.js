@@ -57,13 +57,13 @@ router.put(
 );
 
 // Incrémente proba
-router.put("/:id/catchProbability", userController.incrementCatchProbability);
+// router.put("/:id/catchProbability", userController.incrementCatchProbability);
 
 // Incrémente trust index
 router.put("/:id/trustIndex", userController.incrementTrustIndex);
 
 // Incrémente les 2
-router.put("/:id/updateUserStats", userController.updateUserStats);
+// router.put("/:id/updateUserStats", userController.updateUserStats);
 
 router.put("/:id/resetCatchProbability", userController.resetCatchProbability);
 

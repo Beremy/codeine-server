@@ -23,6 +23,7 @@ const UserCriminalModel = require("./userCriminal");
 const MessageContactModel = require("./messageContact.js");
 const PasswordResetTokenModel = require("./passwordResetToken.js");
 const MonthlyWinnersModel = require("./monthlyWinners.js");
+const TestPlausibilityErrorModel = require("./testPlausibilityError");
 
 const Game = require("./games.js")(sequelize, Sequelize.DataTypes);
 const UserTutorial = require("./userTutorial.js")(
@@ -65,6 +66,7 @@ const UserCriminal = UserCriminalModel(sequelize, Sequelize.DataTypes);
 const MessageContact = MessageContactModel(sequelize, Sequelize.DataTypes);
 const PasswordResetToken = PasswordResetTokenModel(sequelize, Sequelize.DataTypes);
 const MonthlyWinners = MonthlyWinnersModel(sequelize, Sequelize.DataTypes);
+const TestPlausibilityError = TestPlausibilityErrorModel(sequelize, Sequelize.DataTypes);
 
 const models = {
   User: User,
@@ -92,7 +94,8 @@ const models = {
   UserTutorial: UserTutorial,
   MessageContact: MessageContact,
   PasswordResetToken,
-  MonthlyWinners
+  MonthlyWinners,
+  TestPlausibilityError
 };
 
 // *************** Associations User & MonthlyWinners *******************
@@ -110,6 +113,12 @@ PasswordResetToken.belongsTo(models.User, {
 // *************** Associations User & MessageContact *******************
 MessageContact.belongsTo(User, {
   foreignKey: "user_id",
+  targetKey: "id",
+});
+
+// *************** Associations TestPlausibilityError & Text *******************
+models.TestPlausibilityError.belongsTo(models.Text, {
+  foreignKey: "text_id",
   targetKey: "id",
 });
 

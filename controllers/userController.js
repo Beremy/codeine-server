@@ -422,9 +422,6 @@ async function updateUserCoeffMulti(user) {
 }
 
 async function checkAchievements(user) {
-  console.log(
-    "$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$"
-  );
   try {
     const scoreAchievements = [
       { id: "2", score: 100 },
@@ -627,7 +624,7 @@ const incrementTrustIndex = async (req, res) => {
   }
 };
 
-const updateUserStats = async (userId, pointsToAdd, percentageToAdd, trustIndexIncrement, isBonus = false) => {
+const updateUserStats = async (userId, pointsToAdd, percentageToAdd, trustIndexIncrement) => {
   try {
     const user = await User.findOne({ where: { id: userId } });
     if (!user) {
@@ -638,12 +635,22 @@ const updateUserStats = async (userId, pointsToAdd, percentageToAdd, trustIndexI
 
     let coeffTrustIndex = user.trust_index / 80;
     coeffTrustIndex = Math.max(coeffTrustIndex, 0);
-    const additionalPoints = Math.round(pointsToAdd * coeffTrustIndex * user.coeffMulti);
-    user.points += additionalPoints;
+    let additionalPoints = Math.round(pointsToAdd * coeffTrustIndex * user.coeffMulti);
+    
+    // On ajoute les points supplémentaires si tous les skins sont débloqués
+    const newRewardTier = Math.floor((user.points + additionalPoints) / 100);
+    if (newRewardTier > oldRewardTier) {
+      const skinResponse = await getRandomSkin(user.id);
+      if (skinResponse.allSkinsUnlocked) {
+        additionalPoints += 5;
+      }
+    }
 
+    user.points += additionalPoints;
     user.catch_probability = Math.min(100, Math.max(0, user.catch_probability + percentageToAdd));
     user.trust_index = Math.min(100, Math.max(0, user.trust_index + trustIndexIncrement));
 
+    // Gestion des jours consécutifs joués
     const today = new Date();
     const lastPlayedDate = user.lastPlayedDate ? new Date(user.lastPlayedDate) : null;
     const yesterday = new Date();
@@ -658,10 +665,7 @@ const updateUserStats = async (userId, pointsToAdd, percentageToAdd, trustIndexI
     }
 
     user.lastPlayedDate = formatDate(today);
-
     await user.save();
-
-    const newRewardTier = Math.floor(user.points / 100);
 
     let showSkinModal = false;
     let skinData = null;
@@ -670,10 +674,6 @@ const updateUserStats = async (userId, pointsToAdd, percentageToAdd, trustIndexI
       const skinResponse = await getRandomSkin(user.id);
       showSkinModal = true;
       skinData = skinResponse;
-
-      if (skinResponse.allSkinsUnlocked) {
-        await updateUserStats(userId, 5, 0, 0, true); // Provide additional bonus for unlocking all skins
-      }
     }
 
     const newAchievements = await checkAchievements(user);
@@ -691,6 +691,7 @@ const updateUserStats = async (userId, pointsToAdd, percentageToAdd, trustIndexI
     throw new Error('Error updating user stats: ' + error.message);
   }
 };
+
 
 const resetCatchProbability = async (req, res) => {
   const { id } = req.params;
