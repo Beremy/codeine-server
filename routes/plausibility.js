@@ -83,7 +83,6 @@ const areUserErrorsCorrect = (
 // TODO Verif du token user
 router.post("/sendResponse", async (req, res) => {
   const { textId, userErrorDetails, userRateSelected, userId } = req.body;
-
   try {
     let pointsToAdd = 0,
       percentageToAdd = 0,
@@ -283,33 +282,33 @@ router.get("/getErrorDetailTest/:textId", async function (req, res, next) {
 //   }
 // });
 
-// const getTestPlausibilityErrorByTextId = async (textId) => {
-//   try {
-//     const testPlausibilityErrors = await UserErrorDetail.findAll({
-//       where: {
-//         text_id: textId,
-//         is_test: true,
-//       },
-//       attributes: ["id", "text_id", "word_positions", "content"], // spécifiez ici les attributs que vous souhaitez récupérer
-//     });
-//     return testPlausibilityErrors.map((error) => {
-//       return {
-//         id: error.id,
-//         text_id: error.text_id,
-//         word_positions: error.word_positions,
-//         content: error.content,
-//       };
-//     });
-//   } catch (error) {
-//     console.error(
-//       "Error fetching test plausibility errors from UserErrorDetail:",
-//       error
-//     );
-//     throw new Error(
-//       "Error fetching test plausibility errors from UserErrorDetail"
-//     );
-//   }
-// };
+const getTestPlausibilityErrorByTextId = async (textId) => {
+  try {
+    const testPlausibilityErrors = await UserErrorDetail.findAll({
+      where: {
+        text_id: textId,
+        is_test: true,
+      },
+      attributes: ["id", "text_id", "word_positions", "content"], // spécifiez ici les attributs que vous souhaitez récupérer
+    });
+    return testPlausibilityErrors.map((error) => {
+      return {
+        id: error.id,
+        text_id: error.text_id,
+        word_positions: error.word_positions,
+        content: error.content,
+      };
+    });
+  } catch (error) {
+    console.error(
+      "Error fetching test plausibility errors from UserErrorDetail:",
+      error
+    );
+    throw new Error(
+      "Error fetching test plausibility errors from UserErrorDetail"
+    );
+  }
+};
 
 const getTextDetailsById = async (textId) => {
   try {

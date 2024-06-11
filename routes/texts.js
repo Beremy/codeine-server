@@ -4,58 +4,20 @@ var router = express.Router();
 const textController = require("../controllers/textController");
 const errorController = require("../controllers/errorController");
 
-// const adminAuthMiddleware = (req, res, next) => {
-//   console.log("\n");
-//   console.log("\n");
-//   console.log("************ aminAuthMiddleware ********************");
-//   const authHeader = req.headers["authorization"];
-//   console.log("token");
-//   if (!authHeader) {
-//     return res.status(403).send("Un token est requis pour l'authentification.");
-//   }
-
-//   const parts = authHeader.split(" ");
-//   console.log(parts[0]);
-//   console.log(parts[1]);
-//   if (parts.length === 2 && parts[0].toLowerCase() === "bearer") {
-//     const token = parts[1];
-//     try {
-//       const decoded = jwt.verify(token, process.env.JWT_SECRET);
-//       req.user = decoded;
-//       console.log("decoded");
-//       console.log(decoded);
-//       next();
-//     } catch (error) {
-//       console.error("JWT Verification Error:", error);
-//       return res.status(401).json({ error: "Invalid or expired token" });
-//     }
-//   } else {
-//     return res.status(401).json({ error: "Token mal formaté" });
-//   }
-// };
-
 const adminAuthMiddleware = (req, res, next) => {
-  console.log("\n");
-  console.log("\n");
-  console.log("************ aminAuthMiddleware ********************");
   const authHeader = req.headers["authorization"];
   if (!authHeader) {
     return res.status(403).send("Un token est requis pour l'authentification.");
   }
 
   const parts = authHeader.split(" ");
-  console.log(parts[0]);
-  console.log(parts[1]);
   if (parts.length === 2 && parts[0].toLowerCase() === "bearer") {
     const token = parts[1];
     try {
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
-      console.log("decoded", decoded);
       // Vérification si l'utilisateur est un modérateur
       if (decoded.moderator) {
         req.user = decoded;
-        console.log("decoded");
-        console.log(decoded);
         next();
       } else {
         return res
@@ -70,6 +32,8 @@ const adminAuthMiddleware = (req, res, next) => {
     return res.status(401).json({ error: "Token mal formaté" });
   }
 };
+
+
 router.post("/", adminAuthMiddleware, textController.createText);
 
 router.get("/", adminAuthMiddleware, textController.getAllTexts);
