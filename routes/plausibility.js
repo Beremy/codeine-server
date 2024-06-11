@@ -2,7 +2,10 @@ var express = require("express");
 var router = express.Router();
 const { Text, UserErrorDetail, TestPlausibilityError } = require("../models");
 const { Op } = require("sequelize");
-const { updateUserStats } = require("../controllers/userController");
+const {
+  updateUserStats,
+  getUserById,
+} = require("../controllers/userController");
 const {
   createUserTextRating,
   createUserErrorDetail,
@@ -28,7 +31,7 @@ const checkUserSelectionPlausibility = async (
       Math.abs(userRateSelected - textPlausibility) <= plausibilityMargin;
 
     let isValid = isPlausibilityCorrect;
-    let reasonForRate = textDetails.reason_for_rate || "No reason provided.";
+    let reasonForRate = textDetails.reason_for_rate || "";
 
     const isErrorDetailsCorrect =
       testPlausibilityError.length > 0
@@ -77,6 +80,7 @@ const areUserErrorsCorrect = (
   });
 };
 
+// TODO Verif du token user
 router.post("/sendResponse", async (req, res) => {
   const { textId, userErrorDetails, userRateSelected, userId } = req.body;
 
@@ -95,9 +99,6 @@ router.post("/sendResponse", async (req, res) => {
         .status(404)
         .json({ success: false, message: "Text not found" });
     }
-    console.log("\n");
-    console.log("ùùùùùùùùùùù Send reponse ùùùùùùùùùùùù");
-    console.log(textDetails);
 
     if (textDetails.is_plausibility_test) {
       checkResult = await checkUserSelectionPlausibility(
@@ -169,14 +170,39 @@ router.post("/sendResponse", async (req, res) => {
         }
       }
     } else {
-      // Non-test scenario
-      pointsToAdd = 10 + userErrorDetails.length;
+      // non-test scenario
+      const user = await getUserById(userId);
+      if (!user) {
+        return res
+          .status(404)
+          .json({ success: false, message: "User not found" });
+      }
+
+      const vote_weight =
+        user.status === "medecin" ? user.trust_index + 30 : user.trust_index;
+
+      additionalPoints = userErrorDetails.length;
+      pointsToAdd = 10 + additionalPoints;
       percentageToAdd = 1;
       trustIndexIncrement = 0;
       success = true;
 
-      // TODO Creer la ou les erreurs avec createUserTextRating
-      // TODO Créer la text rating
+      const userTextRating = {
+        user_id: userId,
+        text_id: textId,
+        plausibility: userRateSelected,
+        vote_weight: vote_weight,
+      };
+      await createUserTextRating(userTextRating);
+
+      for (let errorDetail of userErrorDetails) {
+        await createUserErrorDetail({
+          ...errorDetail,
+          user_id: userId,
+          text_id: textId,
+          vote_weight: vote_weight,
+        });
+      }
     }
 
     const updatedStats = await updateUserStats(
@@ -233,57 +259,57 @@ router.get("/getErrorDetailTest/:textId", async function (req, res, next) {
   }
 });
 
-router.get("/correctPlausibility/:textId", async function (req, res, next) {
-  const textId = req.params.textId;
-  try {
-    const text = await Text.findOne({
-      where: {
-        id: textId,
-      },
-    });
+// router.get("/correctPlausibility/:textId", async function (req, res, next) {
+//   const textId = req.params.textId;
+//   try {
+//     const text = await Text.findOne({
+//       where: {
+//         id: textId,
+//       },
+//     });
 
-    res.status(200).json({ test_plausibility: text.test_plausibility });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
+//     res.status(200).json({ test_plausibility: text.test_plausibility });
+//   } catch (error) {
+//     res.status(500).json({ error: error.message });
+//   }
+// });
 
-router.post("/", async function (req, res, next) {
-  try {
-    const newPlausibilityError = await UserErrorDetail.create(req.body);
-    res.status(201).json(newPlausibilityError);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
+// router.post("/", async function (req, res, next) {
+//   try {
+//     const newPlausibilityError = await UserErrorDetail.create(req.body);
+//     res.status(201).json(newPlausibilityError);
+//   } catch (error) {
+//     res.status(500).json({ error: error.message });
+//   }
+// });
 
-const getTestPlausibilityErrorByTextId = async (textId) => {
-  try {
-    const testPlausibilityErrors = await UserErrorDetail.findAll({
-      where: {
-        text_id: textId,
-        is_test: true,
-      },
-      attributes: ["id", "text_id", "word_positions", "content"], // spécifiez ici les attributs que vous souhaitez récupérer
-    });
-    return testPlausibilityErrors.map((error) => {
-      return {
-        id: error.id,
-        text_id: error.text_id,
-        word_positions: error.word_positions,
-        content: error.content,
-      };
-    });
-  } catch (error) {
-    console.error(
-      "Error fetching test plausibility errors from UserErrorDetail:",
-      error
-    );
-    throw new Error(
-      "Error fetching test plausibility errors from UserErrorDetail"
-    );
-  }
-};
+// const getTestPlausibilityErrorByTextId = async (textId) => {
+//   try {
+//     const testPlausibilityErrors = await UserErrorDetail.findAll({
+//       where: {
+//         text_id: textId,
+//         is_test: true,
+//       },
+//       attributes: ["id", "text_id", "word_positions", "content"], // spécifiez ici les attributs que vous souhaitez récupérer
+//     });
+//     return testPlausibilityErrors.map((error) => {
+//       return {
+//         id: error.id,
+//         text_id: error.text_id,
+//         word_positions: error.word_positions,
+//         content: error.content,
+//       };
+//     });
+//   } catch (error) {
+//     console.error(
+//       "Error fetching test plausibility errors from UserErrorDetail:",
+//       error
+//     );
+//     throw new Error(
+//       "Error fetching test plausibility errors from UserErrorDetail"
+//     );
+//   }
+// };
 
 const getTextDetailsById = async (textId) => {
   try {

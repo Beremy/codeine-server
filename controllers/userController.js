@@ -108,6 +108,7 @@ const signup = async (req, res) => {
     const newUserDetails = {
       ...req.body,
       email: email,
+      moderator: false,
     };
 
     const user = await createUser(newUserDetails);
@@ -152,23 +153,24 @@ const signin = async (req, res) => {
       return res.status(404).json({ error: "User not found" });
     }
 
-    const isPasswordValid = await bcrypt.compare(
-      req.body.password,
-      user.password
-    );
+    const isPasswordValid = await bcrypt.compare(req.body.password, user.password);
     if (!isPasswordValid) {
       return res.status(401).json({ error: "Invalid password" });
     }
 
-    const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, {
-      expiresIn: "24h",
-    });
+    const token = jwt.sign(
+      { id: user.id, moderator: user.moderator },
+      process.env.JWT_SECRET,
+      { expiresIn: "24h" }
+    );
 
     const userInfo = user.get({ plain: true });
     delete userInfo.password;
-    res
-      .status(200)
-      .json({ message: "User signed in successfully", token, user: userInfo });
+    res.status(200).json({
+      message: "User signed in successfully",
+      token,
+      user: userInfo
+    });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -388,22 +390,15 @@ const getTopMonthlyWinners = async (req, res) => {
   }
 };
 
-const getUserById = async (req, res) => {
+const getUserById = async (userId) => {
   try {
-    const user = await User.findByPk(req.params.id, {
+    const user = await User.findByPk(userId, {
       attributes: { exclude: ["password"] },
     });
-    if (!user) {
-      return res.status(404).json({ error: "User not found" });
-    }
-
-    user.dataValues.created_at = moment(user.created_at)
-      .locale("fr")
-      .format("DD MMMM YYYY");
-
-    res.status(200).json(user);
+    return user;
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error("Failed to fetch user:", error);
+    throw new Error("Failed to fetch user");
   }
 };
 

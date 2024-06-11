@@ -84,6 +84,7 @@ async function checkCriminalAchievements(user, caughtCriminalsCount) {
   }
 }
 
+// TODO Verif du token user
 router.post("/catchCriminal", async function (req, res) {
   const { userId } = req.body;
 

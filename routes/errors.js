@@ -8,6 +8,7 @@ const {
 const { updateUserStats } = require("../controllers/userController");
 const { sequelize } = require("../service/db.js");
 
+// TODO Verif du token user
 router.post("/sendResponse", async (req, res) => {
   const { userErrorDetailId, selectedErrorType, userId } = req.body;
 

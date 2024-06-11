@@ -29,6 +29,7 @@ const generateResetToken = () => {
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+// TODO Verif du token user
 router.post("/requestReset", async (req, res) => {
   try {
     const { email } = req.body;
@@ -92,6 +93,7 @@ router.post("/requestReset", async (req, res) => {
   }
 });
 
+// TODO Verif du token user
 router.post("/resetPassword", async (req, res) => {
   const token = req.body.token;
   const newPassword = req.body.newPassword;
@@ -139,6 +141,7 @@ router.post("/resetPassword", async (req, res) => {
   }
 });
 
+// TODO Verif du token user
 router.post("/changePassword", async (req, res) => {
   const userId = req.body.id;
   const newPassword = req.body.newPassword;
@@ -264,20 +267,20 @@ async function sendMail(toEmail, subject, textContent, htmlContent) {
   }
 }
 
-router.post("/sendMail", async function (req, res, next) {
-  const mail = req.body.mail;
+// router.post("/sendMail", async function (req, res, next) {
+//   const mail = req.body.mail;
 
-  sendMail(
-    "bertrand.remy@inria.fr",
-    "Réinitialisation de mot de passe",
-    "Votre texte ici",
-    "<h3>Votre HTML ici</h3>"
-  )
-    .then(() => res.status(200).json({ message: "Email envoyé!" }))
-    .catch((err) => {
-      console.error("Erreur lors de l'envoi de l'email:", err);
-      res.status(500).json({ error: "Erreur lors de l'envoi de l'email" });
-    });
-});
+//   sendMail(
+//     "bertrand.remy@inria.fr",
+//     "Réinitialisation de mot de passe",
+//     "Votre texte ici",
+//     "<h3>Votre HTML ici</h3>"
+//   )
+//     .then(() => res.status(200).json({ message: "Email envoyé!" }))
+//     .catch((err) => {
+//       console.error("Erreur lors de l'envoi de l'email:", err);
+//       res.status(500).json({ error: "Erreur lors de l'envoi de l'email" });
+//     });
+// });
 
 module.exports = router;

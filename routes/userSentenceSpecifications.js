@@ -26,8 +26,8 @@ router.get("/getNumberSpecifications", async function (req, res) {
   }
 });
 
+// TODO Verif du token user
 router.post("/sendResponse", async (req, res) => {
-
   const { textId, userSentenceSpecifications, userId } = req.body;
 
   try {
@@ -210,21 +210,5 @@ const checkUserSelection = async (
     );
   }
 };
-
-// const getTestSpecificationsByTextId = async (textId, type) => {
-//   try {
-//     const testSpecifications = await TestSpecification.findAll({
-//       where: {
-//         text_id: textId,
-//         type: type,
-//       },
-//     });
-//     return testSpecifications;
-//   } catch (error) {
-//     throw new Error(
-//       "Une erreur est survenue lors de la récupération des spécifications de test."
-//     );
-//   }
-// };
 
 module.exports = router;

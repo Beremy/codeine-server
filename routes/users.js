@@ -3,6 +3,7 @@ var router = express.Router();
 const { User } = require("../models"); // Import your User model
 const authMiddleware = require("../middleware/authMiddleware");
 const userController = require("../controllers/userController");
+const moment = require("moment");
 
 router.get("/protected-route", authMiddleware, (req, res) => {
   // Route protégée par l'authentification
@@ -22,8 +23,14 @@ router.get("/getUserRanking/:id", userController.getUserRanking);
 
 router.get("/getCoeffMultiByUserId/:id", userController.getCoeffMultiByUserId);
 
-router.get("/getMessageReadByUserId/:id", userController.getMessageReadByUserId);
-router.put("/updateMessageReadByUserId/:id", userController.updateMessageReadByUserId);
+router.get(
+  "/getMessageReadByUserId/:id",
+  userController.getMessageReadByUserId
+);
+router.put(
+  "/updateMessageReadByUserId/:id",
+  userController.updateMessageReadByUserId
+);
 
 router.get("/getUsersOrderedByPoints", userController.getUsersOrderedByPoints);
 
@@ -47,40 +54,45 @@ router.get("/getTopMonthlyWinners", userController.getTopMonthlyWinners);
 // Update email
 router.put("/:id/updateUserEmail", userController.updateUserEmail);
 
-// Incrémente points
-router.put("/:id/points", userController.incrementUserPoints);
-
 // Incrémente tutoriel principal
 router.put(
   "/:id/incrementTutorialProgress",
   userController.incrementTutorialProgress
 );
 
-// Incrémente proba
-// router.put("/:id/catchProbability", userController.incrementCatchProbability);
-
-// Incrémente trust index
-router.put("/:id/trustIndex", userController.incrementTrustIndex);
-
-// Incrémente les 2
-// router.put("/:id/updateUserStats", userController.updateUserStats);
-
 router.put("/:id/resetCatchProbability", userController.resetCatchProbability);
 
 // GET user by ID
-router.get("/:id", userController.getUserById);
-
-// Nombre de criminels arrêtés
-
-router.post("/", async function (req, res, next) {
+router.get("/:id", async function (req, res, next) {
   try {
-    const newUser = await User.create(req.body);
-    res.json(newUser);
-  } catch (err) {
-    next(err);
+    const user = await User.findByPk(req.params.id, {
+      attributes: { exclude: ["password"] },
+    });
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    user.dataValues.created_at = moment(user.created_at)
+      .locale("fr")
+      .format("DD MMMM YYYY");
+
+    res.status(200).json(user);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
   }
 });
 
+// Peut être à supprimer
+// router.post("/", async function (req, res, next) {
+//   try {
+//     const newUser = await User.create(req.body);
+//     res.json(newUser);
+//   } catch (err) {
+//     next(err);
+//   }
+// });
+
+// A sécuriser
 router.put("/:id", async function (req, res, next) {
   const userId = req.params.id;
   try {
@@ -95,6 +107,7 @@ router.put("/:id", async function (req, res, next) {
   }
 });
 
+// A sécuriser
 router.delete("/:id", async function (req, res, next) {
   const userId = req.params.id;
   try {
