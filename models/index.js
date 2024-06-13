@@ -24,6 +24,8 @@ const MessageContactModel = require("./messageContact.js");
 const PasswordResetTokenModel = require("./passwordResetToken.js");
 const MonthlyWinnersModel = require("./monthlyWinners.js");
 const TestPlausibilityErrorModel = require("./testPlausibilityError");
+const GroupTextRatingModel = require("./groupTextRating");
+const UserCommentsGroupTextRatingModel = require("./UserCommentsGroupTextRating");
 
 const Game = require("./games.js")(sequelize, Sequelize.DataTypes);
 const UserTutorial = require("./userTutorial.js")(
@@ -57,16 +59,24 @@ const UserTextRating = UserTextRatingModel(sequelize, Sequelize.DataTypes);
 const UserPlayedErrors = UserPlayedErrorsModel(sequelize, Sequelize.DataTypes);
 const ErrorType = ErrorTypeModel(sequelize, Sequelize.DataTypes);
 const UserErrorDetail = UserErrorDetailModel(sequelize, Sequelize.DataTypes);
-const UserTypingErrors = UserTypingErrorsModel(
-  sequelize,
-  Sequelize.DataTypes
-);
+const UserTypingErrors = UserTypingErrorsModel(sequelize, Sequelize.DataTypes);
 const Criminal = CriminalModel(sequelize, Sequelize.DataTypes);
 const UserCriminal = UserCriminalModel(sequelize, Sequelize.DataTypes);
 const MessageContact = MessageContactModel(sequelize, Sequelize.DataTypes);
-const PasswordResetToken = PasswordResetTokenModel(sequelize, Sequelize.DataTypes);
+const PasswordResetToken = PasswordResetTokenModel(
+  sequelize,
+  Sequelize.DataTypes
+);
 const MonthlyWinners = MonthlyWinnersModel(sequelize, Sequelize.DataTypes);
-const TestPlausibilityError = TestPlausibilityErrorModel(sequelize, Sequelize.DataTypes);
+const TestPlausibilityError = TestPlausibilityErrorModel(
+  sequelize,
+  Sequelize.DataTypes
+);
+const GroupTextRating = GroupTextRatingModel(sequelize, Sequelize.DataTypes);
+const UserCommentsGroupTextRating = UserCommentsGroupTextRatingModel(
+  sequelize,
+  Sequelize.DataTypes
+);
 
 const models = {
   User: User,
@@ -95,7 +105,9 @@ const models = {
   MessageContact: MessageContact,
   PasswordResetToken,
   MonthlyWinners,
-  TestPlausibilityError
+  TestPlausibilityError,
+  GroupTextRating,
+  UserCommentsGroupTextRating,
 };
 
 // *************** Associations User & MonthlyWinners *******************
@@ -212,31 +224,31 @@ UserTypingErrors.belongsTo(UserErrorDetail, {
 
 // *************** Associations UserPlayedErrors *******************
 UserErrorDetail.hasMany(UserPlayedErrors, {
-  foreignKey: 'user_error_details_id',
-  sourceKey: 'id'
+  foreignKey: "user_error_details_id",
+  sourceKey: "id",
 });
-UserPlayedErrors.belongsTo(UserErrorDetail, { 
-  foreignKey: 'user_error_details_id',
-  targetKey: 'id'
+UserPlayedErrors.belongsTo(UserErrorDetail, {
+  foreignKey: "user_error_details_id",
+  targetKey: "id",
 });
 // *************** Associations UserErrorDetail *******************
 UserErrorDetail.belongsTo(Text, {
-  foreignKey: 'text_id',
-  targetKey: 'id'
+  foreignKey: "text_id",
+  targetKey: "id",
 });
 
 Text.hasMany(UserErrorDetail, {
-  foreignKey: 'text_id',
-  sourceKey: 'id'
+  foreignKey: "text_id",
+  sourceKey: "id",
 });
 UserErrorDetail.belongsTo(ErrorType, {
-  foreignKey: 'test_error_type_id',
-  targetKey: 'id'
+  foreignKey: "test_error_type_id",
+  targetKey: "id",
 });
 
 ErrorType.hasMany(UserErrorDetail, {
-  foreignKey: 'test_error_type_id',
-  sourceKey: 'id'
+  foreignKey: "test_error_type_id",
+  sourceKey: "id",
 });
 
 // *************** Associations UserTextRating *******************
@@ -258,6 +270,30 @@ UserTextRating.belongsTo(Text, {
   targetKey: "id",
 });
 
+UserTextRating.belongsTo(GroupTextRating, {
+  foreignKey: "group_id",
+});
+
+// *************** Associations UserCommentsGroupTextRating *******************
+User.hasMany(UserCommentsGroupTextRating, { foreignKey: "user_id" });
+
+Text.hasMany(GroupTextRating, { foreignKey: "text_id" });
+
+GroupTextRating.hasMany(UserTextRating, { foreignKey: "group_id" });
+
+GroupTextRating.hasMany(UserCommentsGroupTextRating, {
+  foreignKey: "group_id",
+});
+
+UserCommentsGroupTextRating.belongsTo(User, { foreignKey: "user_id" });
+UserCommentsGroupTextRating.belongsTo(GroupTextRating, {
+  foreignKey: "group_id",
+});
+GroupTextRating.belongsTo(Text, {
+  foreignKey: 'text_id',
+  targetKey: 'id'
+});
+
 // *************** Associations TestSpecification *******************
 Text.hasMany(TestSpecification, {
   foreignKey: "text_id",
@@ -267,7 +303,6 @@ TestSpecification.belongsTo(Text, {
   foreignKey: "text_id",
   targetKey: "id",
 });
-
 
 // *************** Associations User_Game_Texts *******************
 User.hasMany(UserGameText, {

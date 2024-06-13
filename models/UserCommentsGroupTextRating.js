@@ -1,9 +1,9 @@
 const { Model } = require("sequelize");
 
 module.exports = (sequelize, DataTypes) => {
-  class UserTextRating extends Model {}
+  class UserCommentsGroupTextRating extends Model {}
 
-  UserTextRating.init(
+  UserCommentsGroupTextRating.init(
     {
       id: {
         type: DataTypes.INTEGER,
@@ -18,25 +18,6 @@ module.exports = (sequelize, DataTypes) => {
           key: "id",
         },
       },
-      text_id: {
-        type: DataTypes.INTEGER,
-        allowNull: false,
-        references: {
-          model: "texts",
-          key: "id",
-        },
-      },
-      plausibility: {
-        type: DataTypes.DECIMAL,
-        allowNull: false,
-      },
-      sentence_positions: {
-        type: DataTypes.STRING,
-      },
-      vote_weight: {
-        type: DataTypes.INTEGER,
-        allowNull: false,
-      },
       group_id: {
         type: DataTypes.INTEGER,
         allowNull: false,
@@ -45,15 +26,29 @@ module.exports = (sequelize, DataTypes) => {
           key: "id",
         },
       },
+      comment: {
+        type: DataTypes.STRING,
+        allowNull: false,
+      },
+      upvotes: {
+        type: DataTypes.INTEGER,
+        defaultValue: 0,
+      },
+      downvotes: {
+        type: DataTypes.INTEGER,
+        defaultValue: 0,
+      },
+      created_at: {
+        type: DataTypes.DATE,
+        defaultValue: DataTypes.NOW,
+      },
     },
     {
       sequelize,
-      modelName: "user_text_rating",
-      timestamps: true,
-      createdAt: "created_at",
-      updatedAt: false,
+      modelName: "user_comments_group_text_rating",
+      timestamps: false,
     }
   );
 
-  return UserTextRating;
+  return UserCommentsGroupTextRating;
 };

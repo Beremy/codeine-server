@@ -1,6 +1,13 @@
 var express = require("express");
 var router = express.Router();
-const { Text, UserErrorDetail, TestPlausibilityError } = require("../models");
+const {
+  Text,
+  UserErrorDetail,
+  Sentence,
+  Token,
+  GroupTextRating,
+} = require("../models");
+const { Sequelize } = require("sequelize");
 const { Op } = require("sequelize");
 const {
   updateUserStats,
@@ -82,7 +89,13 @@ const areUserErrorsCorrect = (
 
 // TODO Verif du token user
 router.post("/sendResponse", async (req, res) => {
-  const { textId, userErrorDetails, userRateSelected, userId } = req.body;
+  const {
+    textId,
+    userErrorDetails,
+    userRateSelected,
+    sentencePositions,
+    userId,
+  } = req.body;
   try {
     let pointsToAdd = 0,
       percentageToAdd = 0,
@@ -191,6 +204,7 @@ router.post("/sendResponse", async (req, res) => {
         text_id: textId,
         plausibility: userRateSelected,
         vote_weight: vote_weight,
+        sentence_positions: sentencePositions,
       };
       await createUserTextRating(userTextRating);
 
@@ -258,29 +272,168 @@ router.get("/getErrorDetailTest/:textId", async function (req, res, next) {
   }
 });
 
-// router.get("/correctPlausibility/:textId", async function (req, res, next) {
-//   const textId = req.params.textId;
-//   try {
-//     const text = await Text.findOne({
-//       where: {
-//         id: textId,
-//       },
-//     });
+router.get("/getSmallText", async function (req, res, next) {
+  try {
+    const choice = Math.random() < 0.5; // 50% de chance d'avoir un texte déjà joué
+    const nbToken = 110;
 
-//     res.status(200).json({ test_plausibility: text.test_plausibility });
-//   } catch (error) {
-//     res.status(500).json({ error: error.message });
-//   }
-// });
+    let text, group;
 
-// router.post("/", async function (req, res, next) {
-//   try {
-//     const newPlausibilityError = await UserErrorDetail.create(req.body);
-//     res.status(201).json(newPlausibilityError);
-//   } catch (error) {
-//     res.status(500).json({ error: error.message });
-//   }
-// });
+    if (choice) {
+      // Choix d'un texte déjà joué tiré de GroupTextRating
+      group = await GroupTextRating.findOne({
+        order: Sequelize.literal("RAND()"),
+        include: {
+          model: Text,
+          attributes: ["id"],
+        },
+      });
+
+      if (group && group.text) {
+        text = group.text;
+        let sentences = await Sentence.findAll({
+          where: { text_id: text.id },
+          attributes: ["id", "position"],
+          order: [["position", "ASC"]],
+          include: [{
+            model: Token,
+            attributes: ["id", "content", "position", "is_punctuation"],
+            required: true,
+          }]
+        });
+      
+        let tokens = sentences.flatMap(sentence => sentence.tokens.map(token => ({
+          id: token.id,
+          content: token.content,
+          position: token.position,
+          is_punctuation: token.is_punctuation,
+        })));
+      
+        let result = {
+          id: text.id,
+          sentence_positions: sentences.map(sentence => sentence.position).join(", "),
+          tokens: tokens
+        };
+      
+        res.status(200).json(result);
+      } else {
+        res.status(404).json({ error: "No suitable group text found" });
+      }
+    }
+
+    if (!text) {
+      text = await Text.findOne({
+        attributes: ["id"],
+        order: Sequelize.literal("RAND()"),
+      });
+
+      if (!text) {
+        return res.status(404).json({ error: "No more texts to process" });
+      }
+
+      // Récupérer les phrases du texte sélectionné, triées par leur position
+      let sentences = await Sentence.findAll({
+        where: { text_id: text.id },
+        attributes: ["id", "position"],
+        order: [["position", "ASC"]],
+        include: [
+          {
+            model: Token,
+            attributes: ["id", "content", "position", "is_punctuation"],
+            required: true,
+          },
+        ],
+      });
+
+      if (sentences.length === 0) {
+        return res
+          .status(404)
+          .json({ error: "Text " + text.id + " has no sentences" });
+      }
+
+      // Calculer le nombre total de tokens pour chaque phrase
+      let totalTokensBySentence = sentences.map(
+        (sentence) => sentence.tokens.length
+      );
+      // Calculer le total cumulatif de tokens pour identifier les points de départ possibles
+      let cumulativeTokens = totalTokensBySentence.reduce((acc, curr, i) => {
+        acc.push((acc[i - 1] || 0) + curr);
+        return acc;
+      }, []);
+
+      let selectedSentences = [];
+      let totalTokens = 0;
+
+      if (cumulativeTokens[cumulativeTokens.length - 1] < nbToken) {
+        selectedSentences = [...sentences]; // Utiliser toutes les sentences
+        totalTokens = cumulativeTokens[cumulativeTokens.length - 1]; // Total de tokens du texte
+      } else {
+        // Déterminer le maxStartIndex correctement sans utiliser startIndex dans le calcul
+        let validStartIndexes = cumulativeTokens.findIndex(
+          (cumulative) => cumulative >= nbToken
+        );
+        if (validStartIndexes === -1) {
+          // Si aucun index valide n'est trouvé
+          return res
+            .status(404)
+            .json({ error: "Cannot find a suitable start position" });
+        }
+
+        // Le maxStartIndex est maintenant l'index du dernier élément qui peut servir de point de départ valide
+        let maxStartIndex =
+          validStartIndexes < sentences.length
+            ? validStartIndexes
+            : sentences.length - 1;
+
+        let startIndex = Math.floor(Math.random() * (maxStartIndex + 1));
+        let startFromEnd = Math.random() < 0.5; // 50% chance de commencer par la fin
+
+        if (startFromEnd) {
+          // Sélectionner depuis la fin
+          for (
+            let i = sentences.length - 1;
+            i >= 0 && totalTokens < nbToken;
+            i--
+          ) {
+            selectedSentences.unshift(sentences[i]); // Ajouter au début pour conserver l'ordre
+            totalTokens += sentences[i].tokens.length;
+            if (totalTokens >= nbToken) break;
+          }
+        } else {
+          // Sélectionner depuis le début (votre logique actuelle)
+          for (let i = 0; i < sentences.length && totalTokens < nbToken; i++) {
+            selectedSentences.push(sentences[i]);
+            totalTokens += sentences[i].tokens.length;
+            if (totalTokens >= nbToken) break;
+          }
+        }
+      }
+
+      let groupedTokens = selectedSentences.flatMap((sentence) =>
+        sentence.tokens.map((token) => ({
+          id: token.id,
+          content: token.content,
+          position: token.position,
+          is_punctuation: token.is_punctuation,
+        }))
+      );
+
+      // Construire le résultat final
+      let result = {
+        id: text.id,
+        sentence_positions:
+          selectedSentences.length === sentences.length
+            ? "full"
+            : selectedSentences.map((sentence) => sentence.position).join(", "),
+        tokens: groupedTokens,
+      };
+
+      res.status(200).json(result);
+    }
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
 
 const getTestPlausibilityErrorByTextId = async (textId) => {
   try {
