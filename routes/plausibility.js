@@ -7,6 +7,7 @@ const {
   Token,
   GroupTextRating,
   UserTextRating,
+  UserCommentsGroupTextRating,
 } = require("../models");
 const { Sequelize } = require("sequelize");
 const { sequelize } = require("../service/db.js");
@@ -97,8 +98,8 @@ router.post("/sendResponse", async (req, res) => {
     userRateSelected,
     sentencePositions,
     userId,
+    userComment,
   } = req.body;
-
   let transaction;
   let pointsToAdd = 0;
   let percentageToAdd = 0;
@@ -108,7 +109,7 @@ router.post("/sendResponse", async (req, res) => {
   let averagePlausibility = null;
   let correctPositions = [];
   let correctPlausibility = null;
-
+  let groupId = null;
   try {
     transaction = await sequelize.transaction();
     const textDetails = await getTextDetailsById(textId);
@@ -116,11 +117,17 @@ router.post("/sendResponse", async (req, res) => {
 
     if (!textDetails || !user) {
       await transaction.rollback();
-      return res.status(404).json({ success: false, message: "Text or user not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Text or user not found" });
     }
 
     if (textDetails.is_plausibility_test) {
-      let checkResult = await checkUserSelectionPlausibility(textId, userErrorDetails, userRateSelected);
+      let checkResult = await checkUserSelectionPlausibility(
+        textId,
+        userErrorDetails,
+        userRateSelected
+      );
       const noErrorSpecified = userErrorDetails.length === 0;
       const noErrorInDatabase = checkResult.testPlausibilityError.length === 0;
 
@@ -136,7 +143,7 @@ router.post("/sendResponse", async (req, res) => {
           trustIndexIncrement = -1;
           success = false;
           message = checkResult.reasonForRate;
-          correctPlausibility= checkResult.correctPlausibility;
+          correctPlausibility = checkResult.correctPlausibility;
         }
       } else {
         const correctSpecification = checkResult.testPlausibilityError
@@ -146,27 +153,40 @@ router.post("/sendResponse", async (req, res) => {
           spec.word_positions.split(",").map((pos) => parseInt(pos))
         );
 
-        if (!checkResult.isErrorDetailsCorrect && checkResult.testPlausibilityPassed) {
+        if (
+          !checkResult.isErrorDetailsCorrect &&
+          checkResult.testPlausibilityPassed
+        ) {
           pointsToAdd = 10;
           percentageToAdd = 1;
           trustIndexIncrement = 1;
           success = false;
           message = `Vous avez bien estimé la plausibilité, mais voilà les erreurs qu'il fallait trouver :\n${correctSpecification}`;
-        } else if (!checkResult.isErrorDetailsCorrect && !checkResult.testPlausibilityPassed) {
+        } else if (
+          !checkResult.isErrorDetailsCorrect &&
+          !checkResult.testPlausibilityPassed
+        ) {
           pointsToAdd = 0;
           percentageToAdd = 0;
           trustIndexIncrement = -1;
           success = false;
           message = `${checkResult.reasonForRate}\nLes erreurs à trouver étaient :\n${correctSpecification}`;
-          correctPlausibility= checkResult.correctPlausibility;
-        } else if (checkResult.isErrorDetailsCorrect && !checkResult.testPlausibilityPassed) {
+          correctPlausibility = checkResult.correctPlausibility;
+        } else if (
+          checkResult.isErrorDetailsCorrect &&
+          !checkResult.testPlausibilityPassed
+        ) {
           pointsToAdd = 10 + userErrorDetails.length;
           percentageToAdd = 1;
           trustIndexIncrement = 1;
           success = false;
-          message = "Vous avez bien identifié les zones de doute, mais la plausibilité estimée était incorrecte.";
-          correctPlausibility= checkResult.correctPlausibility;
-        } else if (checkResult.isErrorDetailsCorrect && checkResult.testPlausibilityPassed) {
+          message =
+            "Vous avez bien identifié les zones de doute, mais la plausibilité estimée était incorrecte.";
+          correctPlausibility = checkResult.correctPlausibility;
+        } else if (
+          checkResult.isErrorDetailsCorrect &&
+          checkResult.testPlausibilityPassed
+        ) {
           pointsToAdd = 14 + userErrorDetails.length;
           percentageToAdd = 1;
           trustIndexIncrement = 2;
@@ -174,47 +194,90 @@ router.post("/sendResponse", async (req, res) => {
         }
       }
     } else {
-      const { newUserTextRating, isNewGroup } = await createUserTextRating({
-        user_id: userId,
-        text_id: textId,
-        plausibility: userRateSelected,
-        vote_weight: user.trust_index,
-        sentence_positions: sentencePositions
-      }, transaction);
+      const { newUserTextRating, isNewGroup } = await createUserTextRating(
+        {
+          user_id: userId,
+          text_id: textId,
+          plausibility: userRateSelected,
+          vote_weight: user.trust_index,
+          sentence_positions: sentencePositions,
+        },
+        transaction
+      );
 
+      let existingComments = await UserCommentsGroupTextRating.findOne({
+        where: { group_id: newUserTextRating.group_id },
+        transaction: transaction,
+      });
+
+      if (userComment) {
+        await UserCommentsGroupTextRating.create(
+          {
+            user_id: userId,
+            group_id: newUserTextRating.group_id,
+            comment: userComment,
+            upvotes: 0,
+            downvotes: 0,
+          },
+          { transaction: transaction }
+        );
+      }
       for (let errorDetail of userErrorDetails) {
         await createUserErrorDetail({
           ...errorDetail,
           user_id: userId,
           text_id: textId,
           vote_weight: user.trust_index,
-          content: errorDetail.content
+          content: errorDetail.content,
         });
       }
 
       if (!isNewGroup && newUserTextRating) {
+        if (existingComments) {
+          groupId = newUserTextRating.group_id;
+        }
+
         let allRatingsForGroup = await UserTextRating.findAll({
           where: { group_id: newUserTextRating.group_id },
-          transaction: transaction
+          transaction: transaction,
         });
         if (allRatingsForGroup.length > 1) {
-          const totalWeight = allRatingsForGroup.reduce((acc, rating) => acc + rating.vote_weight, 0);
-          const weightedSum = allRatingsForGroup.reduce((acc, rating) => acc + parseFloat(rating.plausibility) * rating.vote_weight, 0);
-          averagePlausibility = Math.round(totalWeight > 0 ? weightedSum / totalWeight : 0);
+          const totalWeight = allRatingsForGroup.reduce(
+            (acc, rating) => acc + rating.vote_weight,
+            0
+          );
+          const weightedSum = allRatingsForGroup.reduce(
+            (acc, rating) =>
+              acc + parseFloat(rating.plausibility) * rating.vote_weight,
+            0
+          );
+          averagePlausibility = Math.round(
+            totalWeight > 0 ? weightedSum / totalWeight : 0
+          );
           success = Math.abs(averagePlausibility - userRateSelected) <= 13;
-          // TODO Variable don de points 10 et 2, et trust index
-          pointsToAdd = success ? 10 + userErrorDetails.length : 2 + userErrorDetails.length;
+          pointsToAdd = success
+            ? 10 + userErrorDetails.length
+            : 2 + userErrorDetails.length;
           trustIndexIncrement = success ? 1 : -1;
-          message = success ? "Les autres enquêteurs sont d'accord avec vous." : "Les autres enquêteurs ont donné des réponses différentes.";
+          message = success
+            ? "Les autres enquêteurs sont d'accord avec vous."
+            : "Les autres enquêteurs ont donné des réponses différentes.";
         }
       }
     }
 
-    const updatedStats = await updateUserStats(userId, pointsToAdd, percentageToAdd, trustIndexIncrement, transaction);
+    const updatedStats = await updateUserStats(
+      userId,
+      pointsToAdd,
+      percentageToAdd,
+      trustIndexIncrement,
+      transaction
+    );
     await transaction.commit();
 
     return res.status(200).json({
       success: success,
+      groupId: groupId,
       newPoints: updatedStats.newPoints,
       newCatchProbability: updatedStats.newCatchProbability,
       newTrustIndex: updatedStats.newTrustIndex,
@@ -224,17 +287,17 @@ router.post("/sendResponse", async (req, res) => {
       skinData: updatedStats.skinData,
       message: message,
       correctPositions: correctPositions,
-      averagePlausibility: !success ? averagePlausibility : null, 
-      correctPlausibility: correctPlausibility
+      averagePlausibility: !success ? averagePlausibility : null,
+      correctPlausibility: correctPlausibility,
     });
   } catch (error) {
     if (transaction) await transaction.rollback();
     console.error("Error in sendResponse:", error.message);
-    return res.status(500).json({ success: false, message: "Internal server error" });
+    return res
+      .status(500)
+      .json({ success: false, message: "Internal server error" });
   }
 });
-
-
 
 router.get("/getErrorDetailTest/:textId", async function (req, res, next) {
   const textId = req.params.textId;

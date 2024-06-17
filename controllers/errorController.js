@@ -12,7 +12,8 @@ const { sequelize } = require("../service/db.js");
 const Op = Sequelize.Op;
 
 const createUserTextRating = async (userTextRating, transaction) => {
-  const { user_id, text_id, plausibility, vote_weight, sentence_positions } = userTextRating;
+  const { user_id, text_id, plausibility, vote_weight, sentence_positions } =
+    userTextRating;
   try {
     let group = await GroupTextRating.findOne({
       where: { text_id: text_id, sentence_positions: sentence_positions },
@@ -21,29 +22,33 @@ const createUserTextRating = async (userTextRating, transaction) => {
 
     let isNewGroup = false;
     if (!group) {
-      group = await GroupTextRating.create({
-        text_id: text_id,
-        sentence_positions: sentence_positions,
-      }, { transaction: transaction });
+      group = await GroupTextRating.create(
+        {
+          text_id: text_id,
+          sentence_positions: sentence_positions,
+        },
+        { transaction: transaction }
+      );
       isNewGroup = true;
     }
 
-    const newUserTextRating = await UserTextRating.create({
-      user_id: user_id,
-      text_id: text_id,
-      group_id: group.id,
-      plausibility: plausibility,
-      vote_weight: vote_weight,
-      sentence_positions: sentence_positions,
-    }, { transaction: transaction });
-
+    const newUserTextRating = await UserTextRating.create(
+      {
+        user_id: user_id,
+        text_id: text_id,
+        group_id: group.id,
+        plausibility: plausibility,
+        vote_weight: vote_weight,
+        sentence_positions: sentence_positions,
+      },
+      { transaction: transaction }
+    );
     return { newUserTextRating, isNewGroup };
   } catch (error) {
     console.error("Error in createUserTextRating:", error);
-    throw error; // Rethrow the error to be handled by the caller
+    throw error;
   }
 };
-
 
 const createUserErrorDetail = async (userErrorDetail) => {
   const { user_id, text_id, word_positions, vote_weight, content } =
