@@ -6,8 +6,10 @@ const {
   Sentence,
   Token,
   GroupTextRating,
+  UserTextRating,
 } = require("../models");
 const { Sequelize } = require("sequelize");
+const { sequelize } = require("../service/db.js");
 const { Op } = require("sequelize");
 const {
   updateUserStats,
@@ -96,29 +98,29 @@ router.post("/sendResponse", async (req, res) => {
     sentencePositions,
     userId,
   } = req.body;
+
+  let transaction;
+  let pointsToAdd = 0;
+  let percentageToAdd = 0;
+  let trustIndexIncrement = 0;
+  let success = true;
+  let message = "";
+  let averagePlausibility = null;
+  let correctPositions = [];
+  let correctPlausibility = null;
+
   try {
-    let pointsToAdd = 0,
-      percentageToAdd = 0,
-      trustIndexIncrement = 0;
-    let success = false;
-    let message = null;
-    let checkResult = null;
-
+    transaction = await sequelize.transaction();
     const textDetails = await getTextDetailsById(textId);
+    const user = await getUserById(userId);
 
-    if (!textDetails) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Text not found" });
+    if (!textDetails || !user) {
+      await transaction.rollback();
+      return res.status(404).json({ success: false, message: "Text or user not found" });
     }
 
     if (textDetails.is_plausibility_test) {
-      checkResult = await checkUserSelectionPlausibility(
-        textId,
-        userErrorDetails,
-        userRateSelected
-      );
-
+      let checkResult = await checkUserSelectionPlausibility(textId, userErrorDetails, userRateSelected);
       const noErrorSpecified = userErrorDetails.length === 0;
       const noErrorInDatabase = checkResult.testPlausibilityError.length === 0;
 
@@ -134,47 +136,37 @@ router.post("/sendResponse", async (req, res) => {
           trustIndexIncrement = -1;
           success = false;
           message = checkResult.reasonForRate;
+          correctPlausibility= checkResult.correctPlausibility;
         }
       } else {
         const correctSpecification = checkResult.testPlausibilityError
           .map((spec) => `• ${spec.content}`)
           .join("\n");
-        const allPositions = checkResult.testPlausibilityError.flatMap((spec) =>
+        correctPositions = checkResult.testPlausibilityError.flatMap((spec) =>
           spec.word_positions.split(",").map((pos) => parseInt(pos))
         );
 
-        if (
-          !checkResult.isErrorDetailsCorrect &&
-          checkResult.testPlausibilityPassed
-        ) {
+        if (!checkResult.isErrorDetailsCorrect && checkResult.testPlausibilityPassed) {
           pointsToAdd = 10;
           percentageToAdd = 1;
           trustIndexIncrement = 1;
           success = false;
           message = `Vous avez bien estimé la plausibilité, mais voilà les erreurs qu'il fallait trouver :\n${correctSpecification}`;
-        } else if (
-          !checkResult.isErrorDetailsCorrect &&
-          !checkResult.testPlausibilityPassed
-        ) {
+        } else if (!checkResult.isErrorDetailsCorrect && !checkResult.testPlausibilityPassed) {
           pointsToAdd = 0;
           percentageToAdd = 0;
           trustIndexIncrement = -1;
           success = false;
           message = `${checkResult.reasonForRate}\nLes erreurs à trouver étaient :\n${correctSpecification}`;
-        } else if (
-          checkResult.isErrorDetailsCorrect &&
-          !checkResult.testPlausibilityPassed
-        ) {
+          correctPlausibility= checkResult.correctPlausibility;
+        } else if (checkResult.isErrorDetailsCorrect && !checkResult.testPlausibilityPassed) {
           pointsToAdd = 10 + userErrorDetails.length;
           percentageToAdd = 1;
           trustIndexIncrement = 1;
           success = false;
-          message =
-            "Vous avez bien identifié les zones de doute, mais la plausibilité estimée était incorrecte.";
-        } else if (
-          checkResult.isErrorDetailsCorrect &&
-          checkResult.testPlausibilityPassed
-        ) {
+          message = "Vous avez bien identifié les zones de doute, mais la plausibilité estimée était incorrecte.";
+          correctPlausibility= checkResult.correctPlausibility;
+        } else if (checkResult.isErrorDetailsCorrect && checkResult.testPlausibilityPassed) {
           pointsToAdd = 14 + userErrorDetails.length;
           percentageToAdd = 1;
           trustIndexIncrement = 2;
@@ -182,50 +174,46 @@ router.post("/sendResponse", async (req, res) => {
         }
       }
     } else {
-      // non-test scenario
-      const user = await getUserById(userId);
-      if (!user) {
-        return res
-          .status(404)
-          .json({ success: false, message: "User not found" });
-      }
-
-      const vote_weight =
-        user.status === "medecin" ? user.trust_index + 30 : user.trust_index;
-
-      additionalPoints = userErrorDetails.length;
-      pointsToAdd = 10 + additionalPoints;
-      percentageToAdd = 1;
-      trustIndexIncrement = 0;
-      success = true;
-
-      const userTextRating = {
+      const { newUserTextRating, isNewGroup } = await createUserTextRating({
         user_id: userId,
         text_id: textId,
         plausibility: userRateSelected,
-        vote_weight: vote_weight,
-        sentence_positions: sentencePositions,
-      };
-      await createUserTextRating(userTextRating);
+        vote_weight: user.trust_index,
+        sentence_positions: sentencePositions
+      }, transaction);
 
       for (let errorDetail of userErrorDetails) {
         await createUserErrorDetail({
           ...errorDetail,
           user_id: userId,
           text_id: textId,
-          vote_weight: vote_weight,
+          vote_weight: user.trust_index,
+          content: errorDetail.content
         });
+      }
+
+      if (!isNewGroup && newUserTextRating) {
+        let allRatingsForGroup = await UserTextRating.findAll({
+          where: { group_id: newUserTextRating.group_id },
+          transaction: transaction
+        });
+        if (allRatingsForGroup.length > 1) {
+          const totalWeight = allRatingsForGroup.reduce((acc, rating) => acc + rating.vote_weight, 0);
+          const weightedSum = allRatingsForGroup.reduce((acc, rating) => acc + parseFloat(rating.plausibility) * rating.vote_weight, 0);
+          averagePlausibility = Math.round(totalWeight > 0 ? weightedSum / totalWeight : 0);
+          success = Math.abs(averagePlausibility - userRateSelected) <= 13;
+          // TODO Variable don de points 10 et 2, et trust index
+          pointsToAdd = success ? 10 + userErrorDetails.length : 2 + userErrorDetails.length;
+          trustIndexIncrement = success ? 1 : -1;
+          message = success ? "Les autres enquêteurs sont d'accord avec vous." : "Les autres enquêteurs ont donné des réponses différentes.";
+        }
       }
     }
 
-    const updatedStats = await updateUserStats(
-      userId,
-      pointsToAdd,
-      percentageToAdd,
-      trustIndexIncrement
-    );
+    const updatedStats = await updateUserStats(userId, pointsToAdd, percentageToAdd, trustIndexIncrement, transaction);
+    await transaction.commit();
 
-    const response = {
+    return res.status(200).json({
       success: success,
       newPoints: updatedStats.newPoints,
       newCatchProbability: updatedStats.newCatchProbability,
@@ -235,23 +223,18 @@ router.post("/sendResponse", async (req, res) => {
       showSkinModal: updatedStats.showSkinModal,
       skinData: updatedStats.skinData,
       message: message,
-      correctPositions: checkResult
-        ? checkResult.testPlausibilityError.map((spec) =>
-            spec.word_positions.split(",").map((pos) => parseInt(pos))
-          )
-        : [],
-      correctPlausibility:
-        checkResult && !checkResult.testPlausibilityPassed
-          ? checkResult.correctPlausibility
-          : null,
-    };
-
-    res.status(200).json(response);
+      correctPositions: correctPositions,
+      averagePlausibility: !success ? averagePlausibility : null, 
+      correctPlausibility: correctPlausibility
+    });
   } catch (error) {
-    console.error("Error in sendPlausibilityResponse:", error.message);
-    res.status(500).json({ success: false, message: error.message });
+    if (transaction) await transaction.rollback();
+    console.error("Error in sendResponse:", error.message);
+    return res.status(500).json({ success: false, message: "Internal server error" });
   }
 });
+
+
 
 router.get("/getErrorDetailTest/:textId", async function (req, res, next) {
   const textId = req.params.textId;
@@ -295,26 +278,32 @@ router.get("/getSmallText", async function (req, res, next) {
           where: { text_id: text.id },
           attributes: ["id", "position"],
           order: [["position", "ASC"]],
-          include: [{
-            model: Token,
-            attributes: ["id", "content", "position", "is_punctuation"],
-            required: true,
-          }]
+          include: [
+            {
+              model: Token,
+              attributes: ["id", "content", "position", "is_punctuation"],
+              required: true,
+            },
+          ],
         });
-      
-        let tokens = sentences.flatMap(sentence => sentence.tokens.map(token => ({
-          id: token.id,
-          content: token.content,
-          position: token.position,
-          is_punctuation: token.is_punctuation,
-        })));
-      
+
+        let tokens = sentences.flatMap((sentence) =>
+          sentence.tokens.map((token) => ({
+            id: token.id,
+            content: token.content,
+            position: token.position,
+            is_punctuation: token.is_punctuation,
+          }))
+        );
+
         let result = {
           id: text.id,
-          sentence_positions: sentences.map(sentence => sentence.position).join(", "),
-          tokens: tokens
+          sentence_positions: sentences
+            .map((sentence) => sentence.position)
+            .join(", "),
+          tokens: tokens,
         };
-      
+
         res.status(200).json(result);
       } else {
         res.status(404).json({ error: "No suitable group text found" });
@@ -442,7 +431,7 @@ const getTestPlausibilityErrorByTextId = async (textId) => {
         text_id: textId,
         is_test: true,
       },
-      attributes: ["id", "text_id", "word_positions", "content"], // spécifiez ici les attributs que vous souhaitez récupérer
+      attributes: ["id", "text_id", "word_positions", "content"],
     });
     return testPlausibilityErrors.map((error) => {
       return {

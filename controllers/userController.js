@@ -21,7 +21,7 @@ const skinOrder = [
   "lunettes",
 ];
 
-const { getRandomSkin } = require('../controllers/skinsController');
+const { getRandomSkin } = require("../controllers/skinsController");
 
 const createUser = async (user) => {
   const transaction = await sequelize.transaction();
@@ -153,7 +153,10 @@ const signin = async (req, res) => {
       return res.status(404).json({ error: "User not found" });
     }
 
-    const isPasswordValid = await bcrypt.compare(req.body.password, user.password);
+    const isPasswordValid = await bcrypt.compare(
+      req.body.password,
+      user.password
+    );
     if (!isPasswordValid) {
       return res.status(401).json({ error: "Invalid password" });
     }
@@ -169,7 +172,7 @@ const signin = async (req, res) => {
     res.status(200).json({
       message: "User signed in successfully",
       token,
-      user: userInfo
+      user: userInfo,
     });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -402,21 +405,22 @@ const getUserById = async (userId) => {
   }
 };
 
-async function updateUserCoeffMulti(user) {
+async function updateUserCoeffMulti(user, transaction) {
   try {
-    const userAchievements = await user.getAchievements();
+    const userAchievements = await user.getAchievements({ transaction: transaction });
     const achievementCount = userAchievements.length;
 
     const newCoeffMulti = parseFloat((1.0 + achievementCount * 0.1).toFixed(1));
 
-    await user.update({ coeffMulti: newCoeffMulti });
+    await user.update({ coeffMulti: newCoeffMulti }, { transaction: transaction });
   } catch (err) {
     console.error("An error occurred while updating user coeffMulti:", err);
     throw err;
   }
 }
 
-async function checkAchievements(user) {
+
+async function checkAchievements(user, transaction) {
   try {
     const scoreAchievements = [
       { id: "2", score: 100 },
@@ -438,15 +442,19 @@ async function checkAchievements(user) {
     for (const achievement of scoreAchievements) {
       const existingAchievement = await user.getAchievements({
         where: { id: achievement.id },
+        transaction: transaction,
       });
       if (
         existingAchievement.length === 0 &&
         user.points >= achievement.score
       ) {
-        const newAchievement = await Achievement.findByPk(achievement.id);
+        const newAchievement = await Achievement.findByPk(achievement.id, {
+          transaction: transaction,
+        });
         if (newAchievement) {
           await user.addAchievement(newAchievement, {
             through: { notified: false },
+            transaction: transaction,
           });
           newAchievements.push(newAchievement);
         }
@@ -457,15 +465,19 @@ async function checkAchievements(user) {
     for (const achievement of consecutiveDayAchievements) {
       const existingAchievement = await user.getAchievements({
         where: { id: achievement.id },
+        transaction: transaction,
       });
       if (
         existingAchievement.length === 0 &&
         user.consecutiveDaysPlayed >= achievement.days
       ) {
-        const newAchievement = await Achievement.findByPk(achievement.id);
+        const newAchievement = await Achievement.findByPk(achievement.id, {
+          transaction: transaction,
+        });
         if (newAchievement) {
           await user.addAchievement(newAchievement, {
             through: { notified: false },
+            transaction: transaction,
           });
           newAchievements.push(newAchievement);
         }
@@ -476,61 +488,40 @@ async function checkAchievements(user) {
     const allSkinsAchievementId = "28";
     const existingAllSkinsAchievement = await user.getAchievements({
       where: { id: allSkinsAchievementId },
+      transaction: transaction,
     });
     if (existingAllSkinsAchievement.length === 0) {
-      // Filtrer les skins en fonction du genre de l'utilisateur
       const genderSpecificConditions = {
         where: {
           [Op.or]: [{ gender: user.gender }, { gender: "unisexe" }],
         },
+        transaction: transaction,
       };
       const totalSkins = await Skin.count(genderSpecificConditions);
-
       const userSkins = await user.getUser_skins({
         distinct: true,
         col: "skin_id",
+        transaction: transaction,
       });
 
       if (userSkins.length >= totalSkins) {
         const allSkinsAchievement = await Achievement.findByPk(
-          allSkinsAchievementId
+          allSkinsAchievementId,
+          { transaction: transaction }
         );
         if (allSkinsAchievement) {
-          const achievementPromise = user
-            .addAchievement(allSkinsAchievement, {
-              through: { notified: false },
-            })
-            .then(() => newAchievements.push(allSkinsAchievement));
-          await achievementPromise;
+          await user.addAchievement(allSkinsAchievement, {
+            through: { notified: false },
+            transaction: transaction,
+          });
+          newAchievements.push(allSkinsAchievement);
         }
       }
     }
 
-    // Haut fait pour jouer entre minuit et 4h
-    const lateNightAchievementId = "24";
-    const existingLateNightAchievement = await user.getAchievements({
-      where: { id: lateNightAchievementId },
-    });
-    const currentHour = new Date().getHours();
-
-    if (
-      existingLateNightAchievement.length === 0 &&
-      currentHour >= 0 &&
-      currentHour < 4
-    ) {
-      const lateNightAchievement = await Achievement.findByPk(
-        lateNightAchievementId
-      );
-      if (lateNightAchievement) {
-        await user.addAchievement(lateNightAchievement, {
-          through: { notified: false },
-        });
-        newAchievements.push(lateNightAchievement);
-      }
-    }
-
     if (newAchievements.length > 0) {
-      await updateUserCoeffMulti(user);
+      // Assuming updateUserCoeffMulti also handles transactions
+      await updateUserCoeffMulti(user, transaction);
     }
 
     return newAchievements;
@@ -598,7 +589,6 @@ const incrementCatchProbability = async (req, res) => {
 };
 
 const incrementTrustIndex = async (req, res) => {
-  // Pas utile pour le moment
   const { id } = req.params;
   const { trust_index } = req.body;
   try {
@@ -619,9 +609,24 @@ const incrementTrustIndex = async (req, res) => {
   }
 };
 
-const updateUserStats = async (userId, pointsToAdd, percentageToAdd, trustIndexIncrement) => {
+const updateUserTrustIndex = async (userId, increment) => {
+  const user = await User.findByPk(userId);
+  user.trust_index += increment;
+  await user.save();
+};
+
+const updateUserStats = async (
+  userId,
+  pointsToAdd,
+  percentageToAdd,
+  trustIndexIncrement,
+  transaction
+) => {
   try {
-    const user = await User.findOne({ where: { id: userId } });
+    const user = await User.findOne({
+      where: { id: userId },
+      transaction: transaction,
+    });
     if (!user) {
       throw new Error("User not found");
     }
@@ -630,48 +635,64 @@ const updateUserStats = async (userId, pointsToAdd, percentageToAdd, trustIndexI
 
     let coeffTrustIndex = user.trust_index / 80;
     coeffTrustIndex = Math.max(coeffTrustIndex, 0);
-    let additionalPoints = Math.round(pointsToAdd * coeffTrustIndex * user.coeffMulti);
-    
+    let additionalPoints = Math.round(
+      pointsToAdd * coeffTrustIndex * user.coeffMulti
+    );
+
     // On ajoute les points supplémentaires si tous les skins sont débloqués
     const newRewardTier = Math.floor((user.points + additionalPoints) / 100);
     if (newRewardTier > oldRewardTier) {
-      const skinResponse = await getRandomSkin(user.id);
+      const skinResponse = await getRandomSkin(user.id, transaction);
       if (skinResponse.allSkinsUnlocked) {
         additionalPoints += 5;
       }
     }
 
     user.points += additionalPoints;
-    user.catch_probability = Math.min(100, Math.max(0, user.catch_probability + percentageToAdd));
-    user.trust_index = Math.min(100, Math.max(0, user.trust_index + trustIndexIncrement));
+    user.monthly_points += additionalPoints;
+    user.catch_probability = Math.min(
+      100,
+      Math.max(0, user.catch_probability + percentageToAdd)
+    );
+    user.trust_index = Math.min(
+      100,
+      Math.max(0, user.trust_index + trustIndexIncrement)
+    );
 
     // Gestion des jours consécutifs joués
     const today = new Date();
-    const lastPlayedDate = user.lastPlayedDate ? new Date(user.lastPlayedDate) : null;
+    const lastPlayedDate = user.lastPlayedDate
+      ? new Date(user.lastPlayedDate)
+      : null;
     const yesterday = new Date();
     yesterday.setDate(yesterday.getDate() - 1);
 
     const formatDate = (date) => date.toISOString().slice(0, 10);
 
-    if (lastPlayedDate && formatDate(lastPlayedDate) === formatDate(yesterday)) {
+    if (
+      lastPlayedDate &&
+      formatDate(lastPlayedDate) === formatDate(yesterday)
+    ) {
       user.consecutiveDaysPlayed = (user.consecutiveDaysPlayed || 0) + 1;
-    } else if (!lastPlayedDate || formatDate(lastPlayedDate) !== formatDate(today)) {
+    } else if (
+      !lastPlayedDate ||
+      formatDate(lastPlayedDate) !== formatDate(today)
+    ) {
       user.consecutiveDaysPlayed = 1;
     }
 
     user.lastPlayedDate = formatDate(today);
-    await user.save();
+    await user.save({ transaction: transaction });
 
     let showSkinModal = false;
     let skinData = null;
 
     if (newRewardTier > oldRewardTier) {
-      const skinResponse = await getRandomSkin(user.id);
+      const skinResponse = await getRandomSkin(user.id, transaction);
       showSkinModal = true;
       skinData = skinResponse;
     }
-
-    const newAchievements = await checkAchievements(user);
+    const newAchievements = await checkAchievements(user, transaction);
 
     return {
       newPoints: user.points,
@@ -683,10 +704,10 @@ const updateUserStats = async (userId, pointsToAdd, percentageToAdd, trustIndexI
       skinData,
     };
   } catch (error) {
-    throw new Error('Error updating user stats: ' + error.message);
+    console.log(error.message);
+    throw new Error("Error updating user stats: " + error.message);
   }
 };
-
 
 const resetCatchProbability = async (req, res) => {
   const { id } = req.params;
