@@ -1,11 +1,6 @@
 var express = require("express");
 var router = express.Router();
 const { Achievement, UserAchievement } = require("../models");
-// const authMiddleware = require("../middleware/authMiddleware");
-
-// router.get("/protected-route", authMiddleware, (req, res) => {
-//   // Route protégée par l'authentification
-// });
 
 /* GET achievements listing. */
 router.get("/", async function (req, res, next) {

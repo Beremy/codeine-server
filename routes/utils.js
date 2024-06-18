@@ -2,7 +2,6 @@ var express = require("express");
 var router = express.Router();
 const { MessageMenu, User, PasswordResetToken } = require("../models");
 const authMiddleware = require("../middleware/authMiddleware");
-// const nodemailer = require("nodemailer");
 const Mailjet = require("node-mailjet");
 const crypto = require("crypto");
 const bcrypt = require("bcryptjs");
@@ -18,9 +17,6 @@ const mailjet = Mailjet.apiConnect(
   }
 );
 
-router.get("/protected-route", authMiddleware, (req, res) => {
-  // Route protégée par l'authentification
-});
 
 // **************** Reset password  ****************
 const generateResetToken = () => {

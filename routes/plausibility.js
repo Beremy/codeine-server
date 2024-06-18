@@ -216,8 +216,6 @@ router.post("/sendResponse", async (req, res) => {
             user_id: userId,
             group_id: newUserTextRating.group_id,
             comment: userComment,
-            upvotes: 0,
-            downvotes: 0,
           },
           { transaction: transaction }
         );
@@ -263,6 +261,10 @@ router.post("/sendResponse", async (req, res) => {
             ? "Les autres enquêteurs sont d'accord avec vous."
             : "Les autres enquêteurs ont donné des réponses différentes.";
         }
+      } else {
+        // Nouveau groupe
+        pointsToAdd = 10 + userErrorDetails.length;
+        percentageToAdd = 1;
       }
     }
 

@@ -1,7 +1,6 @@
 var express = require("express");
 var router = express.Router();
 const { MessageContact } = require("../models");
-// const authMiddleware = require("../middleware/authMiddleware");
 
 router.post("/contactMessage", async function (req, res, next) {
   try {

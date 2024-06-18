@@ -6,7 +6,6 @@ const UserGameTextModel = require("./userGameText.js");
 const AchievementModel = require("./achievement.js");
 const SkinModel = require("./skin.js");
 const UserModel = require("./user.js");
-const AdminModel = require("./admin.js");
 const TextModel = require("./text.js");
 const ThemeModel = require("./theme.js");
 const SentenceModel = require("./sentence.js");
@@ -25,7 +24,8 @@ const PasswordResetTokenModel = require("./passwordResetToken.js");
 const MonthlyWinnersModel = require("./monthlyWinners.js");
 const TestPlausibilityErrorModel = require("./testPlausibilityError");
 const GroupTextRatingModel = require("./groupTextRating");
-const UserCommentsGroupTextRatingModel = require("./UserCommentsGroupTextRating");
+const UserCommentsGroupTextRatingModel = require("./userCommentsGroupTextRating");
+const userCommentVotesModel = require("./userCommentVotes");
 
 const Game = require("./games.js")(sequelize, Sequelize.DataTypes);
 const UserTutorial = require("./userTutorial.js")(
@@ -46,7 +46,6 @@ const Token = TokenModel(sequelize, Sequelize.DataTypes);
 const Achievement = AchievementModel(sequelize, Sequelize.DataTypes);
 const Skin = SkinModel(sequelize, Sequelize.DataTypes);
 const User = UserModel(sequelize, Sequelize.DataTypes);
-const Admin = AdminModel(sequelize, Sequelize.DataTypes);
 const Text = TextModel(sequelize, Sequelize.DataTypes);
 const Theme = ThemeModel(sequelize, Sequelize.DataTypes);
 const Sentence = SentenceModel(sequelize, Sequelize.DataTypes);
@@ -77,10 +76,12 @@ const UserCommentsGroupTextRating = UserCommentsGroupTextRatingModel(
   sequelize,
   Sequelize.DataTypes
 );
-
+const UserCommentVotes = userCommentVotesModel(
+  sequelize,
+  Sequelize.DataTypes
+);
 const models = {
   User: User,
-  Admin: Admin,
   Achievement: Achievement,
   UserAchievement: UserAchievement,
   Skin: Skin,
@@ -108,6 +109,7 @@ const models = {
   TestPlausibilityError,
   GroupTextRating,
   UserCommentsGroupTextRating,
+  UserCommentVotes
 };
 
 // *************** Associations User & MonthlyWinners *******************
@@ -293,6 +295,13 @@ GroupTextRating.belongsTo(Text, {
   foreignKey: 'text_id',
   targetKey: 'id'
 });
+
+// *************** Associations UserCommentVotes *******************
+User.hasMany(UserCommentVotes, { foreignKey: "user_id" });
+UserCommentVotes.belongsTo(User, { foreignKey: "user_id" });
+
+UserCommentsGroupTextRating.hasMany(UserCommentVotes, { foreignKey: "comment_id" });
+UserCommentVotes.belongsTo(UserCommentsGroupTextRating, { foreignKey: "comment_id" });
 
 // *************** Associations TestSpecification *******************
 Text.hasMany(TestSpecification, {

@@ -1,7 +1,9 @@
 var express = require("express");
 var router = express.Router();
 const { User } = require("../models"); // Import your User model
-const authMiddleware = require("../middleware/authMiddleware");
+const {
+  authMiddleware,
+} = require("../middleware/authMiddleware");
 const userController = require("../controllers/userController");
 const moment = require("moment");
 
