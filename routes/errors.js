@@ -11,6 +11,7 @@ const { sequelize } = require("../service/db.js");
 // TODO Verif du token user
 router.post("/sendResponse", async (req, res) => {
   const { userErrorDetailId, selectedErrorType, userId } = req.body;
+  const transaction = await sequelize.transaction();
 
   try {
     const userErrorDetail = await UserErrorDetail.findOne({
@@ -18,9 +19,11 @@ router.post("/sendResponse", async (req, res) => {
       include: [
         { model: ErrorType, attributes: ["id", "name"], as: "error_type" },
       ],
+      transaction
     });
 
     if (!userErrorDetail) {
+      await transaction.rollback();
       return res
         .status(404)
         .json({ success: false, message: "Error detail not found" });
@@ -28,8 +31,8 @@ router.post("/sendResponse", async (req, res) => {
 
     let isUserCorrect = false;
     let pointsToAdd = 0,
-      percentageToAdd = 0,
-      trustIndexIncrement = 0;
+        percentageToAdd = 0,
+        trustIndexIncrement = 0;
     let success = false;
     let message = null;
 
@@ -54,7 +57,7 @@ router.post("/sendResponse", async (req, res) => {
       trustIndexIncrement = 0;
       success = true;
 
-      await createUserTypingError(userId, userErrorDetailId, selectedErrorType);
+      await createUserTypingError(userId, userErrorDetailId, selectedErrorType, transaction);
     }
 
     const updatedStats = await updateUserStats(
@@ -64,6 +67,8 @@ router.post("/sendResponse", async (req, res) => {
       trustIndexIncrement,
       transaction
     );
+
+    await transaction.commit();
 
     const response = {
       success: success,
@@ -79,9 +84,12 @@ router.post("/sendResponse", async (req, res) => {
 
     res.status(200).json(response);
   } catch (error) {
+    await transaction.rollback();
+    console.error("Error processing response:", error);
     res.status(500).json({ success: false, message: error.message });
   }
 });
+
 
 const createUserTypingError = async (userId, userErrorDetailId, errorTypeId) => {
   const transaction = await sequelize.transaction();
