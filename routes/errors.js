@@ -61,7 +61,8 @@ router.post("/sendResponse", async (req, res) => {
       userId,
       pointsToAdd,
       percentageToAdd,
-      trustIndexIncrement
+      trustIndexIncrement,
+      transaction
     );
 
     const response = {
