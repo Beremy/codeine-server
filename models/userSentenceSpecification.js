@@ -27,7 +27,8 @@ module.exports = (sequelize, DataTypes) => {
         },
       },
       type: {
-        type: DataTypes.INTEGER,
+        type: DataTypes.ENUM,
+        values: ["hypothesis", "condition", "negation"],
         allowNull: false,
       },
       content: {

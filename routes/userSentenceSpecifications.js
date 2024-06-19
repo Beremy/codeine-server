@@ -6,6 +6,7 @@ const {
   Text,
 } = require("../models");
 const { updateUserStats } = require("../controllers/userController");
+const { sequelize } = require("../service/db.js");
 
 router.get("/", async function (req, res, next) {
   try {
@@ -29,6 +30,7 @@ router.get("/getNumberSpecifications", async function (req, res) {
 // TODO Verif du token user
 router.post("/sendResponse", async (req, res) => {
   const { textId, userSentenceSpecifications, userId } = req.body;
+  const transaction = await sequelize.transaction();
 
   try {
     let pointsToAdd = 0,
@@ -39,9 +41,14 @@ router.post("/sendResponse", async (req, res) => {
     let additionalPoints = 0;
     let checkResult = null;
 
-    const text = await Text.findOne({
-      where: { id: textId },
-    });
+    const text = await Text.findOne({ where: { id: textId } });
+
+    if (!text) {
+      await transaction.rollback();
+      return res
+        .status(404)
+        .json({ success: false, message: "Text not found" });
+    }
 
     if (text.is_negation_specification_test) {
       checkResult = await checkUserSelection(
@@ -62,7 +69,6 @@ router.post("/sendResponse", async (req, res) => {
           checkResult.testSpecifications.length > 0
             ? `Oups, raté! Voilà les négations qu'il fallait trouver :\n${correctSpecification}`
             : "Oh non, il n'y avait rien à trouver ici";
-
         pointsToAdd = 0;
         percentageToAdd = 0;
         trustIndexIncrement = -1;
@@ -80,9 +86,14 @@ router.post("/sendResponse", async (req, res) => {
       trustIndexIncrement = 0;
       success = true;
 
-      // Enregistrement des réponses de l'utilisateur
-      for (let userSentenceSpecification of userSentenceSpecifications) {
-        await createUserSentenceSpecification(userSentenceSpecification);
+      for (let spec of userSentenceSpecifications) {
+        const { id, ...specData } = spec; // Exclude id if it's not required
+        await createUserSentenceSpecification(
+          {
+            ...specData,
+          },
+          transaction
+        );
       }
     }
 
@@ -90,8 +101,11 @@ router.post("/sendResponse", async (req, res) => {
       userId,
       pointsToAdd,
       percentageToAdd,
-      trustIndexIncrement
+      trustIndexIncrement,
+      transaction
     );
+
+    await transaction.commit();
 
     const response = {
       success: success,
@@ -112,6 +126,8 @@ router.post("/sendResponse", async (req, res) => {
 
     res.status(200).json(response);
   } catch (error) {
+    await transaction.rollback();
+    console.error("Error processing response:", error);
     res.status(500).json({ success: false, message: error.message });
   }
 });
@@ -125,14 +141,16 @@ router.post("/sendResponse", async (req, res) => {
 //   }
 // });
 
-const createUserSentenceSpecification = async (data) => {
+const createUserSentenceSpecification = async (data, transaction) => {
   try {
     const newUserSentenceSpecification = await UserSentenceSpecification.create(
-      data
+      data,
+      { transaction }
     );
     return newUserSentenceSpecification;
   } catch (error) {
-    throw new Error(error.message);
+    console.error("Error in createUserSentenceSpecification:", error);
+    throw error; // Propagate the error to be caught by the caller
   }
 };
 
