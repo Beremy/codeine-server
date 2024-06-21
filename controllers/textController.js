@@ -3,6 +3,7 @@ const { exec } = require("child_process");
 const { Sequelize } = require("sequelize");
 const Op = Sequelize.Op;
 
+// TODO faire getSmallText pour mythoTypo et mythoNo
 const getSmallTextWithTokens = async (req, res) => {
   try {
     // A remettre si on ajoute la mécanique de texte déjà joué

@@ -1,11 +1,10 @@
 var express = require("express");
 var router = express.Router();
 const { User } = require("../models"); // Import your User model
-const {
-  authMiddleware,
-} = require("../middleware/authMiddleware");
+const { authMiddleware } = require("../middleware/authMiddleware");
 const userController = require("../controllers/userController");
 const moment = require("moment");
+const { adminAuthMiddleware } = require("../middleware/authMiddleware");
 
 router.get("/protected-route", authMiddleware, (req, res) => {
   // Route protégée par l'authentification
@@ -29,8 +28,10 @@ router.get(
   "/getMessageReadByUserId/:id",
   userController.getMessageReadByUserId
 );
+
 router.put(
   "/updateMessageReadByUserId/:id",
+  adminAuthMiddleware,
   userController.updateMessageReadByUserId
 );
 
@@ -53,7 +54,7 @@ router.get(
 );
 router.get("/getTopMonthlyWinners", userController.getTopMonthlyWinners);
 
-// Update email
+// TODO mettre token
 router.put("/:id/updateUserEmail", userController.updateUserEmail);
 
 // Incrémente tutoriel principal
@@ -64,7 +65,7 @@ router.put(
 
 router.put("/:id/resetCatchProbability", userController.resetCatchProbability);
 
-// GET user by ID
+// TODO mettre token
 router.get("/:id", async function (req, res, next) {
   try {
     const user = await User.findByPk(req.params.id, {

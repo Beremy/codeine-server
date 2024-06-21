@@ -12,6 +12,7 @@ router.get("/", async function (req, res, next) {
   }
 });
 
+// TODO Mettre token user
 router.get("/byUserId/:userId", async function (req, res, next) {
   try {
     const userId = req.params.userId;

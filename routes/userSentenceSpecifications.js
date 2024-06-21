@@ -132,15 +132,6 @@ router.post("/sendResponse", async (req, res) => {
   }
 });
 
-// router.post("/", async function (req, res, next) {
-//   try {
-//     const newUserSentenceSpecification = await UserSentenceSpecification.create(req.body);
-//     res.status(201).json(newUserSentenceSpecification);
-//   } catch (error) {
-//     res.status(500).json({ error: error.message });
-//   }
-// });
-
 const createUserSentenceSpecification = async (data, transaction) => {
   try {
     const newUserSentenceSpecification = await UserSentenceSpecification.create(

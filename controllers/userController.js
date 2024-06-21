@@ -20,7 +20,6 @@ const skinOrder = [
   "chapeau",
   "lunettes",
 ];
-
 const { getRandomSkin } = require("../controllers/skinsController");
 
 const createUser = async (user) => {
@@ -407,18 +406,22 @@ const getUserById = async (userId) => {
 
 async function updateUserCoeffMulti(user, transaction) {
   try {
-    const userAchievements = await user.getAchievements({ transaction: transaction });
+    const userAchievements = await user.getAchievements({
+      transaction: transaction,
+    });
     const achievementCount = userAchievements.length;
 
     const newCoeffMulti = parseFloat((1.0 + achievementCount * 0.1).toFixed(1));
 
-    await user.update({ coeffMulti: newCoeffMulti }, { transaction: transaction });
+    await user.update(
+      { coeffMulti: newCoeffMulti },
+      { transaction: transaction }
+    );
   } catch (err) {
     console.error("An error occurred while updating user coeffMulti:", err);
     throw err;
   }
 }
-
 
 async function checkAchievements(user, transaction) {
   try {
