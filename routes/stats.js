@@ -10,6 +10,9 @@ const { adminAuthMiddleware } = require("../middleware/authMiddleware");
 router.get("/getUserRegistrationsDate", statsController.getUserRegistrationsDate);
 router.get('/getCumulativeUserRegistrations', statsController.getCumulativeUserRegistrations);
 
+// All games
+router.get("/getCumulativeAnnotationsGames", statsController.getCumulativeAnnotationsGames);
+
 // Text rating 
 router.get("/getRatingPlausibilityDate", statsController.getRatingPlausibilityDate);
 router.get('/getCumulativeRatingPlausibility', statsController.getCumulativeRatingPlausibility);

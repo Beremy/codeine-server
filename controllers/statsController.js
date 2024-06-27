@@ -107,6 +107,64 @@ const getCumulativeUserRegistrations = async (req, res) => {
   }
 };
 
+// **************** All games ****************
+async function getCumulativeData(model, modelName, globalEarliest) {
+  const latest = await model.max("created_at") || new Date();
+
+  const results = await model.findAll({
+    attributes: [
+      [sequelize.fn("DATE_FORMAT", sequelize.col("created_at"), "%Y%u"), "week"],
+      [sequelize.fn("COUNT", sequelize.col("id")), "count"],
+    ],
+    group: [sequelize.fn("DATE_FORMAT", sequelize.col("created_at"), "%Y%u")]
+  });
+
+  let weeklyData = generateWeeklySeries(globalEarliest, latest);
+  let cumulativeCount = 0;
+
+  results.forEach((result) => {
+    const weekNumber = result.get("week");
+    const index = weeklyData.findIndex((w) => w.week === weekNumber);
+    if (index !== -1) {
+      weeklyData[index][modelName] = result.get("count");
+      cumulativeCount += result.get("count");
+      weeklyData[index][`cumulative${modelName}`] = cumulativeCount;
+    }
+  });
+
+  for (let i = 0; i < weeklyData.length; i++) {
+    if (i > 0) {
+      weeklyData[i][`cumulative${modelName}`] = weeklyData[i][`cumulative${modelName}`] !== undefined ? weeklyData[i][`cumulative${modelName}`] : weeklyData[i - 1][`cumulative${modelName}`];
+    } else {
+      weeklyData[i][`cumulative${modelName}`] = weeklyData[i][`cumulative${modelName}`] || 0;
+    }
+  }
+  return weeklyData;
+}
+
+
+async function getCumulativeAnnotationsGames(req, res) {
+  try {
+    const globalStartDate = '2024-03-04';
+
+    const textRatings = await getCumulativeData(UserTextRating, 'TextRating', globalStartDate);
+    const typingErrors = await getCumulativeData(UserTypingErrors, 'TypingErrors', globalStartDate);
+    const sentenceSpecifications = await getCumulativeData(UserSentenceSpecification, 'SentenceSpecification', globalStartDate);
+
+    const combinedData = textRatings.map((week, index) => ({
+      date: week.date,
+      cumulativeTextRating: week.cumulativeTextRating || 0,
+      cumulativeTypingErrors: typingErrors[index] ? typingErrors[index].cumulativeTypingErrors : 0,
+      cumulativeSentenceSpecification: sentenceSpecifications[index] ? sentenceSpecifications[index].cumulativeSentenceSpecification : 0,
+    }));
+
+    res.status(200).json(combinedData);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+}
+
+
 // **************** UserTextRating ****************
 const getRatingPlausibilityDate = async (req, res) => {
   try {
@@ -220,7 +278,6 @@ const getUserErrorDetailDate = async (req, res) => {
         weeklyData[index].count = result.get("count");
       }
     });
-    console.log(weeklyData);
 
     res.status(200).json(weeklyData);
   } catch (error) {
@@ -443,6 +500,7 @@ const getCumulativeUserSentenceSpecification = async (req, res) => {
 module.exports = {
   getUserRegistrationsDate,
   getCumulativeUserRegistrations,
+  getCumulativeAnnotationsGames,
   getCumulativeRatingPlausibility,
   getRatingPlausibilityDate,
   getUserErrorDetailDate,
