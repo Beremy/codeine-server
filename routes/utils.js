@@ -1,12 +1,18 @@
 var express = require("express");
 var router = express.Router();
-const { MessageMenu, User, PasswordResetToken } = require("../models");
-const authMiddleware = require("../middleware/authMiddleware");
+const { MessageMenu, User, PasswordResetToken, Text } = require("../models");
 const Mailjet = require("node-mailjet");
 const crypto = require("crypto");
 const bcrypt = require("bcryptjs");
 const { sequelize } = require("../service/db.js");
 const { Op } = require("sequelize");
+const utilsController = require("../controllers/utilsController.js");
+const path = require("path");
+const fs = require("fs");
+
+const {
+  adminAuthMiddleware,
+} = require("../middleware/authMiddleware");
 
 const mailjet = Mailjet.apiConnect(
   process.env.MJ_APIKEY_PUBLIC,
@@ -17,6 +23,8 @@ const mailjet = Mailjet.apiConnect(
   }
 );
 
+// **************** Dump data  ****************
+router.post("/dump/tables", adminAuthMiddleware, utilsController.dumpTables);
 
 // **************** Reset password  ****************
 const generateResetToken = () => {
@@ -216,22 +224,23 @@ router.get("/messageMenu", async function (req, res, next) {
   }
 });
 
-router.put("/messageMenu", async function (req, res, next) {
-  try {
-    const existingMessageMenu = await MessageMenu.findByPk(1);
-    if (existingMessageMenu) {
-      existingMessageMenu.title = req.body.title;
-      existingMessageMenu.message = req.body.message;
-      existingMessageMenu.active = req.body.active;
-      await existingMessageMenu.save();
-      res.json(existingMessageMenu);
-    } else {
-      res.status(404).send("Message not found");
-    }
-  } catch (err) {
-    next(err);
-  }
-});
+// TODO a sécuriser admin
+// router.put("/messageMenu", async function (req, res, next) {
+//   try {
+//     const existingMessageMenu = await MessageMenu.findByPk(1);
+//     if (existingMessageMenu) {
+//       existingMessageMenu.title = req.body.title;
+//       existingMessageMenu.message = req.body.message;
+//       existingMessageMenu.active = req.body.active;
+//       await existingMessageMenu.save();
+//       res.json(existingMessageMenu);
+//     } else {
+//       res.status(404).send("Message not found");
+//     }
+//   } catch (err) {
+//     next(err);
+//   }
+// });
 
 async function sendMail(toEmail, subject, textContent, htmlContent) {
   const request = mailjet.post("send", { version: "v3.1" }).request({
@@ -262,21 +271,5 @@ async function sendMail(toEmail, subject, textContent, htmlContent) {
     throw err;
   }
 }
-
-// router.post("/sendMail", async function (req, res, next) {
-//   const mail = req.body.mail;
-
-//   sendMail(
-//     "bertrand.remy@inria.fr",
-//     "Réinitialisation de mot de passe",
-//     "Votre texte ici",
-//     "<h3>Votre HTML ici</h3>"
-//   )
-//     .then(() => res.status(200).json({ message: "Email envoyé!" }))
-//     .catch((err) => {
-//       console.error("Erreur lors de l'envoi de l'email:", err);
-//       res.status(500).json({ error: "Erreur lors de l'envoi de l'email" });
-//     });
-// });
 
 module.exports = router;

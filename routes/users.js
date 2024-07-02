@@ -57,7 +57,7 @@ router.get("/getTopMonthlyWinners", userController.getTopMonthlyWinners);
 // TODO mettre token
 router.put("/:id/updateUserEmail", userController.updateUserEmail);
 
-// Incrémente tutoriel principal
+// TODO mettre token
 router.put(
   "/:id/incrementTutorialProgress",
   userController.incrementTutorialProgress
@@ -85,30 +85,21 @@ router.get("/:id", async function (req, res, next) {
   }
 });
 
-// Peut être à supprimer
-// router.post("/", async function (req, res, next) {
+
+// TODO a tester sans
+// router.put("/:id", async function (req, res, next) {
+//   const userId = req.params.id;
 //   try {
-//     const newUser = await User.create(req.body);
-//     res.json(newUser);
+//     await User.update(req.body, {
+//       where: {
+//         id: userId,
+//       },
+//     });
+//     res.status(200).send("User updated");
 //   } catch (err) {
 //     next(err);
 //   }
 // });
-
-// A sécuriser
-router.put("/:id", async function (req, res, next) {
-  const userId = req.params.id;
-  try {
-    await User.update(req.body, {
-      where: {
-        id: userId,
-      },
-    });
-    res.status(200).send("User updated");
-  } catch (err) {
-    next(err);
-  }
-});
 
 // A sécuriser
 router.delete("/:id", async function (req, res, next) {
