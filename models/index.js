@@ -21,6 +21,7 @@ const CriminalModel = require("./criminal.js");
 const UserCriminalModel = require("./userCriminal");
 const MessageContactModel = require("./messageContact.js");
 const PasswordResetTokenModel = require("./passwordResetToken.js");
+const RefreshTokenModel = require("./refreshToken.js");
 const MonthlyWinnersModel = require("./monthlyWinners.js");
 const TestPlausibilityErrorModel = require("./testPlausibilityError");
 const GroupTextRatingModel = require("./groupTextRating");
@@ -66,6 +67,10 @@ const PasswordResetToken = PasswordResetTokenModel(
   sequelize,
   Sequelize.DataTypes
 );
+const RefreshToken = RefreshTokenModel(
+  sequelize,
+  Sequelize.DataTypes
+);
 const MonthlyWinners = MonthlyWinnersModel(sequelize, Sequelize.DataTypes);
 const TestPlausibilityError = TestPlausibilityErrorModel(
   sequelize,
@@ -105,6 +110,7 @@ const models = {
   UserTutorial: UserTutorial,
   MessageContact: MessageContact,
   PasswordResetToken,
+  RefreshToken,
   MonthlyWinners,
   TestPlausibilityError,
   GroupTextRating,
@@ -120,6 +126,12 @@ MonthlyWinners.belongsTo(User, {
 
 // *************** Associations PasswordResetToken *******************
 PasswordResetToken.belongsTo(models.User, {
+  foreignKey: "userId",
+  targetKey: "id",
+});
+
+// *************** Associations RefreshToken *******************
+RefreshToken.belongsTo(models.User, {
   foreignKey: "userId",
   targetKey: "id",
 });

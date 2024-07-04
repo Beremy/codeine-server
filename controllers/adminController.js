@@ -20,7 +20,7 @@ const signup = async (req, res) => {
   try {
     const admin = await createAdmin(req.body);
     const token = jwt.sign({ id: admin.id }, process.env.JWT_SECRET, {
-      expiresIn: "24h",
+      expiresIn: "30d",
     });
     const adminInfo = admin.get({ plain: true });
     delete adminInfo.password;

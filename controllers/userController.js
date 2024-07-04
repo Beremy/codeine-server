@@ -6,6 +6,7 @@ const {
   UserSkin,
   MonthlyWinners,
   Skin,
+  RefreshToken,
 } = require("../models");
 const { QueryTypes } = require("sequelize");
 const { sequelize } = require("../service/db.js");
@@ -111,9 +112,9 @@ const signup = async (req, res) => {
     };
 
     const user = await createUser(newUserDetails);
-    const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, {
-      expiresIn: "24h",
-    });
+    const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, 
+      {expiresIn: "30d"}
+      );
     const userInfo = user.get({ plain: true });
     delete userInfo.password;
     res
@@ -159,11 +160,24 @@ const signin = async (req, res) => {
     if (!isPasswordValid) {
       return res.status(401).json({ error: "Invalid password" });
     }
+    // TODO Refresh token a revoir
+    // const accessToken = jwt.sign({ id: user.id, role: user.role }, process.env.JWT_SECRET, {
+    //   expiresIn: '24h'
+    // });
+
+    // const refreshToken = jwt.sign({ id: user.id, role: user.role }, process.env.JWT_REFRESH_SECRET, {
+    //   expiresIn: '7d'
+    // });
+    // await RefreshToken.create({
+    //   user_id: user.id,
+    //   token: refreshToken,
+    //   expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 days from now
+    // });
 
     const token = jwt.sign(
       { id: user.id, moderator: user.moderator },
-      process.env.JWT_SECRET,
-      { expiresIn: "24h" }
+      process.env.JWT_SECRET
+      // { expiresIn: "24h" }
     );
 
     const userInfo = user.get({ plain: true });
@@ -171,9 +185,12 @@ const signin = async (req, res) => {
     res.status(200).json({
       message: "User signed in successfully",
       token,
+      // accessToken,
+      // refreshToken,
       user: userInfo,
     });
   } catch (error) {
+    console.error("An error occurred while updating user coeffMulti:", error);
     res.status(500).json({ error: error.message });
   }
 };

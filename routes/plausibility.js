@@ -92,6 +92,8 @@ const areUserErrorsCorrect = (
 
 // TODO Verif du token user
 router.post("/sendResponse", async (req, res) => {
+
+// TODO il se passe des trucs pas cool avec la transaction je crois. Des fois elle ne se ferme aps
   const {
     textId,
     userErrorDetails,
@@ -115,11 +117,11 @@ router.post("/sendResponse", async (req, res) => {
     const textDetails = await getTextDetailsById(textId);
     const user = await getUserById(userId);
 
-    if (!textDetails || !user) {
+    if (!textDetails) {
       await transaction.rollback();
       return res
         .status(404)
-        .json({ success: false, message: "Text or user not found" });
+        .json({ success: false, message: "Text not found" });
     }
 
     if (textDetails.is_plausibility_test) {
@@ -268,30 +270,44 @@ router.post("/sendResponse", async (req, res) => {
       }
     }
 
-    const updatedStats = await updateUserStats(
-      userId,
-      pointsToAdd,
-      percentageToAdd,
-      trustIndexIncrement,
-      transaction
-    );
-    await transaction.commit();
 
-    return res.status(200).json({
-      success: success,
-      groupId: groupId,
-      newPoints: updatedStats.newPoints,
-      newCatchProbability: updatedStats.newCatchProbability,
-      newTrustIndex: updatedStats.newTrustIndex,
-      newCoeffMulti: updatedStats.newCoeffMulti,
-      newAchievements: updatedStats.newAchievements,
-      showSkinModal: updatedStats.showSkinModal,
-      skinData: updatedStats.skinData,
-      message: message,
-      correctPositions: correctPositions,
-      averagePlausibility: !success ? averagePlausibility : null,
-      correctPlausibility: correctPlausibility,
-    });
+    if (userId > 0) {
+      console.log("cas user connecté");
+      const updatedStats = await updateUserStats(
+        userId,
+        pointsToAdd,
+        percentageToAdd,
+        trustIndexIncrement,
+        transaction
+      );
+      await transaction.commit();
+
+      return res.status(200).json({
+        success: success,
+        groupId: groupId,
+        newPoints: updatedStats.newPoints,
+        newCatchProbability: updatedStats.newCatchProbability,
+        newTrustIndex: updatedStats.newTrustIndex,
+        newCoeffMulti: updatedStats.newCoeffMulti,
+        newAchievements: updatedStats.newAchievements,
+        showSkinModal: updatedStats.showSkinModal,
+        skinData: updatedStats.skinData,
+        message: message,
+        correctPositions: correctPositions,
+        averagePlausibility: !success ? averagePlausibility : null,
+        correctPlausibility: correctPlausibility,
+      });
+    } else {
+      console.log("cas user pas connecté");
+      await transaction.commit();
+
+      return res.status(200).json({
+        success: success,
+        message: message,
+        correctPositions: correctPositions,
+        correctPlausibility: correctPlausibility,
+      });
+    }
   } catch (error) {
     if (transaction) await transaction.rollback();
     console.error("Error in sendResponse:", error.message);
@@ -310,7 +326,7 @@ router.get("/getErrorDetailTest/:textId", async function (req, res, next) {
         text_id: textId,
         is_test: true,
         test_error_type_id: {
-          [Op.ne]: 10, // Enlever les erreurs qui sont typées "non erreur"
+          [Op.ne]: 10, 
         },
       },
     });
