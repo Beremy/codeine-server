@@ -31,7 +31,6 @@ router.get(
 
 router.put(
   "/updateMessageReadByUserId/:id",
-  adminAuthMiddleware,
   userController.updateMessageReadByUserId
 );
 
@@ -48,6 +47,10 @@ router.get(
   "/getUsersOrderedByPointsInMonthly",
   userController.getUsersOrderedByPointsInMonthly
 );
+
+// Décrémente proba
+router.put("/:id/catchProbability", userController.incrementCatchProbability);
+
 router.get(
   "/getUserRankingRangeInMonthly/:id",
   userController.getUserRankingRangeInMonthly
@@ -84,7 +87,6 @@ router.get("/:id", async function (req, res, next) {
     res.status(500).json({ error: error.message });
   }
 });
-
 
 // TODO a tester sans
 // router.put("/:id", async function (req, res, next) {

@@ -112,9 +112,9 @@ const signup = async (req, res) => {
     };
 
     const user = await createUser(newUserDetails);
-    const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, 
-      {expiresIn: "30d"}
-      );
+    const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, {
+      expiresIn: "30d",
+    });
     const userInfo = user.get({ plain: true });
     delete userInfo.password;
     res
@@ -587,7 +587,6 @@ const incrementUserPoints = async (req, res) => {
 
 const incrementCatchProbability = async (req, res) => {
   const { id } = req.params;
-  const { catch_probability } = req.body;
   try {
     const user = await User.findOne({ where: { id } });
     if (!user) {
@@ -596,7 +595,7 @@ const incrementCatchProbability = async (req, res) => {
 
     user.catch_probability = Math.min(
       100,
-      Math.max(0, user.catch_probability + catch_probability)
+      Math.max(0, user.catch_probability - 15)
     );
     await user.save();
 
@@ -922,4 +921,5 @@ module.exports = {
   getTopMonthlyWinners,
   incrementTutorialProgress,
   getUserDetailsById,
+  incrementCatchProbability
 };
