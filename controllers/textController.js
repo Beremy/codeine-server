@@ -475,40 +475,6 @@ const getTextWithTokensById = async (req, res) => {
   }
 };
 
-const getTextTestPlausibility = async (req, res) => {
-  try {
-    // trouver un texte qui a le champ is_plausibility_test à true
-    const text = await Text.findOne({
-      where: {
-        is_plausibility_test: true,
-      },
-      attributes: [
-        "id",
-        // "num",
-        // "origin",
-        // "is_plausibility_test",
-        // "test_plausibility",
-      ],
-      order: Sequelize.literal("RAND()"),
-      include: [
-        {
-          model: Token,
-          attributes: ["id", "content", "position", "is_punctuation"],
-        },
-      ],
-    });
-
-    if (!text) {
-      return res.status(404).json({ error: "No more texts to process" });
-    }
-    text.tokens.sort((a, b) => a.position - b.position);
-
-    res.status(200).json(text);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-};
-
 const getTextTestNegation = async (req, res) => {
   try {
     // trouver un texte qui a le champ is_negation_specification à true
@@ -554,7 +520,7 @@ module.exports = {
   getTextWithTokensNotPlayed,
   getSmallTextWithTokens,
   getTextWithTokensById,
-  getTextTestPlausibility,
+  // getTextTestPlausibility,
   getTextTestNegation,
   getTextWithTokensByGameType,
 };

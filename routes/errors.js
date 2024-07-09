@@ -115,9 +115,9 @@ const createUserTypingError = async (userId, userErrorDetailId, errorTypeId) => 
       }
 
       await userErrorDetail.update({ vote_weight: newVoteWeight }, { transaction });
-      console.log("UserErrorDetail vote_weight updated");
+      console.error("UserErrorDetail vote_weight updated");
     } else {
-      console.log("UserErrorDetail not found");
+      console.error("UserErrorDetail not found");
     }
 
     await transaction.commit();

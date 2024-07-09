@@ -723,7 +723,7 @@ const updateUserStats = async (
       skinData,
     };
   } catch (error) {
-    console.log(error.message);
+    console.error(error.message);
     throw new Error("Error updating user stats: " + error.message);
   }
 };

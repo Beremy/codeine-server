@@ -3,6 +3,7 @@ var express = require("express");
 var router = express.Router();
 const textController = require("../controllers/textController");
 const errorController = require("../controllers/errorController");
+const plausibilityController = require("../controllers/plausibilityController");
 
 const {
   adminAuthMiddleware,
@@ -12,7 +13,7 @@ router.post("/", adminAuthMiddleware, textController.createText);
 
 router.get("/", adminAuthMiddleware, textController.getAllTexts);
 
-router.get("/getTextTestPlausibility", textController.getTextTestPlausibility);
+router.get("/getTextTestPlausibility", plausibilityController.getTextTestPlausibility);
 router.get("/getTextTestNegation", textController.getTextTestNegation);
 router.get(
   "/getTextWithTokensByGameType/:gameType",

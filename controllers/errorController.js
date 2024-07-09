@@ -122,7 +122,7 @@ const getTextWithErrorValidatedNotPlayed = async (req, res) => {
       tokens: userErrorDetail.text.tokens,
     });
   } catch (error) {
-    console.log(error);
+    console.error(error);
     res.status(500).json({ error: error.message });
   }
 };
@@ -165,7 +165,7 @@ const getTextWithErrorValidated = async (req, res) => {
       tokens: userErrorDetail.text.tokens,
     });
   } catch (error) {
-    console.log(error);
+    console.error(error);
     res.status(500).json({ error: error.message });
   }
 };
@@ -209,7 +209,7 @@ const getTextWithErrorValidatedByErrorId = async (req, res) => {
       tokens: userErrorDetail.text.tokens,
     });
   } catch (error) {
-    console.log(error);
+    console.error(error);
     res.status(500).json({ error: error.message });
   }
 };
@@ -246,7 +246,7 @@ const getTextTestWithErrorValidated = async (req, res) => {
       tokens: userErrorDetail.text.tokens,
     });
   } catch (error) {
-    console.log(error);
+    console.error(error);
     res.status(500).json({ error: error.message });
   }
 };
