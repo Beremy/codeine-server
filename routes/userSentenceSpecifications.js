@@ -29,7 +29,7 @@ router.get("/getNumberSpecifications", async function (req, res) {
 
 // TODO Verif du token user
 router.post("/sendResponse", async (req, res) => {
-  const { textId, userSentenceSpecifications, userId } = req.body;
+  const { textId, userSentenceSpecifications, userId, responseNum } = req.body;
   const transaction = await sequelize.transaction();
 
   try {
@@ -69,20 +69,28 @@ router.post("/sendResponse", async (req, res) => {
           checkResult.testSpecifications.length > 0
             ? `Oups, raté! Voilà les négations qu'il fallait trouver :\n${correctSpecification}`
             : "Oh non, il n'y avait rien à trouver ici";
-        pointsToAdd = 0;
-        percentageToAdd = 0;
-        trustIndexIncrement = -1;
+        if (responseNum < 6) {
+          console.log("********** Suspicion de spam ************ ");
+          console.log("user", userId);
+          pointsToAdd = 5;
+          percentageToAdd = 0;
+          trustIndexIncrement = -5;
+        } else {
+          pointsToAdd = 0;
+          percentageToAdd = 0;
+          trustIndexIncrement = -1;
+        }
       } else {
         additionalPoints = checkResult.testSpecifications.length;
         pointsToAdd = 5 + additionalPoints;
-        percentageToAdd = 1;
+        percentageToAdd = 2;
         trustIndexIncrement = 2;
         success = true;
       }
     } else {
       additionalPoints = userSentenceSpecifications.length;
       pointsToAdd = 5 + additionalPoints;
-      percentageToAdd = 1;
+      percentageToAdd = 2;
       trustIndexIncrement = 0;
       success = true;
 

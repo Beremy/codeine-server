@@ -26,6 +26,7 @@ const getText = async (req, res) => {
     const nbToken = 110;
 
     let text, group;
+
     if (randomNumber < 25) {
       return await getTextTestPlausibility(req, res);
     } else if (randomNumber >= 25 && randomNumber < 45) {
@@ -235,6 +236,7 @@ const sendResponse = async (req, res) => {
     sentencePositions,
     userId,
     userComment,
+    responseNum,
   } = req.body;
   let transaction;
   let pointsToAdd = 0;
@@ -264,10 +266,19 @@ const sendResponse = async (req, res) => {
         userErrorDetails,
         userRateSelected
       );
+
       const noErrorSpecified = userErrorDetails.length === 0;
       const noErrorInDatabase = checkResult.testPlausibilityError.length === 0;
-
-      if (noErrorSpecified || noErrorInDatabase) {
+      if (!checkResult.isValid && responseNum < 6) {
+        console.log("********** Suspicion de spam ************ ");
+        console.log("user", userId);
+        pointsToAdd = 0;
+        percentageToAdd = 0;
+        trustIndexIncrement = -15;
+        success = false;
+        message = checkResult.reasonForRate;
+        correctPlausibility = checkResult.correctPlausibility;
+      } else if (noErrorSpecified || noErrorInDatabase) {
         if (checkResult.testPlausibilityPassed) {
           pointsToAdd = 14;
           percentageToAdd = 2;
@@ -366,46 +377,50 @@ const sendResponse = async (req, res) => {
         });
       }
 
-      if (!isNewGroup && newUserTextRating) {
-        if (existingComments) {
-          groupId = newUserTextRating.group_id;
-        }
+      if (newUserTextRating) {
+        if (!isNewGroup) {
+          if (existingComments) {
+            groupId = newUserTextRating.group_id;
+          }
 
-        let allRatingsForGroup = await UserTextRating.findAll({
-          where: { group_id: newUserTextRating.group_id },
-          transaction: transaction,
-        });
-        if (allRatingsForGroup.length > 1) {
-          const totalWeight = allRatingsForGroup.reduce(
-            (acc, rating) => acc + rating.vote_weight,
-            0
-          );
-          const weightedSum = allRatingsForGroup.reduce(
-            (acc, rating) =>
-              acc + parseFloat(rating.plausibility) * rating.vote_weight,
-            0
-          );
-          averagePlausibility = Math.round(
-            totalWeight > 0 ? weightedSum / totalWeight : 0
-          );
-          success = Math.abs(averagePlausibility - userRateSelected) <= 13;
-          pointsToAdd = success
-            ? 14 + userErrorDetails.length
-            : 5 + userErrorDetails.length;
-          trustIndexIncrement = success ? 1 : -1;
-          message = success
-            ? "Les autres enquêteurs sont d'accord avec vous."
-            : "Les autres enquêteurs ont, de leurs côtés, donné des réponses différentes.";
+          let allRatingsForGroup = await UserTextRating.findAll({
+            where: { group_id: newUserTextRating.group_id },
+            transaction: transaction,
+          });
+          if (allRatingsForGroup.length > 1) {
+            const totalWeight = allRatingsForGroup.reduce(
+              (acc, rating) => acc + rating.vote_weight,
+              0
+            );
+            const weightedSum = allRatingsForGroup.reduce(
+              (acc, rating) =>
+                acc + parseFloat(rating.plausibility) * rating.vote_weight,
+              0
+            );
+            averagePlausibility = Math.round(
+              totalWeight > 0 ? weightedSum / totalWeight : 0
+            );
+            success = Math.abs(averagePlausibility - userRateSelected) <= 13;
+            pointsToAdd = success
+              ? 14 + userErrorDetails.length
+              : 5 + userErrorDetails.length;
+            trustIndexIncrement = success ? 1 : -1;
+            message = success
+              ? "Les autres enquêteurs sont d'accord avec vous."
+              : "Les autres enquêteurs ont, de leurs côtés, donné des réponses différentes.";
+          }
+        } else {
+          // Nouveau groupe
+          pointsToAdd = 14 + userErrorDetails.length;
+          percentageToAdd = 2;
+          trustIndexIncrement = 0;
         }
-      } else {
-        // Nouveau groupe
-        pointsToAdd = 14 + userErrorDetails.length;
-        percentageToAdd = 2;
-        trustIndexIncrement = 0;
       }
     }
 
     if (userId > 0) {
+ 
+      // vérifier pointsToAdd
       const updatedStats = await updateUserStats(
         userId,
         pointsToAdd,
@@ -465,7 +480,6 @@ const getTextTestPlausibility = async (req, res) => {
         },
       ],
     });
-
     if (!text) {
       return res.status(404).json({ error: "No more texts to process" });
     }
@@ -487,7 +501,6 @@ const checkUserSelectionPlausibility = async (
   try {
     const textDetails = await getTextDetailsById(textId);
     if (!textDetails) throw new Error("Text details not found");
-
     const testPlausibilityError = await getTestPlausibilityErrorByTextId(
       textId
     );

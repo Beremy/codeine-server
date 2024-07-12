@@ -1,4 +1,4 @@
-require('dotenv').config();
+require("dotenv").config();
 const { Sequelize } = require("sequelize");
 
 const sequelize = new Sequelize(
@@ -8,7 +8,8 @@ const sequelize = new Sequelize(
   {
     host: process.env.DB_HOST,
     dialect: process.env.DB_DIALECT,
-    timezone: '+02:00',
+    logging: false,
+    timezone: "+02:00",
     define: {
       timestamps: false,
       freezeTableName: true,
