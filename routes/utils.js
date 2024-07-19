@@ -250,7 +250,7 @@ router.get("/getDefinition", async (req, res) => {
   }
 
   const scriptToRun = "./scripts/lemmatize.py";
-  const command = `python ${scriptToRun} "${word}"`;
+  const command = `./hostomythoenv/bin/python ${scriptToRun} "${word}"`;
 
   exec(command, async (error, stdout, stderr) => {
     if (error || stderr) {
