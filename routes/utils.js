@@ -10,10 +10,9 @@ const { Op } = require("sequelize");
 const utilsController = require("../controllers/utilsController.js");
 const path = require("path");
 const fs = require("fs");
+const { exec } = require("child_process");
 
-const {
-  adminAuthMiddleware,
-} = require("../middleware/authMiddleware");
+const { adminAuthMiddleware } = require("../middleware/authMiddleware");
 
 const mailjet = Mailjet.apiConnect(
   process.env.MJ_APIKEY_PUBLIC,
@@ -24,18 +23,23 @@ const mailjet = Mailjet.apiConnect(
   }
 );
 
-router.post('/refreshToken', async (req, res) => {
+router.post("/refreshToken", async (req, res) => {
   const { refreshToken } = req.body;
-  if (!refreshToken) return res.status(401).json({ error: 'Refresh Token is required' });
+  if (!refreshToken)
+    return res.status(401).json({ error: "Refresh Token is required" });
 
   try {
     const userData = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
-    const newAccessToken = jwt.sign({ id: userData.id, role: userData.role }, process.env.JWT_SECRET, {
-      expiresIn: '24h'
-    });
+    const newAccessToken = jwt.sign(
+      { id: userData.id, role: userData.role },
+      process.env.JWT_SECRET,
+      {
+        expiresIn: "24h",
+      }
+    );
     res.json({ accessToken: newAccessToken });
   } catch (error) {
-    return res.status(403).json({ error: 'Invalid or Expired Refresh Token' });
+    return res.status(403).json({ error: "Invalid or Expired Refresh Token" });
   }
 });
 
@@ -208,8 +212,6 @@ router.get("/tokenValidation/:token", async (req, res) => {
   }
 });
 
-// ****************************************************
-
 router.get("/messageMenu", async function (req, res, next) {
   try {
     const messageType = req.query.messageType;
@@ -240,6 +242,130 @@ router.get("/messageMenu", async function (req, res, next) {
   }
 });
 
+// ******************** Definition ********************************
+router.get("/getDefinition", async (req, res) => {
+  const word = req.query.word;
+  if (!word) {
+    return res.status(400).json({ error: "No word provided" });
+  }
+
+  const scriptToRun = "./scripts/lemmatize.py";
+  const command = `python ${scriptToRun} "${word}"`;
+
+  exec(command, async (error, stdout, stderr) => {
+    if (error || stderr) {
+      console.error(`exec error: ${error || stderr}`);
+      return res.status(500).json({ error: error?.message || stderr });
+    }
+
+    const lemma = stdout.trim();
+
+    try {
+      const definitions = await fetchDefinition(lemma);
+      if (definitions.length !== 0) {
+        res.json(definitions);
+      } else {
+        res.status(404).json({ error: "No definitions found" });
+      }
+    } catch (err) {
+      console.error("Error fetching definitions:", err);
+      res.status(500).json({ error: err.message });
+    }
+  });
+});
+
+async function fetchDefinition(lemma) {
+  const wikiUrl = `https://fr.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(
+    lemma
+  )}`;
+  const response = await fetch(wikiUrl);
+  const json = await response.json();
+
+  if (json.type === "disambiguation") {
+    return getWikipediaDefinitions(lemma);
+  } else if (json.type === "standard" && json.extract) {
+    return {
+      definitions: [
+        {
+          title: json.title,
+          definition: json.extract,
+          url: `https://fr.wikipedia.org/wiki/${encodeURIComponent(lemma)}`,
+        },
+      ],
+      result_type: "direct",
+    };
+  } else {
+    return fetchTextSearch(lemma);
+  }
+}
+
+async function getWikipediaDefinitions(lemma) {
+  const encodedLemma = encodeURIComponent(lemma);
+  const disambiguationUrl = `https://fr.wikipedia.org/w/api.php?action=query&format=json&list=search&srsearch=${encodedLemma}&srlimit=2`;
+  const disambiguationResponse = await fetch(disambiguationUrl);
+  const disambiguationData = await disambiguationResponse.json();
+
+  const pageTitles = disambiguationData.query.search.map((page) => page.title);
+  const definitions = [];
+
+  for (const pageTitle of pageTitles) {
+    const definitionUrl = `https://fr.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(
+      pageTitle
+    )}`;
+    const definitionResponse = await fetch(definitionUrl);
+    const definitionData = await definitionResponse.json();
+
+    if (definitionData.extract) {
+      definitions.push({
+        title: pageTitle,
+        definition: definitionData.extract,
+        url: `https://fr.wikipedia.org/wiki/${encodeURIComponent(pageTitle)}`,
+      });
+    }
+  }
+  return {
+    definitions: definitions,
+    result_type: "multiple",
+  };
+}
+
+async function fetchTextSearch(lemma) {
+  const url = `https://fr.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(
+    lemma
+  )}&format=json&origin=*`;
+  const response = await fetch(url);
+  const data = await response.json();
+
+  if (data.query.search.length > 0) {
+    const title = data.query.search[0].title;
+    const summary = await fetchSummaryFromWikipedia(title);
+    return {
+      definitions: [summary],
+      result_type: "search",
+    };
+  } else {
+    throw new Error("No results found in full text search");
+  }
+}
+
+async function fetchSummaryFromWikipedia(title) {
+  const url = `https://fr.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(
+    title
+  )}`;
+  const response = await fetch(url);
+  const json = await response.json();
+  if (json.extract) {
+    return {
+      title: json.title,
+      definition: json.extract,
+      url: `https://fr.wikipedia.org/wiki/${encodeURIComponent(title)}`,
+    };
+  } else {
+    throw new Error("Summary not found for the provided title");
+  }
+}
+
+// **************************************************************
 // TODO a sécuriser admin
 // router.put("/messageMenu", async function (req, res, next) {
 //   try {
