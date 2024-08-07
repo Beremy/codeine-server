@@ -649,6 +649,18 @@ const updateUserStats = async (
     if (!user) {
       throw new Error("User not found");
     }
+    const userCriminals = await user.getCriminals();
+    const criminalsCount = userCriminals.length;
+    const userTrust = user.trust_index;
+    let adjustedPercentageToAdd = 0;
+
+    if (userTrust > 30) {
+      const decayRate = 0.14; // Taux de décroissance ajustable pour affiner la progression
+      adjustedPercentageToAdd =
+        percentageToAdd * Math.exp(-decayRate * criminalsCount);
+    }
+
+    const catchProbabilityToAdd = parseFloat(percentageToAdd);
 
     const oldRewardTier = Math.floor(user.points / 100);
 
@@ -669,13 +681,24 @@ const updateUserStats = async (
 
     user.points += additionalPoints;
     user.monthly_points += additionalPoints;
+
+    // Convertir user.catch_probability en nombre si nécessaire
+    let currentCatchProbability = parseFloat(user.catch_probability);
+
+    // Vérifier si la conversion a réussi
+    if (isNaN(currentCatchProbability)) {
+      currentCatchProbability = 0; // Ou une autre valeur par défaut appropriée
+    }
+
+    // Mettre à jour la probabilité de capture
     user.catch_probability = Math.min(
       100,
-      Math.max(0, user.catch_probability + percentageToAdd)
+      Math.max(0, currentCatchProbability + adjustedPercentageToAdd)
     );
+
     user.trust_index = Math.min(
       100,
-      Math.max(0, user.trust_index + trustIndexIncrement)
+      Math.max(0, user.trust_index + parseFloat(trustIndexIncrement))
     );
 
     // Gestion des jours consécutifs joués
@@ -921,5 +944,5 @@ module.exports = {
   getTopMonthlyWinners,
   incrementTutorialProgress,
   getUserDetailsById,
-  incrementCatchProbability
+  incrementCatchProbability,
 };

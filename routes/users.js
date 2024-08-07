@@ -5,6 +5,7 @@ const { authMiddleware } = require("../middleware/authMiddleware");
 const userController = require("../controllers/userController");
 const moment = require("moment");
 const { adminAuthMiddleware } = require("../middleware/authMiddleware");
+const bcrypt = require("bcryptjs");
 
 router.get("/protected-route", authMiddleware, (req, res) => {
   // Route protégée par l'authentification
@@ -107,12 +108,23 @@ router.get("/:id", async function (req, res, next) {
 router.delete("/:id", async function (req, res, next) {
   const userId = req.params.id;
   try {
-    await User.destroy({
-      where: {
-        id: userId,
+    const randomPassword = await bcrypt.hash(
+      Math.random().toString(36).slice(-8),
+      10
+    );
+    await User.update(
+      {
+        username: `user_${userId}`,
+        email: null,
+        password: randomPassword,
       },
-    });
-    res.status(200).send("User deleted");
+      {
+        where: {
+          id: userId,
+        },
+      }
+    );
+    res.status(200).send("User anonymized");
   } catch (err) {
     next(err);
   }

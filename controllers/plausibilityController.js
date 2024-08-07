@@ -229,6 +229,7 @@ const getErrorDetailTest = async (req, res) => {
 };
 
 const sendResponse = async (req, res) => {
+  console.log("sendResponse");
   const {
     textId,
     userErrorDetails,
@@ -281,7 +282,7 @@ const sendResponse = async (req, res) => {
       } else if (noErrorSpecified || noErrorInDatabase) {
         if (checkResult.testPlausibilityPassed) {
           pointsToAdd = 14;
-          percentageToAdd = 2;
+          percentageToAdd = 5;
           trustIndexIncrement = 1;
           success = true;
         } else {
@@ -305,7 +306,7 @@ const sendResponse = async (req, res) => {
           checkResult.testPlausibilityPassed
         ) {
           pointsToAdd = 14;
-          percentageToAdd = 2;
+          percentageToAdd = 5;
           trustIndexIncrement = 1;
           success = false;
           message = `Vous avez bien estimé la plausibilité, mais voilà les erreurs qu'il fallait trouver :\n${correctSpecification}`;
@@ -324,7 +325,7 @@ const sendResponse = async (req, res) => {
           !checkResult.testPlausibilityPassed
         ) {
           pointsToAdd = 14 + userErrorDetails.length;
-          percentageToAdd = 2;
+          percentageToAdd = 5;
           trustIndexIncrement = 1;
           success = false;
           message =
@@ -335,7 +336,7 @@ const sendResponse = async (req, res) => {
           checkResult.testPlausibilityPassed
         ) {
           pointsToAdd = 16 + userErrorDetails.length;
-          percentageToAdd = 3;
+          percentageToAdd = 6;
           trustIndexIncrement = 2;
           success = true;
         }
@@ -405,6 +406,7 @@ const sendResponse = async (req, res) => {
               ? 14 + userErrorDetails.length
               : 5 + userErrorDetails.length;
             trustIndexIncrement = success ? 1 : -1;
+            percentageToAdd = success ? 5 : 2;
             message = success
               ? "Les autres enquêteurs sont d'accord avec vous."
               : "Les autres enquêteurs ont, de leurs côtés, donné des réponses différentes.";
@@ -412,14 +414,13 @@ const sendResponse = async (req, res) => {
         } else {
           // Nouveau groupe
           pointsToAdd = 14 + userErrorDetails.length;
-          percentageToAdd = 2;
+          percentageToAdd = 5;
           trustIndexIncrement = 0;
         }
       }
     }
 
     if (userId > 0) {
- 
       // vérifier pointsToAdd
       const updatedStats = await updateUserStats(
         userId,

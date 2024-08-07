@@ -42,7 +42,7 @@ router.post("/sendResponse", async (req, res) => {
 
       if (isUserCorrect) {
         pointsToAdd = 3;
-        percentageToAdd = 1;
+        percentageToAdd = 3;
         trustIndexIncrement = 1;
       } else {
         pointsToAdd = 0;
@@ -53,7 +53,7 @@ router.post("/sendResponse", async (req, res) => {
       success = isUserCorrect;
     } else {
       pointsToAdd = 3;
-      percentageToAdd = 1;
+      percentageToAdd = 3;
       trustIndexIncrement = 0;
       success = true;
 

@@ -83,14 +83,14 @@ router.post("/sendResponse", async (req, res) => {
       } else {
         additionalPoints = checkResult.testSpecifications.length;
         pointsToAdd = 5 + additionalPoints;
-        percentageToAdd = 2;
+        percentageToAdd = 3;
         trustIndexIncrement = 2;
         success = true;
       }
     } else {
       additionalPoints = userSentenceSpecifications.length;
       pointsToAdd = 5 + additionalPoints;
-      percentageToAdd = 2;
+      percentageToAdd = 3;
       trustIndexIncrement = 0;
       success = true;
 
