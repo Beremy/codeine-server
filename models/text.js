@@ -42,28 +42,23 @@ module.exports = (sequelize, DataTypes) => {
         allowNull: true,
         defaultValue: 0,
       },
-      avg_weighted_plausibility: {
-        type: DataTypes.DECIMAL(5, 2),
-        allowNull: true,
-        defaultValue: 0,
-      },
-      is_hypothesis_specification_test: {
-        type: DataTypes.BOOLEAN,
-        defaultValue: false,
-      },
-      is_condition_specification_test: {
-        type: DataTypes.BOOLEAN,
-        defaultValue: false,
-      },
+      // is_hypothesis_specification_test: {
+      //   type: DataTypes.BOOLEAN,
+      //   defaultValue: false,
+      // },
+      // is_condition_specification_test: {
+      //   type: DataTypes.BOOLEAN,
+      //   defaultValue: false,
+      // },
       is_negation_specification_test: {
         type: DataTypes.BOOLEAN,
         defaultValue: false,
       },
-      nb_of_treatments: {
-        type: DataTypes.INTEGER,
-        allowNull: true,
-        defaultValue: 0,
-      },
+      // nb_of_treatments: {
+      //   type: DataTypes.INTEGER,
+      //   allowNull: true,
+      //   defaultValue: 0,
+      // },
       length: {
         type: DataTypes.INTEGER,
         allowNull: true,
