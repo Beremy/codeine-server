@@ -195,9 +195,27 @@ const signin = async (req, res) => {
   }
 };
 
+const editUser = async (req, res) => {
+  try {
+    const userId = parseInt(req.params.id);
+    const user = await User.update(req.body, {
+      where: {
+        id: userId,
+      },
+    });
+    res.status(200).send(user);
+  } catch (error) {
+    console.error("Erreur dans la mise à jour de l'utilisateur:", error);
+    res.status(500).json({ error: error.message });
+  }
+};
+
 const getAllUsers = async (req, res) => {
   try {
-    const users = await User.findAll();
+    const users = await User.findAll({
+      order: [["username"]],
+      attributes: { exclude: ["password", "notifications_enabled"] },
+    });
     res.status(200).json(users);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -412,7 +430,7 @@ const getTopMonthlyWinners = async (req, res) => {
 const getUserById = async (userId) => {
   try {
     const user = await User.findByPk(userId, {
-      attributes: { exclude: ["password"] },
+      attributes: { exclude: ["password", "notifications_enabled"] },
     });
     return user;
   } catch (error) {
@@ -924,6 +942,7 @@ module.exports = {
   signup,
   signin,
   getAllUsers,
+  editUser,
   getUserById,
   getUserByEmail,
   getUsersOrderedByPoints,

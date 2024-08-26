@@ -7,27 +7,27 @@ const { adminAuthMiddleware } = require("../middleware/authMiddleware");
 
 // User
 // router.get("/getUserRegistrationsDate", adminAuthMiddleware, statsController.getUserRegistrationsDate);
-router.get("/getUserRegistrationsDate", statsController.getUserRegistrationsDate);
-router.get('/getCumulativeUserRegistrations', statsController.getCumulativeUserRegistrations);
+router.get("/getUserRegistrationsDate", adminAuthMiddleware, statsController.getUserRegistrationsDate);
+router.get('/getCumulativeUserRegistrations', adminAuthMiddleware, statsController.getCumulativeUserRegistrations);
 
 // All games
-router.get("/getCumulativeAnnotationsGames", statsController.getCumulativeAnnotationsGames);
+router.get("/getCumulativeAnnotationsGames", adminAuthMiddleware, statsController.getCumulativeAnnotationsGames);
 
 // Text rating 
-router.get("/getRatingPlausibilityDate", statsController.getRatingPlausibilityDate);
-router.get('/getCumulativeRatingPlausibility', statsController.getCumulativeRatingPlausibility);
+router.get("/getRatingPlausibilityDate", adminAuthMiddleware, statsController.getRatingPlausibilityDate);
+router.get('/getCumulativeRatingPlausibility', adminAuthMiddleware, statsController.getCumulativeRatingPlausibility);
 
 // UserErrorDetail
-router.get("/getUserErrorDetailDate", statsController.getUserErrorDetailDate);
-router.get('/getCumulativeUserErrorDetail', statsController.getCumulativeUserErrorDetail);
+router.get("/getUserErrorDetailDate", adminAuthMiddleware, statsController.getUserErrorDetailDate);
+router.get('/getCumulativeUserErrorDetail', adminAuthMiddleware, statsController.getCumulativeUserErrorDetail);
 
 // UserTypingErrors
-router.get("/getUserTypingErrorsDate", statsController.getUserTypingErrorsDate);
-router.get('/getCumulativeUserTypingErrors', statsController.getCumulativeUserTypingErrors);
+router.get("/getUserTypingErrorsDate", adminAuthMiddleware, statsController.getUserTypingErrorsDate);
+router.get('/getCumulativeUserTypingErrors', adminAuthMiddleware, statsController.getCumulativeUserTypingErrors);
 
 // UserSentenceSpecification
-router.get("/getUserSentenceSpecificationDate", statsController.getUserSentenceSpecificationDate);
-router.get('/getCumulativeUserSentenceSpecification', statsController.getCumulativeUserSentenceSpecification);
+router.get("/getUserSentenceSpecificationDate", adminAuthMiddleware, statsController.getUserSentenceSpecificationDate);
+router.get('/getCumulativeUserSentenceSpecification', adminAuthMiddleware, statsController.getCumulativeUserSentenceSpecification);
 
 
 module.exports = router;

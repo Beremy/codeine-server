@@ -12,7 +12,9 @@ router.get("/protected-route", authMiddleware, (req, res) => {
 });
 
 /* GET users listing. */
-// router.get("/", userController.getAllUsers);
+router.get("/", adminAuthMiddleware, userController.getAllUsers);
+
+// router.put("/:id", async function (req, res, next) {
 
 // POST new user (signup)
 router.post("/signup", userController.signup);
@@ -69,11 +71,11 @@ router.put(
 
 router.put("/:id/resetCatchProbability", userController.resetCatchProbability);
 
-// TODO mettre token
+// TODO mettre token ou token admin
 router.get("/:id", async function (req, res, next) {
   try {
     const user = await User.findByPk(req.params.id, {
-      attributes: { exclude: ["password"] },
+      attributes: { exclude: ["password", "notifications_enabled"] },
     });
     if (!user) {
       return res.status(404).json({ error: "User not found" });
@@ -89,22 +91,7 @@ router.get("/:id", async function (req, res, next) {
   }
 });
 
-// TODO a tester sans
-// router.put("/:id", async function (req, res, next) {
-//   const userId = req.params.id;
-//   try {
-//     await User.update(req.body, {
-//       where: {
-//         id: userId,
-//       },
-//     });
-//     res.status(200).send("User updated");
-//   } catch (err) {
-//     next(err);
-//   }
-// });
-
-// A sécuriser
+// A sécuriser (admin ou userid)
 router.delete("/:id", async function (req, res, next) {
   const userId = req.params.id;
   try {
@@ -117,6 +104,19 @@ router.delete("/:id", async function (req, res, next) {
         username: `user_${userId}`,
         email: null,
         password: randomPassword,
+        points: 0,
+        monthly_points: 0,
+        trust_index: 0,
+        gender: 'homme',
+        status: 'autre',
+        created_at: null,
+        color_skin: 'clear',
+        tutorial_progress: 0,
+        catch_probability: 0,
+        consecutiveDaysPlayed: 0,
+        lastPlayedDate: null,
+        coeffMulti: 0,
+        nb_first_monthly: 0,
       },
       {
         where: {
@@ -129,5 +129,8 @@ router.delete("/:id", async function (req, res, next) {
     next(err);
   }
 });
+
+// Admin
+router.put("/:id", adminAuthMiddleware, userController.editUser);
 
 module.exports = router;
