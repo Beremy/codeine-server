@@ -229,7 +229,6 @@ const getErrorDetailTest = async (req, res) => {
 };
 
 const sendResponse = async (req, res) => {
-  console.log("sendResponse");
   const {
     textId,
     userErrorDetails,

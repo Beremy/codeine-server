@@ -36,22 +36,28 @@ const getUserRegistrationsDate = async (req, res) => {
 
     const results = await User.findAll({
       attributes: [
-        [
-          sequelize.fn("DATE_FORMAT", sequelize.col("created_at"), "%Y%u"),
-          "week",
-        ],
+        [sequelize.fn("DATE_FORMAT", sequelize.col("created_at"), "%Y%u"), "week"],
         [sequelize.fn("COUNT", sequelize.col("id")), "count"],
+        "status"  // Ajouter le champ status à la sélection
       ],
-      group: [sequelize.fn("DATE_FORMAT", sequelize.col("created_at"), "%Y%u")],
+      group: [sequelize.fn("DATE_FORMAT", sequelize.col("created_at"), "%Y%u"), "status"],  // Regrouper également par status
+      order: [[sequelize.fn("DATE_FORMAT", sequelize.col("created_at"), "%Y%u"), "ASC"]],
     });
 
     const weeklyData = generateWeeklySeries(earliest, latest);
+
+    // Initialiser les données pour chaque type de status
+    weeklyData.forEach(week => {
+      week.medecin = 0;
+      week.autre = 0;
+      week.inconnu = 0;
+    });
 
     results.forEach((result) => {
       const weekNumber = result.get("week");
       const index = weeklyData.findIndex((w) => w.week === weekNumber);
       if (index !== -1) {
-        weeklyData[index].count = result.get("count");
+        weeklyData[index][result.status] = result.get("count");
       }
     });
 
@@ -60,6 +66,7 @@ const getUserRegistrationsDate = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+
 
 const getCumulativeUserRegistrations = async (req, res) => {
   try {
@@ -102,6 +109,22 @@ const getCumulativeUserRegistrations = async (req, res) => {
     }
 
     res.status(200).json(weeklyData);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+const getUserTypesCount = async (req, res) => {
+  try {
+    const results = await User.findAll({
+      attributes: [
+        "status",
+        [sequelize.fn("COUNT", sequelize.col("id")), "count"]
+      ],
+      group: ["status"]
+    });
+
+    res.status(200).json(results);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -500,6 +523,7 @@ const getCumulativeUserSentenceSpecification = async (req, res) => {
 module.exports = {
   getUserRegistrationsDate,
   getCumulativeUserRegistrations,
+  getUserTypesCount,
   getCumulativeAnnotationsGames,
   getCumulativeRatingPlausibility,
   getRatingPlausibilityDate,

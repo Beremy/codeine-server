@@ -657,7 +657,8 @@ const updateUserStats = async (
   pointsToAdd,
   percentageToAdd,
   trustIndexIncrement,
-  transaction
+  transaction,
+  isPenalty = false
 ) => {
   try {
     const user = await User.findOne({
@@ -667,18 +668,20 @@ const updateUserStats = async (
     if (!user) {
       throw new Error("User not found");
     }
+
     const userCriminals = await user.getCriminals();
     const criminalsCount = userCriminals.length;
     const userTrust = user.trust_index;
     let adjustedPercentageToAdd = 0;
 
-    if (userTrust > 30) {
-      const decayRate = 0.14; // Taux de décroissance ajustable pour affiner la progression
+    // Si malus, on ne prend pas en compte le nb de criminels arrêtés
+    if (!isPenalty && userTrust > 30) {
+      const decayRate = 0.14;
       adjustedPercentageToAdd =
         percentageToAdd * Math.exp(-decayRate * criminalsCount);
+    } else {
+      adjustedPercentageToAdd = percentageToAdd;
     }
-
-    const catchProbabilityToAdd = parseFloat(percentageToAdd);
 
     const oldRewardTier = Math.floor(user.points / 100);
 
@@ -702,13 +705,10 @@ const updateUserStats = async (
 
     // Convertir user.catch_probability en nombre si nécessaire
     let currentCatchProbability = parseFloat(user.catch_probability);
-
-    // Vérifier si la conversion a réussi
     if (isNaN(currentCatchProbability)) {
-      currentCatchProbability = 0; // Ou une autre valeur par défaut appropriée
+      currentCatchProbability = 0;
     }
 
-    // Mettre à jour la probabilité de capture
     user.catch_probability = Math.min(
       100,
       Math.max(0, currentCatchProbability + adjustedPercentageToAdd)
@@ -756,7 +756,7 @@ const updateUserStats = async (
 
     return {
       newPoints: user.points,
-      newCatchProbability: user.catch_probability,
+      newCatchProbability: Math.round(parseFloat(user.catch_probability)), // Arrondir à l'entier
       newTrustIndex: user.trust_index,
       newCoeffMulti: user.coeffMulti,
       newAchievements,
