@@ -3,6 +3,15 @@ const { exec } = require("child_process");
 const { Sequelize } = require("sequelize");
 const Op = Sequelize.Op;
 
+const getNumberOfTexts = async (req, res) => {
+  try {
+    const numberOfTexts = await Text.count();
+    res.status(200).json({ count: numberOfTexts });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
 // TODO faire getSmallText pour mythoTypo et mythoNo
 const getSmallTextWithTokens = async (req, res) => {
   try {
@@ -31,6 +40,7 @@ const getSmallTextWithTokens = async (req, res) => {
         is_hypothesis_specification_test: false,
         is_condition_specification_test: false,
         is_negation_specification_test: false,
+        is_active: true,
       },
       attributes: [
         "id",
@@ -188,6 +198,7 @@ const getTextWithTokensNotPlayed = async (req, res) => {
         is_hypothesis_specification_test: false,
         is_condition_specification_test: false,
         is_negation_specification_test: false,
+        is_active: true,
       },
       attributes: [
         "id",
@@ -224,6 +235,9 @@ const getTextWithTokensNotPlayed = async (req, res) => {
 const getTextWithTokensByGameType = async (req, res) => {
   try {
     const text = await Text.findOne({
+      where: {
+        is_active: true,
+      },
       attributes: [
         "id",
         "num",
@@ -259,7 +273,19 @@ const getTextWithTokensByGameType = async (req, res) => {
 const getAllTexts = async (req, res) => {
   try {
     const texts = await Text.findAll();
-    res.status(200).json(texts.reverse());
+    const truncatedTexts = texts.map((text) => {
+      const content =
+        text.content.length > 180
+          ? text.content.substring(0, 180) + "..."
+          : text.content;
+
+      return {
+        ...text.toJSON(),
+        content: content,
+      };
+    });
+
+    res.status(200).json(truncatedTexts.reverse());
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -267,7 +293,9 @@ const getAllTexts = async (req, res) => {
 
 const getTextById = async (req, res) => {
   try {
-    const text = await Text.findByPk(req.params.id);
+    const text = await Text.findByPk(req.params.id, {
+      attributes: { exclude: ["length, id_theme"] },
+    });
     if (!text) {
       return res.status(404).json({ error: "Text not found" });
     }
@@ -481,6 +509,7 @@ const getTextTestNegation = async (req, res) => {
     const text = await Text.findOne({
       where: {
         is_negation_specification_test: true,
+        is_active: true,
       },
       attributes: [
         "id",
@@ -497,7 +526,6 @@ const getTextTestNegation = async (req, res) => {
         },
       ],
     });
-
     if (!text) {
       return res.status(404).json({ error: "No more texts to process" });
     }
@@ -523,4 +551,5 @@ module.exports = {
   // getTextTestPlausibility,
   getTextTestNegation,
   getTextWithTokensByGameType,
+  getNumberOfTexts,
 };

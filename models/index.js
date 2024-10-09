@@ -27,6 +27,7 @@ const TestPlausibilityErrorModel = require("./testPlausibilityError");
 const GroupTextRatingModel = require("./groupTextRating");
 const UserCommentsGroupTextRatingModel = require("./userCommentsGroupTextRating");
 const userCommentVotesModel = require("./userCommentVotes");
+const VariableModel = require("./variable");
 
 const Game = require("./games.js")(sequelize, Sequelize.DataTypes);
 const UserTutorial = require("./userTutorial.js")(
@@ -50,6 +51,7 @@ const User = UserModel(sequelize, Sequelize.DataTypes);
 const Text = TextModel(sequelize, Sequelize.DataTypes);
 const Theme = ThemeModel(sequelize, Sequelize.DataTypes);
 const Sentence = SentenceModel(sequelize, Sequelize.DataTypes);
+const Variable = VariableModel(sequelize, Sequelize.DataTypes);
 const UserSentenceSpecification = UserSentenceSpecificationModel(
   sequelize,
   Sequelize.DataTypes
@@ -115,7 +117,8 @@ const models = {
   TestPlausibilityError,
   GroupTextRating,
   UserCommentsGroupTextRating,
-  UserCommentVotes
+  UserCommentVotes,
+  Variable
 };
 
 // *************** Associations User & MonthlyWinners *******************

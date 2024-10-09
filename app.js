@@ -25,6 +25,7 @@ var games = require("./routes/games");
 var messages = require("./routes/messages");
 var comments = require("./routes/comments");
 var stats = require("./routes/stats");
+var variables = require("./routes/variables");
 
 var app = express();
 app.use(cors());
@@ -69,5 +70,5 @@ app.use("/games", games);
 app.use("/messages", messages);
 app.use("/comments", comments);
 app.use("/stats", stats);
-
+app.use("/variables", variables);
 module.exports = app;

@@ -23,11 +23,6 @@ module.exports = (sequelize, DataTypes) => {
         allowNull: false,
         defaultValue: "",
       },
-      id_theme: {
-        type: DataTypes.INTEGER,
-        allowNull: true,
-        defaultValue: 1,
-      },
       origin: {
         type: DataTypes.STRING(45),
         allowNull: true,
@@ -42,6 +37,11 @@ module.exports = (sequelize, DataTypes) => {
         allowNull: true,
         defaultValue: 0,
       },
+      reason_for_rate: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+        defaultValue: "",
+      },
       // is_hypothesis_specification_test: {
       //   type: DataTypes.BOOLEAN,
       //   defaultValue: false,
@@ -54,20 +54,19 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.BOOLEAN,
         defaultValue: false,
       },
-      // nb_of_treatments: {
-      //   type: DataTypes.INTEGER,
-      //   allowNull: true,
-      //   defaultValue: 0,
-      // },
-      length: {
+      nb_of_treatments: {
         type: DataTypes.INTEGER,
         allowNull: true,
         defaultValue: 0,
       },
-      reason_for_rate: {
-        type: DataTypes.TEXT,
+      is_active: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: 1,
+      },
+      length: {
+        type: DataTypes.INTEGER,
         allowNull: true,
-        defaultValue: "",
+        defaultValue: 0,
       },
     },
     {

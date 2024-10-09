@@ -27,6 +27,7 @@ module.exports = (sequelize, DataTypes) => {
       email: {
         type: DataTypes.STRING(255),
         defaultValue: "",
+        allowNull: true,
       },
       points: {
         type: DataTypes.INTEGER,

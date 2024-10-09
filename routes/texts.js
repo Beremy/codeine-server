@@ -52,6 +52,10 @@ router.get(
   "/getTextTestWithErrorValidated",
   errorController.getTextTestWithErrorValidated
 );
+router.get(
+  "/getNumberOfTexts",
+  textController.getNumberOfTexts
+);
 
 // Administrateur
 router.get("/:id", adminAuthMiddleware, textController.getTextById);

@@ -96,7 +96,7 @@ const getText = async (req, res) => {
       return res.status(200).json(result);
     } else {
       text = await Text.findOne({
-        where: { is_plausibility_test: false },
+        where: { is_plausibility_test: false, is_active: true },
         attributes: ["id"],
         order: Sequelize.literal("RAND()"),
       });
@@ -174,7 +174,7 @@ const getText = async (req, res) => {
             if (totalTokens >= nbToken) break;
           }
         } else {
-          // Sélectionner depuis le début (votre logique actuelle)
+          // Sélectionner depuis le début
           for (let i = 0; i < sentences.length && totalTokens < nbToken; i++) {
             selectedSentences.push(sentences[i]);
             totalTokens += sentences[i].tokens.length;
@@ -470,6 +470,7 @@ const getTextTestPlausibility = async (req, res) => {
     const text = await Text.findOne({
       where: {
         is_plausibility_test: true,
+        is_active: true,
       },
       attributes: ["id"],
       order: Sequelize.literal("RAND()"),
