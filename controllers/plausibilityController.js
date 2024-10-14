@@ -260,6 +260,12 @@ const sendResponse = async (req, res) => {
         .json({ success: false, message: "Text not found" });
     }
 
+    await Text.increment("nb_of_treatments", {
+      by: 1,
+      where: { id: textId },
+      transaction,
+    });
+
     if (textDetails.is_plausibility_test) {
       let checkResult = await checkUserSelectionPlausibility(
         textId,

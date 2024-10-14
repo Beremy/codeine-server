@@ -1,10 +1,6 @@
 var express = require("express");
 var router = express.Router();
-const {
-  ErrorType,
-  UserErrorDetail,
-  UserTypingErrors
-} = require("../models");
+const { ErrorType, UserErrorDetail, UserTypingErrors, Text } = require("../models");
 const { updateUserStats } = require("../controllers/userController");
 const { sequelize } = require("../service/db.js");
 
@@ -19,7 +15,7 @@ router.post("/sendResponse", async (req, res) => {
       include: [
         { model: ErrorType, attributes: ["id", "name"], as: "error_type" },
       ],
-      transaction
+      transaction,
     });
 
     if (!userErrorDetail) {
@@ -31,8 +27,8 @@ router.post("/sendResponse", async (req, res) => {
 
     let isUserCorrect = false;
     let pointsToAdd = 0,
-        percentageToAdd = 0,
-        trustIndexIncrement = 0;
+      percentageToAdd = 0,
+      trustIndexIncrement = 0;
     let success = false;
     let message = null;
 
@@ -57,7 +53,12 @@ router.post("/sendResponse", async (req, res) => {
       trustIndexIncrement = 0;
       success = true;
 
-      await createUserTypingError(userId, userErrorDetailId, selectedErrorType, transaction);
+      await createUserTypingError(
+        userId,
+        userErrorDetailId,
+        selectedErrorType,
+        transaction
+      );
     }
 
     const updatedStats = await updateUserStats(
@@ -90,20 +91,29 @@ router.post("/sendResponse", async (req, res) => {
   }
 });
 
-
-const createUserTypingError = async (userId, userErrorDetailId, errorTypeId) => {
+const createUserTypingError = async (
+  userId,
+  userErrorDetailId,
+  errorTypeId
+) => {
   const transaction = await sequelize.transaction();
 
   try {
-    await UserTypingErrors.create({
-      user_id: userId,
-      user_error_details_id: userErrorDetailId,
-      error_type_id: errorTypeId,
-    }, { transaction });
+    await UserTypingErrors.create(
+      {
+        user_id: userId,
+        user_error_details_id: userErrorDetailId,
+        error_type_id: errorTypeId,
+      },
+      { transaction }
+    );
 
-    const userErrorDetail = await UserErrorDetail.findOne({
-      where: { id: userErrorDetailId },
-    }, { transaction });
+    const userErrorDetail = await UserErrorDetail.findOne(
+      {
+        where: { id: userErrorDetailId },
+      },
+      { transaction }
+    );
 
     if (userErrorDetail) {
       let newVoteWeight = userErrorDetail.vote_weight;
@@ -114,7 +124,10 @@ const createUserTypingError = async (userId, userErrorDetailId, errorTypeId) => 
         newVoteWeight = userErrorDetail.vote_weight + 3;
       }
 
-      await userErrorDetail.update({ vote_weight: newVoteWeight }, { transaction });
+      await userErrorDetail.update(
+        { vote_weight: newVoteWeight },
+        { transaction }
+      );
       console.error("UserErrorDetail vote_weight updated");
     } else {
       console.error("UserErrorDetail not found");

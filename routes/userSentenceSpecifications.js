@@ -50,6 +50,8 @@ router.post("/sendResponse", async (req, res) => {
         .json({ success: false, message: "Text not found" });
     }
 
+    await text.increment('nb_of_treatments', { by: 1, transaction });
+
     if (text.is_negation_specification_test) {
       checkResult = await checkUserSelection(
         textId,
@@ -149,7 +151,7 @@ const createUserSentenceSpecification = async (data, transaction) => {
     return newUserSentenceSpecification;
   } catch (error) {
     console.error("Error in createUserSentenceSpecification:", error);
-    throw error; // Propagate the error to be caught by the caller
+    throw error;
   }
 };
 
