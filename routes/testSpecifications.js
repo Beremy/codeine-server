@@ -8,8 +8,8 @@ const testSpecificationController = require("../controllers/testSpecificationCon
 // router.delete("/deleteByTextId/:textId", adminAuthMiddleware, testSpecificationController.deleteTestSpecificationsByTextId);
 
 
-router.get("/:textId/:type", testSpecificationController.getTestSpecificationByTextId);
-router.post("/", testSpecificationController.createTestSpecification);
-router.delete("/deleteByTextId/:textId", testSpecificationController.deleteTestSpecificationsByTextId);
+router.get("/:textId/:type", adminAuthMiddleware, testSpecificationController.getTestSpecificationByTextId);
+router.post("/", adminAuthMiddleware, testSpecificationController.createTestSpecifications);
+router.delete("/deleteByTextId/:textId", adminAuthMiddleware, testSpecificationController.deleteTestSpecificationsByTextId);
 
 module.exports = router;
