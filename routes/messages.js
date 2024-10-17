@@ -1,6 +1,7 @@
 var express = require("express");
 var router = express.Router();
 const { MessageContact } = require("../models");
+const utilsController = require("../controllers/utilsController");
 
 router.post("/contactMessage", async function (req, res, next) {
   try {
@@ -18,5 +19,9 @@ router.post("/contactMessage", async function (req, res, next) {
     next(err);
   }
 });
+
+router.delete("/deleteMessage/:id", utilsController.deleteMessage);
+
+router.get("/getMessages", utilsController.getMessages);
 
 module.exports = router;

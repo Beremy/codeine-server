@@ -1,4 +1,4 @@
-const { Text, User } = require("../models/index.js");
+const { MessageContact } = require("../models/index.js");
 const { sequelize } = require("../service/db.js");
 const fs = require("fs");
 const path = require("path");
@@ -37,4 +37,23 @@ const dumpTables = async (req, res) => {
   }
 };
 
-module.exports = { dumpTables };
+const getMessages = async (req, res, next) => {
+  try {
+    const messages = await MessageContact.findAll();
+    res.json(messages);
+  } catch (err) {
+    next(err);
+  }
+};
+
+const deleteMessage = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    await MessageContact.destroy({ where: { id } });
+    res.json({ message: "Message supprimé avec succès." });
+  } catch (err) {
+    next(err);
+  }
+};
+
+module.exports = { dumpTables, getMessages, deleteMessage };
