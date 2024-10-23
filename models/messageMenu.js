@@ -14,7 +14,7 @@ module.exports = (sequelize, DataTypes) => {
         autoIncrement: true,
       },
       title: {
-        type: DataTypes.STRING(45),
+        type: DataTypes.STRING(255),
         allowNull: true,
       },
       message: {
@@ -24,6 +24,11 @@ module.exports = (sequelize, DataTypes) => {
       active: {
         type: DataTypes.BOOLEAN,
         defaultValue: false,
+      },
+      message_type: {
+        type: DataTypes.ENUM,
+        values: ['home_not_connected', 'home_connected'],
+        allowNull: true,
       },
     },
     {
