@@ -14,7 +14,6 @@ router.post("/", adminAuthMiddleware, textController.createText);
 router.get("/", adminAuthMiddleware, textController.getAllTexts);
 
 router.get("/getTextTestPlausibility", plausibilityController.getTextTestPlausibility);
-router.get("/getTextTestNegation", textController.getTextTestNegation);
 router.get(
   "/getTextWithTokensByGameType/:gameType",
   textController.getTextWithTokensByGameType
@@ -31,6 +30,7 @@ router.get(
   "/getSmallTextWithTokensNotPlayed/:userId/:gameType/:nbToken",
   textController.getSmallTextWithTokens
 );
+
 router.get(
   "/getTextWithTokensById/:textId",
   textController.getTextWithTokensById

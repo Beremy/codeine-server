@@ -1,37 +1,70 @@
-var express = require("express");
-var router = express.Router();
 const {
-  UserSentenceSpecification,
   TestSpecification,
+  UserSentenceSpecification,
   Text,
+  Token,
 } = require("../models");
-const { updateUserStats } = require("../controllers/userController");
+const { updateUserStats } = require("../controllers/userController.js");
 const { sequelize } = require("../service/db.js");
+const textController = require("./textController.js");
 
-router.get("/", async function (req, res, next) {
+const getText = async (req, res) => {
   try {
-    const userSentenceSpecifications =
-      await UserSentenceSpecification.findAll();
-    res.status(200).json(userSentenceSpecifications);
+    const randomNumber = Math.floor(Math.random() * 100);
+    if (randomNumber < 30) {
+      return await getTextTestNegation(req, res);
+    } else {
+      const gameType = "negation";
+      const nbToken = 100;
+      req.params = { gameType, nbToken };
+      const smallText = await textController.getSmallTextWithTokens(req, res);
+      return smallText;
+    }
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
-});
+};
 
-router.get("/getNumberSpecifications", async function (req, res) {
+const getTextTestNegation = async (req, res) => {
   try {
-    const numberSpecifications = await UserSentenceSpecification.count();
-    res.status(200).json(numberSpecifications);
+    // trouver un texte qui a le champ is_negation_specification à true
+    const text = await Text.findOne({
+      where: {
+        is_negation_specification_test: true,
+        is_active: true,
+      },
+      attributes: [
+        "id",
+        // "num",
+        // "origin",
+        // "is_negation_specification_test",
+        // "length",
+      ],
+      order: sequelize.literal("RAND()"),
+      include: [
+        {
+          model: Token,
+          attributes: ["id", "content", "position", "is_punctuation"],
+        },
+      ],
+    });
+    if (!text) {
+      return res.status(404).json({ error: "No more texts to process" });
+    }
+    text.tokens.sort((a, b) => a.position - b.position);
+    text.dataValues.sentence_positions = "1, 2, 3, 4";
+
+    res.status(200).json(text);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
-});
+};
 
-// TODO Verif du token user
-router.post("/sendResponse", async (req, res) => {
+const sendResponse = async (req, res) => {
   const { textId, userSentenceSpecifications, userId, responseNum } = req.body;
   const transaction = await sequelize.transaction();
-
+  console.log("sendreponse");
+  console.log(req.body);
   try {
     let pointsToAdd = 0,
       percentageToAdd = 0,
@@ -42,7 +75,7 @@ router.post("/sendResponse", async (req, res) => {
     let checkResult = null;
 
     const text = await Text.findOne({ where: { id: textId } });
-
+    console.log(textId);
     if (!text) {
       await transaction.rollback();
       return res
@@ -50,7 +83,7 @@ router.post("/sendResponse", async (req, res) => {
         .json({ success: false, message: "Text not found" });
     }
 
-    await text.increment('nb_of_treatments', { by: 1, transaction });
+    await text.increment("nb_of_treatments", { by: 1, transaction });
 
     if (text.is_negation_specification_test) {
       checkResult = await checkUserSelection(
@@ -97,7 +130,7 @@ router.post("/sendResponse", async (req, res) => {
       success = true;
 
       for (let spec of userSentenceSpecifications) {
-        const { id, ...specData } = spec; // Exclude id if it's not required
+        const { id, ...specData } = spec;
         await createUserSentenceSpecification(
           {
             ...specData,
@@ -140,7 +173,17 @@ router.post("/sendResponse", async (req, res) => {
     console.error("Error processing response:", error);
     res.status(500).json({ success: false, message: error.message });
   }
-});
+};
+
+const getAllSentenceSpecifications = async (req, res) => {
+  try {
+    const userSentenceSpecifications =
+      await UserSentenceSpecification.findAll();
+    res.status(200).json(userSentenceSpecifications);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
 
 const createUserSentenceSpecification = async (data, transaction) => {
   try {
@@ -230,4 +273,11 @@ const checkUserSelection = async (
   }
 };
 
-module.exports = router;
+module.exports = {
+  createUserSentenceSpecification,
+  checkUserSelection,
+  getAllSentenceSpecifications,
+  sendResponse,
+  getText,
+  getTextTestNegation,
+};

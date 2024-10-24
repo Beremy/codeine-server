@@ -491,7 +491,7 @@ const getTextTestPlausibility = async (req, res) => {
       return res.status(404).json({ error: "No more texts to process" });
     }
     text.tokens.sort((a, b) => a.position - b.position);
-
+    text.dataValues.sentence_positions = "1, 2, 3, 4";
     res.status(200).json(text);
   } catch (error) {
     res.status(500).json({ error: error.message });
