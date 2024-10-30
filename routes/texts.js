@@ -35,7 +35,6 @@ router.get(
   "/getTextWithTokensById/:textId",
   textController.getTextWithTokensById
 );
-router.get("/theme/:theme", textController.getTextsByTheme);
 router.get(
   "/getTextWithErrorValidatedNotPlayed/:userId",
   errorController.getTextWithErrorValidatedNotPlayed

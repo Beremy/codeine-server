@@ -1,4 +1,4 @@
-const { Text, Theme, Token, UserGameText, Sentence } = require("../models");
+const { Text, Token, UserGameText, Sentence } = require("../models");
 const { exec } = require("child_process");
 const { Sequelize } = require("sequelize");
 const Op = Sequelize.Op;
@@ -143,7 +143,6 @@ const getSmallTextWithTokens = async (req, res) => {
     let result = {
       id: text.id,
       num: text.num,
-      id_theme: text.id_theme,
       origin: text.origin,
       is_plausibility_test: text.is_plausibility_test,
       test_plausibility: text.test_plausibility,
@@ -194,7 +193,6 @@ const getTextWithTokensNotPlayed = async (req, res) => {
       attributes: [
         "id",
         "num",
-        "id_theme",
         "origin",
         "is_plausibility_test",
         "test_plausibility",
@@ -232,7 +230,6 @@ const getTextWithTokensByGameType = async (req, res) => {
       attributes: [
         "id",
         "num",
-        "id_theme",
         "origin",
         "is_plausibility_test",
         "test_plausibility",
@@ -285,7 +282,7 @@ const getAllTexts = async (req, res) => {
 const getTextById = async (req, res) => {
   try {
     const text = await Text.findByPk(req.params.id, {
-      attributes: { exclude: ["length, id_theme"] },
+      attributes: { exclude: ["length"] },
     });
     if (!text) {
       return res.status(404).json({ error: "Text not found" });
@@ -296,21 +293,21 @@ const getTextById = async (req, res) => {
   }
 };
 
-const getTextsByTheme = async (req, res) => {
-  try {
-    const themeId = req.params.theme;
-    const theme = await Theme.findOne({ where: { id: themeId } });
+// const getTextsByTheme = async (req, res) => {
+//   try {
+//     const themeId = req.params.theme;
+//     const theme = await Theme.findOne({ where: { id: themeId } });
 
-    if (!theme) {
-      return res.status(404).json({ error: "Theme not found" });
-    }
+//     if (!theme) {
+//       return res.status(404).json({ error: "Theme not found" });
+//     }
 
-    const texts = await Text.findAll({ where: { id_theme: theme.id } });
-    res.status(200).json(texts);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-};
+//     const texts = await Text.findAll({ where: { id_theme: theme.id } });
+//     res.status(200).json(texts);
+//   } catch (error) {
+//     res.status(500).json({ error: error.message });
+//   }
+// };
 
 const createText = async (req, res) => {
   try {
@@ -465,7 +462,6 @@ const getTextWithTokensById = async (req, res) => {
         "id",
         "num",
         "origin",
-        "id_theme",
         "is_plausibility_test",
         "test_plausibility",
         "is_hypothesis_specification_test",
@@ -499,7 +495,6 @@ const getTextWithTokensById = async (req, res) => {
 module.exports = {
   getAllTexts,
   getTextById,
-  getTextsByTheme,
   createText,
   updateText,
   deleteText,

@@ -1,11 +1,7 @@
 const { Model } = require("sequelize");
 
 module.exports = (sequelize, DataTypes) => {
-  class MessageMenu extends Model {
-    static associate(models) {
-      this.hasMany(models.Text, { foreignKey: "id_theme" });
-    }
-  }
+  class MessageMenu extends Model {}
   MessageMenu.init(
     {
       id: {

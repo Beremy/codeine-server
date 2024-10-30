@@ -1,11 +1,7 @@
 const { Model } = require("sequelize");
 
 module.exports = (sequelize, DataTypes) => {
-  class Text extends Model {
-    static associate(models) {
-      this.belongsTo(models.Theme, { foreignKey: "id_theme" });
-    }
-  }
+  class Text extends Model {}
   Text.init(
     {
       id: {

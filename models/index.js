@@ -7,7 +7,6 @@ const AchievementModel = require("./achievement.js");
 const SkinModel = require("./skin.js");
 const UserModel = require("./user.js");
 const TextModel = require("./text.js");
-const ThemeModel = require("./theme.js");
 const SentenceModel = require("./sentence.js");
 const MessageMenuModel = require("./messageMenu.js");
 const UserSentenceSpecificationModel = require("./userSentenceSpecification");
@@ -49,7 +48,6 @@ const Achievement = AchievementModel(sequelize, Sequelize.DataTypes);
 const Skin = SkinModel(sequelize, Sequelize.DataTypes);
 const User = UserModel(sequelize, Sequelize.DataTypes);
 const Text = TextModel(sequelize, Sequelize.DataTypes);
-const Theme = ThemeModel(sequelize, Sequelize.DataTypes);
 const Sentence = SentenceModel(sequelize, Sequelize.DataTypes);
 const Variable = VariableModel(sequelize, Sequelize.DataTypes);
 const UserSentenceSpecification = UserSentenceSpecificationModel(
@@ -94,7 +92,6 @@ const models = {
   Skin: Skin,
   UserSkin: UserSkin,
   Text: Text,
-  Theme: Theme,
   Sentence: Sentence,
   UserSentenceSpecification: UserSentenceSpecification,
   Token: Token,
