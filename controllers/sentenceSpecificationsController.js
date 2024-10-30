@@ -63,8 +63,6 @@ const getTextTestNegation = async (req, res) => {
 const sendResponse = async (req, res) => {
   const { textId, userSentenceSpecifications, userId, responseNum } = req.body;
   const transaction = await sequelize.transaction();
-  console.log("sendreponse");
-  console.log(req.body);
   try {
     let pointsToAdd = 0,
       percentageToAdd = 0,
@@ -75,7 +73,6 @@ const sendResponse = async (req, res) => {
     let checkResult = null;
 
     const text = await Text.findOne({ where: { id: textId } });
-    console.log(textId);
     if (!text) {
       await transaction.rollback();
       return res
@@ -203,7 +200,7 @@ const checkUserSelection = async (
   userSentenceSpecifications,
   gameType,
   positionErrorMargin = 3,
-  negationErrorMargin = 1
+  negationErrorMargin = 0
 ) => {
   try {
     const testSpecifications = await TestSpecification.findAll({
