@@ -50,20 +50,22 @@ const createUserTextRating = async (userTextRating, transaction) => {
   }
 };
 
-const createUserErrorDetail = async (userErrorDetail) => {
-  const { user_id, text_id, word_positions, vote_weight, content } =
-    userErrorDetail;
+const createUserErrorDetail = async (userErrorDetail, transaction = null) => {
+  const { user_id, text_id, word_positions, vote_weight, content } = userErrorDetail;
 
   try {
-    const newUserErrorDetail = await UserErrorDetail.create({
-      user_id: user_id,
-      text_id: text_id,
-      word_positions: word_positions,
-      vote_weight: vote_weight,
-      content: content,
-      is_test: false,
-      test_error_type_id: null,
-    });
+    const newUserErrorDetail = await UserErrorDetail.create(
+      {
+        user_id: user_id,
+        text_id: text_id,
+        word_positions: word_positions,
+        vote_weight: vote_weight,
+        content: content,
+        is_test: false,
+        test_error_type_id: null,
+      },
+      { transaction }
+    );
     return newUserErrorDetail;
   } catch (error) {
     console.error("Error in createUserErrorDetail:", error);

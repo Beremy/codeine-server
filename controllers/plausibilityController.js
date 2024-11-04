@@ -374,13 +374,16 @@ const sendResponse = async (req, res) => {
         );
       }
       for (let errorDetail of userErrorDetails) {
-        await createUserErrorDetail({
-          ...errorDetail,
-          user_id: userId,
-          text_id: textId,
-          vote_weight: user.trust_index,
-          content: errorDetail.content,
-        });
+        await createUserErrorDetail(
+          {
+            ...errorDetail,
+            user_id: userId,
+            text_id: textId,
+            vote_weight: user.trust_index,
+            content: errorDetail.content,
+          },
+          transaction
+        );
       }
 
       if (newUserTextRating) {
