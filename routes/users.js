@@ -73,7 +73,6 @@ router.put(
   userController.resetCatchProbability
 );
 
-// TODO mettre token ou token admin
 router.get("/:id", adminOrUserMiddleware, async function (req, res, next) {
   try {
     const user = await User.findByPk(req.user.id, {
