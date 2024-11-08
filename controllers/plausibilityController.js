@@ -22,7 +22,6 @@ const {
 const getText = async (req, res) => {
   try {
     const randomNumber = Math.floor(Math.random() * 100);
-    // TODO ici, mettre un appel à getTextTestPlausibility pour 20% autre % de cas
     const nbToken = 110;
 
     let text, group;
@@ -234,7 +233,6 @@ const sendResponse = async (req, res) => {
     userErrorDetails,
     userRateSelected,
     sentencePositions,
-    userId,
     userComment,
     responseNum,
   } = req.body;
@@ -248,11 +246,12 @@ const sendResponse = async (req, res) => {
   let correctPositions = [];
   let correctPlausibility = null;
   let groupId = null;
+  const userId = req.user.id;
   try {
     transaction = await sequelize.transaction();
     const textDetails = await getTextDetailsById(textId);
+    console.log(userId);
     const user = await getUserById(userId);
-
     if (!textDetails) {
       await transaction.rollback();
       return res

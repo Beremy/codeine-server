@@ -6,37 +6,15 @@ const {
   updateUserCoeffMulti,
   updateUserStats,
 } = require("../controllers/userController");
+const { userAuthMiddleware } = require("../middleware/authMiddleware");
 
-// const authMiddleware = require("../middleware/authMiddleware");
-
-// router.get("/protected-route", authMiddleware, (req, res) => {
-//   // Route protégée par l'authentification
-// });
-
-router.get("/:criminalId", async function (req, res) {
-  const criminalId = req.params.criminalId;
+router.get("/caughtByUserId", userAuthMiddleware, async function (req, res) {
   try {
-    const criminal = await Criminal.findOne({
-      where: {
-        id: criminalId,
-      },
-    });
-    if (!criminal) {
-      return res.status(404).json({ error: "Criminal not found" });
-    }
-    res.status(200).json(criminal);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-router.get("/caughtByUserId/:userId", async function (req, res) {
-  const userId = req.params.userId;
-  try {
+    const userId = req.user.id;
     const userCriminals = await UserCriminal.findAll({
       where: { user_id: userId },
       include: [{ model: Criminal }],
-      order: [["criminal_id", "DESC"]], // Ajouter l'option de tri ici
+      order: [["criminal_id", "DESC"]],
     });
     const criminals = userCriminals.map((uc) => uc.criminal);
     if (criminals.length === 0) {
@@ -87,10 +65,8 @@ async function checkCriminalAchievements(user, caughtCriminalsCount) {
   }
 }
 
-// TODO Verif du token user
-router.post("/catchCriminal", async function (req, res) {
-  const { userId } = req.body;
-
+router.post("/catchCriminal", userAuthMiddleware, async function (req, res) {
+  const userId = req.user.id;
   try {
     const user = await User.findOne({ where: { id: userId } });
     if (!user) {
@@ -146,7 +122,6 @@ router.post("/catchCriminal", async function (req, res) {
 
       // Calcul ID du prochain criminel à attraper
       const nextCriminalId = lastCaught ? lastCaught.criminal_id + 1 : 1;
-
       if (nextCriminalId > totalCriminalsCount) {
         return res.status(200).json({
           message: "No more criminals to catch",

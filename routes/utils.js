@@ -11,7 +11,7 @@ const utilsController = require("../controllers/utilsController.js");
 const path = require("path");
 const fs = require("fs");
 const { exec } = require("child_process");
-
+const { userAuthMiddleware } = require("../middleware/authMiddleware");
 const { adminAuthMiddleware } = require("../middleware/authMiddleware");
 
 const mailjet = Mailjet.apiConnect(
@@ -23,25 +23,25 @@ const mailjet = Mailjet.apiConnect(
   }
 );
 
-router.post("/refreshToken", async (req, res) => {
-  const { refreshToken } = req.body;
-  if (!refreshToken)
-    return res.status(401).json({ error: "Refresh Token is required" });
+// router.post("/refreshToken", async (req, res) => {
+//   const { refreshToken } = req.body;
+//   if (!refreshToken)
+//     return res.status(401).json({ error: "Refresh Token is required" });
 
-  try {
-    const userData = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
-    const newAccessToken = jwt.sign(
-      { id: userData.id, role: userData.role },
-      process.env.JWT_SECRET,
-      {
-        expiresIn: "24h",
-      }
-    );
-    res.json({ accessToken: newAccessToken });
-  } catch (error) {
-    return res.status(403).json({ error: "Invalid or Expired Refresh Token" });
-  }
-});
+//   try {
+//     const userData = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
+//     const newAccessToken = jwt.sign(
+//       { id: userData.id, role: userData.role },
+//       process.env.JWT_SECRET,
+//       {
+//         expiresIn: "24h",
+//       }
+//     );
+//     res.json({ accessToken: newAccessToken });
+//   } catch (error) {
+//     return res.status(403).json({ error: "Invalid or Expired Refresh Token" });
+//   }
+// });
 
 // **************** Dump data  ****************
 router.post("/dump/tables", adminAuthMiddleware, utilsController.dumpTables);
@@ -53,7 +53,6 @@ const generateResetToken = () => {
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-// TODO Verif du token user
 router.post("/requestReset", async (req, res) => {
   try {
     const { email } = req.body;
@@ -117,7 +116,6 @@ router.post("/requestReset", async (req, res) => {
   }
 });
 
-// TODO Verif du token user
 router.post("/resetPassword", async (req, res) => {
   const token = req.body.token;
   const newPassword = req.body.newPassword;
@@ -165,9 +163,8 @@ router.post("/resetPassword", async (req, res) => {
   }
 });
 
-// TODO Verif du token user
-router.post("/changePassword", async (req, res) => {
-  const userId = req.body.id;
+router.post("/changePassword", userAuthMiddleware, async (req, res) => {
+  const userId = req.user.id;
   const newPassword = req.body.newPassword;
   try {
     const transaction = await sequelize.transaction();

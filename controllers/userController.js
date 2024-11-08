@@ -570,9 +570,10 @@ async function checkAchievements(user, transaction) {
 }
 
 const incrementTutorialProgress = async (req, res) => {
-  const { id } = req.params;
+  const userId = req.user.id;
+
   try {
-    const user = await User.findOne({ where: { id } });
+    const user = await User.findOne({ where: userId });
     if (!user) {
       return res.status(404).json({ error: "User not found" });
     }
@@ -770,7 +771,7 @@ const updateUserStats = async (
 };
 
 const resetCatchProbability = async (req, res) => {
-  const { id } = req.params;
+  const { id } = req.user.id;
 
   try {
     const user = await User.findByPk(id);
@@ -824,7 +825,7 @@ const getMessageReadByUserId = async (req, res) => {
 };
 
 const updateMessageReadByUserId = async (req, res) => {
-  const userId = parseInt(req.params.id);
+  const userId = req.user.id;
   const { readStatus } = req.body;
 
   try {
@@ -902,8 +903,8 @@ const getUserDetailsById = async (req, res) => {
   }
 };
 
-const updateUserEmail = async (req, res) => {
-  const userId = req.params.id;
+const updateUserEmail = async (req, res, next) => {
+  const userId = req.user.id;
   const { email } = req.body;
 
   if (!email) {
@@ -917,7 +918,7 @@ const updateUserEmail = async (req, res) => {
   }
 
   try {
-    // Vérifier si l'e-mail est déjà pris par un autre utilisateur
+    // Vérifie si l'email est déjà utilisé par un autre utilisateur
     const emailExists = await User.findOne({ where: { email } });
     if (emailExists) {
       return res.status(409).send("Email already in use");

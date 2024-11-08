@@ -12,7 +12,6 @@ const getNumberOfTexts = async (req, res) => {
   }
 };
 
-// TODO faire getSmallText pour mythoTypo et mythoNo
 const getSmallTextWithTokens = async (req, res) => {
   try {
     // A remettre si on ajoute la mécanique de texte déjà joué
@@ -42,9 +41,7 @@ const getSmallTextWithTokens = async (req, res) => {
         is_negation_specification_test: false,
         is_active: true,
       },
-      attributes: [
-        "id",
-      ],
+      attributes: ["id"],
       order: Sequelize.literal("RAND()"),
     });
 
@@ -158,101 +155,6 @@ const getSmallTextWithTokens = async (req, res) => {
     };
 
     res.status(200).json(result);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-};
-
-const getTextWithTokensNotPlayed = async (req, res) => {
-  try {
-    const { userId, gameType } = req.params;
-    // chercher tous les textes déjà joués par cet utilisateur pour ce type de jeu
-    const userGameTexts = await UserGameText.findAll({
-      where: {
-        user_id: userId,
-        game_type: gameType,
-      },
-      attributes: ["text_id"],
-    });
-
-    // créer un tableau d'IDs de ces textes
-    const playedTextIds = userGameTexts.map(
-      (userGameText) => userGameText.text_id
-    );
-
-    // trouver un texte qui n'a pas encore été joué par cet utilisateur pour ce type de jeu
-    const text = await Text.findOne({
-      where: {
-        id: { [Op.notIn]: playedTextIds },
-        is_plausibility_test: false,
-        is_hypothesis_specification_test: false,
-        is_condition_specification_test: false,
-        is_negation_specification_test: false,
-        is_active: true,
-      },
-      attributes: [
-        "id",
-        "num",
-        "origin",
-        "is_plausibility_test",
-        "test_plausibility",
-        "is_hypothesis_specification_test",
-        "is_condition_specification_test",
-        "is_negation_specification_test",
-        "length",
-      ],
-      order: Sequelize.literal("RAND()"),
-      include: [
-        {
-          model: Token,
-          attributes: ["id", "content", "position", "is_punctuation"],
-        },
-      ],
-    });
-
-    if (!text) {
-      return res.status(404).json({ error: "No more texts to process" });
-    }
-    text.tokens.sort((a, b) => a.position - b.position);
-
-    res.status(200).json(text);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-};
-
-const getTextWithTokensByGameType = async (req, res) => {
-  try {
-    const text = await Text.findOne({
-      where: {
-        is_active: true,
-      },
-      attributes: [
-        "id",
-        "num",
-        "origin",
-        "is_plausibility_test",
-        "test_plausibility",
-        "is_hypothesis_specification_test",
-        "is_condition_specification_test",
-        "is_negation_specification_test",
-        "length",
-      ],
-      order: Sequelize.literal("RAND()"),
-      include: [
-        {
-          model: Token,
-          attributes: ["id", "content", "position", "is_punctuation"],
-        },
-      ],
-    });
-
-    if (!text) {
-      return res.status(404).json({ error: "No more texts to process" });
-    }
-    text.tokens.sort((a, b) => a.position - b.position);
-
-    res.status(200).json(text);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -460,14 +362,6 @@ const getTextWithTokensById = async (req, res) => {
       },
       attributes: [
         "id",
-        "num",
-        "origin",
-        "is_plausibility_test",
-        "test_plausibility",
-        "is_hypothesis_specification_test",
-        "is_condition_specification_test",
-        "is_negation_specification_test",
-        "length",
       ],
       include: [
         {
@@ -490,8 +384,6 @@ const getTextWithTokensById = async (req, res) => {
   }
 };
 
-
-
 module.exports = {
   getAllTexts,
   getTextById,
@@ -499,10 +391,7 @@ module.exports = {
   updateText,
   deleteText,
   getTextsByOrigin,
-  getTextWithTokensNotPlayed,
   getSmallTextWithTokens,
   getTextWithTokensById,
-  // getTextTestPlausibility,
-  getTextWithTokensByGameType,
   getNumberOfTexts,
 };

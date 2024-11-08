@@ -1,25 +1,19 @@
 var express = require("express");
 var router = express.Router();
-const { User } = require("../models"); // Import your User model
-const { authMiddleware } = require("../middleware/authMiddleware");
+const { User } = require("../models");
 const userController = require("../controllers/userController");
 const moment = require("moment");
-const { adminAuthMiddleware } = require("../middleware/authMiddleware");
+const {
+  adminAuthMiddleware,
+  adminOrUserMiddleware,
+  userAuthMiddleware,
+} = require("../middleware/authMiddleware");
 const bcrypt = require("bcryptjs");
 
-router.get("/protected-route", authMiddleware, (req, res) => {
-  // Route protégée par l'authentification
-});
-
-/* GET users listing. */
 router.get("/", adminAuthMiddleware, userController.getAllUsers);
 
-// router.put("/:id", async function (req, res, next) {
-
-// POST new user (signup)
 router.post("/signup", userController.signup);
 
-// POST user login (signin)
 router.post("/signin", userController.signin);
 
 // Récupération du rang de l'utilisateur
@@ -33,7 +27,8 @@ router.get(
 );
 
 router.put(
-  "/updateMessageReadByUserId/:id",
+  "/updateMessageReadByUserId",
+  userAuthMiddleware,
   userController.updateMessageReadByUserId
 );
 
@@ -60,21 +55,28 @@ router.get(
 );
 router.get("/getTopMonthlyWinners", userController.getTopMonthlyWinners);
 
-// TODO mettre token
-router.put("/:id/updateUserEmail", userController.updateUserEmail);
-
-// TODO mettre token
 router.put(
-  "/:id/incrementTutorialProgress",
+  "/updateUserEmail",
+  userAuthMiddleware,
+  userController.updateUserEmail
+);
+
+router.put(
+  "/incrementTutorialProgress",
+  userAuthMiddleware,
   userController.incrementTutorialProgress
 );
 
-router.put("/:id/resetCatchProbability", userController.resetCatchProbability);
+router.put(
+  "/:id/resetCatchProbability",
+  userAuthMiddleware,
+  userController.resetCatchProbability
+);
 
 // TODO mettre token ou token admin
-router.get("/:id", async function (req, res, next) {
+router.get("/:id", adminOrUserMiddleware, async function (req, res, next) {
   try {
-    const user = await User.findByPk(req.params.id, {
+    const user = await User.findByPk(req.user.id, {
       attributes: { exclude: ["password", "notifications_enabled"] },
     });
     if (!user) {
@@ -107,10 +109,10 @@ router.delete("/:id", async function (req, res, next) {
         points: 0,
         monthly_points: 0,
         trust_index: 0,
-        gender: 'homme',
-        status: 'autre',
+        gender: "homme",
+        status: "autre",
         created_at: null,
-        color_skin: 'clear',
+        color_skin: "clear",
         tutorial_progress: 0,
         catch_probability: 0,
         consecutiveDaysPlayed: 0,

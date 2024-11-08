@@ -1,7 +1,7 @@
 var express = require("express");
 var router = express.Router();
 const { UserCommentVotes } = require("../models");
-const { authMiddleware } = require("../middleware/authMiddleware");
+const { userAuthMiddleware } = require("../middleware/authMiddleware");
 
 const voteComment = async (req, res) => {
   // TODO A voir si je mets l'userId dans l'url ou dans le token
@@ -38,6 +38,6 @@ const voteComment = async (req, res) => {
   }
 };
 
-router.post("/voteComment", authMiddleware, voteComment);
+router.post("/voteComment", userAuthMiddleware, voteComment);
 
 module.exports = router;

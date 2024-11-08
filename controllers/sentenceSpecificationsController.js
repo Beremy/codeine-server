@@ -61,7 +61,8 @@ const getTextTestNegation = async (req, res) => {
 };
 
 const sendResponse = async (req, res) => {
-  const { textId, userSentenceSpecifications, userId, responseNum } = req.body;
+  const { textId, userSentenceSpecifications, responseNum } = req.body;
+  const userId = req.user.id;
   const transaction = await sequelize.transaction();
   try {
     let pointsToAdd = 0,

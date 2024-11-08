@@ -2,6 +2,7 @@ var express = require("express");
 var router = express.Router();
 const { Skin, UserSkin, User } = require("../models");
 const { Op } = require("sequelize");
+const { userAuthMiddleware } = require("../middleware/authMiddleware");
 const skinOrder = [
   "personnage",
   "veste",
@@ -19,58 +20,6 @@ const organizeSkinsByType = (skins) => {
     return result;
   }, {});
 };
-
-// router.post("/randomSkin/:userId", async function (req, res, next) {
-//   try {
-//     const userId = req.params.userId;
-//     const allSkins = await Skin.findAll();
-//     const user = await User.findByPk(userId);
-//     const ownedSkins = await UserSkin.findAll({ where: { user_id: userId } });
-//     const ownedSkinIds = ownedSkins.map((s) => s.skin_id);
-
-//     if (!user) {
-//       return res.status(404).json({ error: "User not found" });
-//     }
-
-//     let skinPool = [];
-//     const userGender = user.gender;
-
-//     for (let skin of allSkins) {
-//       if (
-//         !ownedSkinIds.includes(skin.id) &&
-//         (skin.gender === userGender ||
-//           skin.gender === "unisexe" ||
-//           !skin.gender)
-//       ) {
-//         // Vérification si le skin est déjà possédé et correspond au genre de l'utilisateur ou est unisexe
-//         skinPool = skinPool.concat(Array(11 - skin.rarity).fill(skin));
-//       }
-//     }
-
-//     if (skinPool.length === 0) {
-//       return res.status(200).json({ allSkinsUnlocked: true });
-//     }
-
-//     const randomIndex = Math.floor(Math.random() * skinPool.length);
-//     const selectedSkin = skinPool[randomIndex];
-
-//     const newSkin = await UserSkin.create({
-//       user_id: userId,
-//       skin_id: selectedSkin.id,
-//       equipped: false,
-//     });
-
-//     res.status(200).json({
-//       skin_id: selectedSkin.id,
-//       name: selectedSkin.name,
-//       image_url: selectedSkin.image_url,
-//       type: selectedSkin.type,
-//       rarity: selectedSkin.rarity
-//     });
-//   } catch (error) {
-//     res.status(500).json({ error: error.message });
-//   }
-// });
 
 /* GET skins listing. */
 router.get("/", async function (req, res, next) {
@@ -137,9 +86,9 @@ router.get("/equipped/:userId", async function (req, res, next) {
   }
 });
 
-router.put("/equip/:userId/:skinId", async function (req, res, next) {
+router.put("/equip/:skinId", userAuthMiddleware, async function (req, res, next) {
   try {
-    const userId = req.params.userId;
+    const userId = req.user.id;
     const skinId = req.params.skinId;
 
     // Déséquiper tous les skins du même type
@@ -178,9 +127,9 @@ router.put("/equip/:userId/:skinId", async function (req, res, next) {
   }
 });
 
-router.put("/unequip/:userId/:skinId", async function (req, res, next) {
+router.put("/unequip/:skinId", userAuthMiddleware, async function (req, res, next) {
   try {
-    const userId = req.params.userId;
+    const userId = req.user.id;
     const skinId = req.params.skinId;
 
     // Trouver et déséquiper le skin spécifié

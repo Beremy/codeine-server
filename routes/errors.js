@@ -1,13 +1,18 @@
 var express = require("express");
 var router = express.Router();
-const { ErrorType, UserErrorDetail, UserTypingErrors, Text } = require("../models");
+const {
+  ErrorType,
+  UserErrorDetail,
+  UserTypingErrors,
+} = require("../models");
 const { updateUserStats } = require("../controllers/userController");
 const { sequelize } = require("../service/db.js");
+const { userAuthMiddleware } = require("../middleware/authMiddleware");
 
-// TODO Verif du token user
-router.post("/sendResponse", async (req, res) => {
-  const { userErrorDetailId, selectedErrorType, userId } = req.body;
+router.post("/sendResponse", userAuthMiddleware, async (req, res) => {
+  const { userErrorDetailId, selectedErrorType } = req.body;
   const transaction = await sequelize.transaction();
+  const userId = req.user.id;
 
   try {
     const userErrorDetail = await UserErrorDetail.findOne({
