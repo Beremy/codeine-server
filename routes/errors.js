@@ -4,10 +4,93 @@ const {
   ErrorType,
   UserErrorDetail,
   UserTypingErrors,
+  Token,
+  Text,
 } = require("../models");
 const { updateUserStats } = require("../controllers/userController");
 const { sequelize } = require("../service/db.js");
 const { userAuthMiddleware } = require("../middleware/authMiddleware");
+const { Op } = require("sequelize");
+
+router.get("/getTextMythoTypo", async function (req, res, next) {
+  try {
+    const randomNumber = Math.floor(Math.random() * 100);
+    console.log(randomNumber);
+    if (randomNumber < 35) {
+      const userErrorDetail = await UserErrorDetail.findOne({
+        where: {
+          is_test: true,
+        },
+        include: {
+          model: Text,
+          include: [
+            {
+              model: Token,
+              attributes: ["id", "content", "position", "is_punctuation"],
+            },
+          ],
+        },
+        order: sequelize.literal("RAND()"),
+      });
+
+      if (!userErrorDetail) {
+        return res
+          .status(404)
+          .json({ error: "No text with test errors found" });
+      }
+
+      userErrorDetail.text.tokens.sort((a, b) => a.position - b.position);
+
+      res.status(200).json({
+        id: userErrorDetail.text.id,
+        num: userErrorDetail.text.num,
+        idUserErrorDetail: userErrorDetail.id,
+        positionErrorTokens: userErrorDetail.word_positions,
+        tokens: userErrorDetail.text.tokens,
+      });
+    } else {
+      const { userId } = req.params;
+
+      // Recherche d'une erreur non jouée par l'utilisateur avec vote_weight supérieur à 50
+      const userErrorDetail = await UserErrorDetail.findOne({
+        where: {
+          vote_weight: { [Op.gte]: 50 },
+        },
+        include: {
+          model: Text,
+          include: [
+            {
+              model: Token,
+              attributes: ["id", "content", "position", "is_punctuation"],
+            },
+          ],
+        },
+        order: sequelize.literal("RAND()"),
+      });
+
+      if (!userErrorDetail) {
+        return res
+          .status(404)
+          .json({ error: "No text with unplayed errors found" });
+      }
+
+      userErrorDetail.text.tokens.sort((a, b) => a.position - b.position);
+
+      // Renvoyer le texte avec une erreur non jouée
+      res.status(200).json({
+        id: userErrorDetail.text.id,
+        num: userErrorDetail.text.num,
+        vote_weight: userErrorDetail.vote_weight,
+        idUserErrorDetail: userErrorDetail.id,
+        userIdUserErrorDetail: userErrorDetail.userId,
+        positionErrorTokens: userErrorDetail.word_positions,
+        tokens: userErrorDetail.text.tokens,
+      });
+    }
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
 
 router.post("/sendResponse", userAuthMiddleware, async (req, res) => {
   const { userErrorDetailId, selectedErrorType } = req.body;

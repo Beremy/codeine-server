@@ -363,30 +363,13 @@ async function fetchSummaryFromWikipedia(title) {
 }
 
 // **************************************************************
-// TODO a sécuriser admin
-// router.put("/messageMenu", async function (req, res, next) {
-//   try {
-//     const existingMessageMenu = await MessageMenu.findByPk(1);
-//     if (existingMessageMenu) {
-//       existingMessageMenu.title = req.body.title;
-//       existingMessageMenu.message = req.body.message;
-//       existingMessageMenu.active = req.body.active;
-//       await existingMessageMenu.save();
-//       res.json(existingMessageMenu);
-//     } else {
-//       res.status(404).send("Message not found");
-//     }
-//   } catch (err) {
-//     next(err);
-//   }
-// });
 
 async function sendMail(toEmail, subject, textContent, htmlContent) {
   const request = mailjet.post("send", { version: "v3.1" }).request({
     Messages: [
       {
         From: {
-          Email: "bertrand.remy@inria.fr",
+          Email: "hostomytho@hotmail.com",
           Name: "HostoMytho",
         },
         To: [

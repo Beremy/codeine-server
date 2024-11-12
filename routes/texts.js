@@ -19,10 +19,10 @@ router.get(
   "/getTextWithTokensById/:textId",
   textController.getTextWithTokensById
 );
-router.get(
-  "/getTextWithErrorValidatedNotPlayed/:userId",
-  errorController.getTextWithErrorValidatedNotPlayed
-);
+// router.get(
+//   "/getTextWithErrorValidatedNotPlayed/:userId",
+//   errorController.getTextWithErrorValidatedNotPlayed
+// );
 router.get(
   "/getTextWithErrorValidated",
   errorController.getTextWithErrorValidated
