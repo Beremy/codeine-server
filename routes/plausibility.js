@@ -4,8 +4,7 @@ const { userAuthMiddleware } = require("../middleware/authMiddleware");
 
 const plausibilityController = require("../controllers/plausibilityController");
 
-// TODO Verif du token user
-router.post("/sendResponse", userAuthMiddleware, plausibilityController.sendResponse);
+router.post("/sendResponse", plausibilityController.sendResponse);
 
 router.get("/getErrorDetailTest/:textId", plausibilityController.getErrorDetailTest);
 

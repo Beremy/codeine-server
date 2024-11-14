@@ -235,6 +235,7 @@ const sendResponse = async (req, res) => {
     sentencePositions,
     userComment,
     responseNum,
+    userId
   } = req.body;
   let transaction;
   let pointsToAdd = 0;
@@ -246,9 +247,8 @@ const sendResponse = async (req, res) => {
   let correctPositions = [];
   let correctPlausibility = null;
   let groupId = null;
-  const userId = req.user.id;
   try {
-    transaction = await sequelize.transaction();
+  transaction = await sequelize.transaction();
     const textDetails = await getTextDetailsById(textId);
     console.log(userId);
     const user = await getUserById(userId);
