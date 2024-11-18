@@ -7,16 +7,20 @@ const {
 const { updateUserStats } = require("../controllers/userController.js");
 const { sequelize } = require("../service/db.js");
 const textController = require("./textController.js");
+const { getVariableFromCache } = require("../service/cache");
 
 const getText = async (req, res) => {
   try {
+    const percentage_test_mythono =
+      getVariableFromCache("percentage_test_mythono") || 30;
     const randomNumber = Math.floor(Math.random() * 100);
-    if (randomNumber < 30) {
+    if (randomNumber < percentage_test_mythono) {
       return await getTextTestNegation(req, res);
     } else {
       const gameType = "negation";
-      const nbToken = 100;
-      req.params = { gameType, nbToken };
+
+      req.params = { gameType };
+
       const smallText = await textController.getSmallTextWithTokens(req, res);
       return smallText;
     }
@@ -33,13 +37,7 @@ const getTextTestNegation = async (req, res) => {
         is_negation_specification_test: true,
         is_active: true,
       },
-      attributes: [
-        "id",
-        // "num",
-        // "origin",
-        // "is_negation_specification_test",
-        // "length",
-      ],
+      attributes: ["id"],
       order: sequelize.literal("RAND()"),
       include: [
         {
@@ -64,6 +62,11 @@ const sendResponse = async (req, res) => {
   const { textId, userSentenceSpecifications, responseNum } = req.body;
   const userId = req.user.id;
   const transaction = await sequelize.transaction();
+  const base_points_earned_mythono =
+    getVariableFromCache("base_points_earned_mythono") || 5;
+  const base_catchability_mythono =
+    getVariableFromCache("base_catchability_mythono") || 3;
+
   try {
     let pointsToAdd = 0,
       percentageToAdd = 0,
@@ -105,7 +108,7 @@ const sendResponse = async (req, res) => {
         if (responseNum < 6) {
           console.log("********** Suspicion de spam ************ ");
           console.log("user", userId);
-          pointsToAdd = 5;
+          pointsToAdd = base_points_earned_mythono;
           percentageToAdd = 0;
           trustIndexIncrement = -5;
         } else {
@@ -115,15 +118,15 @@ const sendResponse = async (req, res) => {
         }
       } else {
         additionalPoints = checkResult.testSpecifications.length;
-        pointsToAdd = 5 + additionalPoints;
-        percentageToAdd = 3;
+        pointsToAdd = base_points_earned_mythono + additionalPoints;
+        percentageToAdd = base_catchability_mythono;
         trustIndexIncrement = 2;
         success = true;
       }
     } else {
       additionalPoints = userSentenceSpecifications.length;
-      pointsToAdd = 5 + additionalPoints;
-      percentageToAdd = 3;
+      pointsToAdd = base_points_earned_mythono + additionalPoints;
+      percentageToAdd = base_catchability_mythono;
       trustIndexIncrement = 0;
       success = true;
 

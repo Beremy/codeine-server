@@ -1,5 +1,6 @@
 const { Variable } = require("../models");
 const { sequelize } = require("../service/db.js");
+const { refreshVariableInCache } = require("../service/cache");
 
 const getAllVariables = async (req, res) => {
   try {
@@ -39,13 +40,12 @@ const getVariableByKey = async (req, res) => {
         const variable = await Variable.findOne({ where: { key }, transaction });
   
         if (!variable) {
-          return res
-            .status(404)
-            .json({ error: `Variable with key '${key}' not found` });
+          return res.status(404).json({ error: `Variable with key '${key}' not found` });
         }
   
         variable.value = newValue;
         await variable.save({ transaction });
+        await refreshVariableInCache(key, newValue);
       }
   
       await transaction.commit();
@@ -55,6 +55,7 @@ const getVariableByKey = async (req, res) => {
       res.status(500).json({ error: error.message });
     }
   };
+  
 
 module.exports = {
   getAllVariables,

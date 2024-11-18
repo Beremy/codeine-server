@@ -6,7 +6,8 @@ var logger = require("morgan");
 const PORT = 3001;
 const { sequelize, connectToDb } = require("./service/db");
 const { cleanExpiredTokens } = require("./service/utils");
-var cron = require('node-cron');
+var cron = require("node-cron");
+const { initializeCache } = require("./service/cache");
 
 var indexRouter = require("./routes/index");
 var usersRouter = require("./routes/users");
@@ -30,22 +31,19 @@ var variables = require("./routes/variables");
 var app = express();
 app.use(cors());
 
-// // Si on veut restreindre l'accès:
-// const corsOptions = {
-//   origin: "http://localhost:3000", // Remplacez par l'URL de l'application client
-// };
-// app.use(cors(corsOptions));
-
-app.listen(PORT, "0.0.0.0", async () => {
-  console.log(`Server is running at http://localhost:${PORT}`);
-  await connectToDb();
+// Mise en cache des variables de l'application
+initializeCache().then(() => {
+  console.log("Variable cache initialized.");
+  app.listen(PORT, "0.0.0.0", async () => {
+    console.log(`Server is running at http://localhost:${PORT}`);
+    await connectToDb();
+  });
 });
 
-// Nettoyage des tokens expirés une fois par jour à minuit 
-cron.schedule('0 0 * * *', () => {
+// Nettoyage des tokens expirés une fois par jour à minuit
+cron.schedule("0 0 * * *", () => {
   cleanExpiredTokens();
 });
-// TODO Mettre l'appel du script month_end ici
 
 app.use(logger("dev"));
 app.use(express.json());

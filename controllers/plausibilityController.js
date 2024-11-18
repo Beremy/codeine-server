@@ -18,17 +18,28 @@ const {
   updateUserStats,
   getUserById,
 } = require("../controllers/userController");
+const { getVariableFromCache } = require("../service/cache");
 
 const getText = async (req, res) => {
   try {
     const randomNumber = Math.floor(Math.random() * 100);
-    const nbToken = 110;
+    const text_length_in_game =
+      getVariableFromCache("text_length_in_game") || 110;
+    const percentage_test_mythooupas =
+      getVariableFromCache("percentage_test_mythooupas") || 25;
+    const text_already_treated_mythooupas =
+      getVariableFromCache("text_already_treated_mythooupas") || 20;
 
+    const sumTextAlreadyTreated =
+      percentage_test_mythooupas + text_already_treated_mythooupas;
     let text, group;
 
-    if (randomNumber < 25) {
+    if (randomNumber < percentage_test_mythooupas) {
       return await getTextTestPlausibility(req, res);
-    } else if (randomNumber >= 25 && randomNumber < 45) {
+    } else if (
+      randomNumber >= percentage_test_mythooupas &&
+      randomNumber < sumTextAlreadyTreated
+    ) {
       // Choix d'un texte déjà joué tiré de GroupTextRating
       group = await GroupTextRating.findOne({
         order: Sequelize.literal("RAND()"),
@@ -137,13 +148,13 @@ const getText = async (req, res) => {
       let selectedSentences = [];
       let totalTokens = 0;
 
-      if (cumulativeTokens[cumulativeTokens.length - 1] < nbToken) {
+      if (cumulativeTokens[cumulativeTokens.length - 1] < text_length_in_game) {
         selectedSentences = [...sentences]; // Utiliser toutes les sentences
         totalTokens = cumulativeTokens[cumulativeTokens.length - 1]; // Total de tokens du texte
       } else {
         // Déterminer le maxStartIndex correctement sans utiliser startIndex dans le calcul
         let validStartIndexes = cumulativeTokens.findIndex(
-          (cumulative) => cumulative >= nbToken
+          (cumulative) => cumulative >= text_length_in_game
         );
         if (validStartIndexes === -1) {
           // Si aucun index valide n'est trouvé
@@ -165,19 +176,23 @@ const getText = async (req, res) => {
           // Sélectionner depuis la fin
           for (
             let i = sentences.length - 1;
-            i >= 0 && totalTokens < nbToken;
+            i >= 0 && totalTokens < text_length_in_game;
             i--
           ) {
             selectedSentences.unshift(sentences[i]); // Ajouter au début pour conserver l'ordre
             totalTokens += sentences[i].tokens.length;
-            if (totalTokens >= nbToken) break;
+            if (totalTokens >= text_length_in_game) break;
           }
         } else {
           // Sélectionner depuis le début
-          for (let i = 0; i < sentences.length && totalTokens < nbToken; i++) {
+          for (
+            let i = 0;
+            i < sentences.length && totalTokens < text_length_in_game;
+            i++
+          ) {
             selectedSentences.push(sentences[i]);
             totalTokens += sentences[i].tokens.length;
-            if (totalTokens >= nbToken) break;
+            if (totalTokens >= text_length_in_game) break;
           }
         }
       }
@@ -235,7 +250,7 @@ const sendResponse = async (req, res) => {
     sentencePositions,
     userComment,
     responseNum,
-    userId
+    userId,
   } = req.body;
   let transaction;
   let pointsToAdd = 0;
@@ -248,9 +263,12 @@ const sendResponse = async (req, res) => {
   let correctPlausibility = null;
   let groupId = null;
   try {
-  transaction = await sequelize.transaction();
+    transaction = await sequelize.transaction();
     const textDetails = await getTextDetailsById(textId);
-    console.log(userId);
+    const basePointsEarnedMythoOuPas =
+      getVariableFromCache("base_points_earned_mythooupas") || 14;
+    const base_catchability_mythooupas =
+      getVariableFromCache("base_catchability_mythooupas") || 5;
     const user = await getUserById(userId);
     if (!textDetails) {
       await transaction.rollback();
@@ -285,8 +303,8 @@ const sendResponse = async (req, res) => {
         correctPlausibility = checkResult.correctPlausibility;
       } else if (noErrorSpecified || noErrorInDatabase) {
         if (checkResult.testPlausibilityPassed) {
-          pointsToAdd = 14;
-          percentageToAdd = 5;
+          pointsToAdd = basePointsEarnedMythoOuPas;
+          percentageToAdd = base_catchability_mythooupas;
           trustIndexIncrement = 1;
           success = true;
         } else {
@@ -309,8 +327,8 @@ const sendResponse = async (req, res) => {
           !checkResult.isErrorDetailsCorrect &&
           checkResult.testPlausibilityPassed
         ) {
-          pointsToAdd = 14;
-          percentageToAdd = 5;
+          pointsToAdd = basePointsEarnedMythoOuPas;
+          percentageToAdd = base_catchability_mythooupas;
           trustIndexIncrement = 1;
           success = false;
           message = `Vous avez bien estimé la plausibilité, mais voilà les erreurs qu'il fallait trouver :\n${correctSpecification}`;
@@ -328,8 +346,8 @@ const sendResponse = async (req, res) => {
           checkResult.isErrorDetailsCorrect &&
           !checkResult.testPlausibilityPassed
         ) {
-          pointsToAdd = 14 + userErrorDetails.length;
-          percentageToAdd = 5;
+          pointsToAdd = basePointsEarnedMythoOuPas + userErrorDetails.length;
+          percentageToAdd = base_catchability_mythooupas;
           trustIndexIncrement = 1;
           success = false;
           message =
@@ -339,8 +357,9 @@ const sendResponse = async (req, res) => {
           checkResult.isErrorDetailsCorrect &&
           checkResult.testPlausibilityPassed
         ) {
-          pointsToAdd = 16 + userErrorDetails.length;
-          percentageToAdd = 6;
+          pointsToAdd =
+            basePointsEarnedMythoOuPas + 2 + userErrorDetails.length;
+          percentageToAdd = base_catchability_mythooupas + 1;
           trustIndexIncrement = 2;
           success = true;
         }
@@ -411,9 +430,11 @@ const sendResponse = async (req, res) => {
             success = Math.abs(averagePlausibility - userRateSelected) <= 13;
             pointsToAdd = success
               ? 14 + userErrorDetails.length
-              : 5 + userErrorDetails.length;
+              : base_catchability_mythooupas + userErrorDetails.length;
             trustIndexIncrement = success ? 1 : -1;
-            percentageToAdd = success ? 5 : 2;
+            percentageToAdd = success
+              ? base_catchability_mythooupas
+              : base_catchability_mythooupas / 2;
             message = success
               ? "Les autres enquêteurs sont d'accord avec vous."
               : "Les autres enquêteurs ont, de leurs côtés, donné des réponses différentes.";
@@ -421,7 +442,7 @@ const sendResponse = async (req, res) => {
         } else {
           // Nouveau groupe
           pointsToAdd = 14 + userErrorDetails.length;
-          percentageToAdd = 5;
+          percentageToAdd = base_catchability_mythooupas;
           trustIndexIncrement = 0;
         }
       }

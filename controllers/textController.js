@@ -2,6 +2,7 @@ const { Text, Token, UserGameText, Sentence } = require("../models");
 const { exec } = require("child_process");
 const { Sequelize } = require("sequelize");
 const Op = Sequelize.Op;
+const { getVariableFromCache } = require("../service/cache");
 
 const getNumberOfTexts = async (req, res) => {
   try {
@@ -14,9 +15,10 @@ const getNumberOfTexts = async (req, res) => {
 
 const getSmallTextWithTokens = async (req, res) => {
   try {
-    // A remettre si on ajoute la mécanique de texte déjà joué
-    // const { userId, gameType } = req.params;
-    const { gameType, nbToken } = req.params;
+    const { gameType } = req.params;
+
+    const nbToken = getVariableFromCache("text_length_in_game") || 110;
+
     // chercher tous les textes déjà joués par cet utilisateur pour ce type de jeu
     const userGameTexts = await UserGameText.findAll({
       where: {
@@ -360,9 +362,7 @@ const getTextWithTokensById = async (req, res) => {
       where: {
         id: textId,
       },
-      attributes: [
-        "id",
-      ],
+      attributes: ["id"],
       include: [
         {
           model: Token,

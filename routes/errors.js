@@ -11,12 +11,14 @@ const { updateUserStats } = require("../controllers/userController");
 const { sequelize } = require("../service/db.js");
 const { userAuthMiddleware } = require("../middleware/authMiddleware");
 const { Op } = require("sequelize");
+const { getVariableFromCache } = require("../service/cache");
 
 router.get("/getTextMythoTypo", async function (req, res, next) {
   try {
+    const percentage_test_mythotypo =
+    getVariableFromCache("percentage_test_mythotypo") || 30;
     const randomNumber = Math.floor(Math.random() * 100);
-    console.log(randomNumber);
-    if (randomNumber < 35) {
+    if (randomNumber < percentage_test_mythotypo) {
       const userErrorDetail = await UserErrorDetail.findOne({
         where: {
           is_test: true,
@@ -98,6 +100,11 @@ router.post("/sendResponse", userAuthMiddleware, async (req, res) => {
   const userId = req.user.id;
 
   try {
+    const base_points_earned_mythotypo =
+      getVariableFromCache("base_points_earned_mythotypo") || 3;
+    const base_catchability_mythotypo =
+      getVariableFromCache("base_catchability_mythotypo") || 3;
+
     const userErrorDetail = await UserErrorDetail.findOne({
       where: { id: userErrorDetailId },
       include: [
@@ -125,8 +132,8 @@ router.post("/sendResponse", userAuthMiddleware, async (req, res) => {
       isUserCorrect = selectedErrorType === correctAnswerId;
 
       if (isUserCorrect) {
-        pointsToAdd = 3;
-        percentageToAdd = 3;
+        pointsToAdd = base_points_earned_mythotypo;
+        percentageToAdd = base_catchability_mythotypo;
         trustIndexIncrement = 1;
       } else {
         pointsToAdd = 0;
@@ -136,8 +143,8 @@ router.post("/sendResponse", userAuthMiddleware, async (req, res) => {
       }
       success = isUserCorrect;
     } else {
-      pointsToAdd = 3;
-      percentageToAdd = 3;
+      pointsToAdd = base_points_earned_mythotypo;
+      percentageToAdd = base_catchability_mythotypo;
       trustIndexIncrement = 0;
       success = true;
 
