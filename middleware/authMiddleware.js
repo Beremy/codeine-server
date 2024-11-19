@@ -73,17 +73,15 @@ const adminOrUserMiddleware = (req, res, next) => {
       }
 
       const userIdFromToken = decoded.id;
-      const userIdFromParams = req.params.id;
+      const userIdFromParams = JSON.parse(req.params.id);
 
       if (userIdFromToken === userIdFromParams) {
         return next();
       } else {
-        return res
-          .status(403)
-          .json({
-            error:
-              "Accès refusé. Vous n'êtes pas autorisé à accéder aux informations d'un autre utilisateur.",
-          });
+        return res.status(403).json({
+          error:
+            "Accès refusé. Vous n'êtes pas autorisé à accéder aux informations d'un autre utilisateur.",
+        });
       }
     } catch (error) {
       console.error("JWT Verification Error:", error);
