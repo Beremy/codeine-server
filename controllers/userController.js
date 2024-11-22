@@ -14,12 +14,12 @@ const moment = require("moment");
 const { Op } = require("sequelize");
 const skinOrder = [
   "personnage",
-  "veste",
-  "stetho",
-  "visage",
-  "cheveux",
-  "chapeau",
-  "lunettes",
+  "Vestes",
+  "Accessoires",
+  "Visages",
+  "Cheveux",
+  "Chapeaux",
+  "Lunettes",
 ];
 const { getRandomSkin } = require("../controllers/skinsController");
 
