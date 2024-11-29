@@ -75,7 +75,7 @@ router.put(
 
 router.get("/:id", adminOrUserMiddleware, async function (req, res, next) {
   try {
-    const user = await User.findByPk(req.user.id, {
+    const user = await User.findByPk(req.params.id, {
       attributes: { exclude: ["password", "notifications_enabled"] },
     });
     if (!user) {
