@@ -429,8 +429,8 @@ const sendResponse = async (req, res) => {
             );
             success = Math.abs(averagePlausibility - userRateSelected) <= 13;
             pointsToAdd = success
-              ? 14 + userErrorDetails.length
-              : base_catchability_mythooupas + userErrorDetails.length;
+              ? basePointsEarnedMythoOuPas + userErrorDetails.length
+              : basePointsEarnedMythoOuPas + userErrorDetails.length;
             trustIndexIncrement = success ? 1 : -1;
             percentageToAdd = success
               ? base_catchability_mythooupas
@@ -441,7 +441,7 @@ const sendResponse = async (req, res) => {
           }
         } else {
           // Nouveau groupe
-          pointsToAdd = 14 + userErrorDetails.length;
+          pointsToAdd = basePointsEarnedMythoOuPas + userErrorDetails.length;
           percentageToAdd = base_catchability_mythooupas;
           trustIndexIncrement = 0;
         }

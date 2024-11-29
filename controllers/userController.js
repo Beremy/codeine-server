@@ -676,10 +676,15 @@ const updateUserStats = async (
     let adjustedPercentageToAdd = 0;
 
     // Si malus, on ne prend pas en compte le nb de criminels arrêtés
-    if (!isPenalty && userTrust > 30) {
-      const decayRate = 0.14;
-      adjustedPercentageToAdd =
-        percentageToAdd * Math.exp(-decayRate * criminalsCount);
+
+    if (!isPenalty) {
+      if (userTrust < 30) {
+        adjustedPercentageToAdd = 0;
+      } else if (userTrust > 30) {
+        const decayRate = 0.14;
+        adjustedPercentageToAdd =
+          percentageToAdd * Math.exp(-decayRate * criminalsCount);
+      }
     } else {
       adjustedPercentageToAdd = percentageToAdd;
     }
