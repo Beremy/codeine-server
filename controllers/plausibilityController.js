@@ -139,6 +139,7 @@ const getText = async (req, res) => {
       let totalTokensBySentence = sentences.map(
         (sentence) => sentence.tokens.length
       );
+
       // Calculer le total cumulatif de tokens pour identifier les points de départ possibles
       let cumulativeTokens = totalTokensBySentence.reduce((acc, curr, i) => {
         acc.push((acc[i - 1] || 0) + curr);
@@ -153,27 +154,26 @@ const getText = async (req, res) => {
         totalTokens = cumulativeTokens[cumulativeTokens.length - 1]; // Total de tokens du texte
       } else {
         // Déterminer le maxStartIndex correctement sans utiliser startIndex dans le calcul
-        let validStartIndexes = cumulativeTokens.findIndex(
-          (cumulative) => cumulative >= text_length_in_game
-        );
-        if (validStartIndexes === -1) {
-          // Si aucun index valide n'est trouvé
+        const validStartIndexes = cumulativeTokens
+          .map((cumulative, idx) =>
+            cumulative >= text_length_in_game ? idx : -1
+          )
+          .filter((idx) => idx !== -1);
+
+        if (validStartIndexes.length === 0) {
           return res
             .status(404)
             .json({ error: "Cannot find a suitable start position" });
         }
 
-        // Le maxStartIndex est maintenant l'index du dernier élément qui peut servir de point de départ valide
-        let maxStartIndex =
-          validStartIndexes < sentences.length
-            ? validStartIndexes
-            : sentences.length - 1;
+        const randomValidIndex =
+          validStartIndexes[
+            Math.floor(Math.random() * validStartIndexes.length)
+          ];
+        const startIndex = randomValidIndex;
 
-        let startIndex = Math.floor(Math.random() * (maxStartIndex + 1));
         let startFromEnd = Math.random() < 0.5; // 50% chance de commencer par la fin
-
         if (startFromEnd) {
-          // Sélectionner depuis la fin
           for (
             let i = sentences.length - 1;
             i >= 0 && totalTokens < text_length_in_game;
@@ -184,9 +184,8 @@ const getText = async (req, res) => {
             if (totalTokens >= text_length_in_game) break;
           }
         } else {
-          // Sélectionner depuis le début
           for (
-            let i = 0;
+            let i = startIndex;
             i < sentences.length && totalTokens < text_length_in_game;
             i++
           ) {
@@ -284,6 +283,7 @@ const sendResponse = async (req, res) => {
     });
 
     if (textDetails.is_plausibility_test) {
+
       let checkResult = await checkUserSelectionPlausibility(
         textId,
         userErrorDetails,
@@ -365,32 +365,18 @@ const sendResponse = async (req, res) => {
         }
       }
     } else {
-      const { newUserTextRating, isNewGroup } = await createUserTextRating(
-        {
-          user_id: userId,
-          text_id: textId,
-          plausibility: userRateSelected,
-          vote_weight: user.trust_index,
-          sentence_positions: sentencePositions,
-        },
-        transaction
-      );
-
-      let existingComments = await UserCommentsGroupTextRating.findOne({
-        where: { group_id: newUserTextRating.group_id },
-        transaction: transaction,
-      });
-
-      if (userComment) {
-        await UserCommentsGroupTextRating.create(
+      const { newUserTextRating, isNewGroup, group } =
+        await createUserTextRating(
           {
             user_id: userId,
-            group_id: newUserTextRating.group_id,
-            comment: userComment,
+            text_id: textId,
+            plausibility: userRateSelected,
+            vote_weight: user.trust_index,
+            sentence_positions: sentencePositions,
           },
-          { transaction: transaction }
+          transaction
         );
-      }
+
       for (let errorDetail of userErrorDetails) {
         await createUserErrorDetail(
           {
@@ -405,16 +391,24 @@ const sendResponse = async (req, res) => {
       }
 
       if (newUserTextRating) {
-        if (!isNewGroup) {
-          if (existingComments) {
-            groupId = newUserTextRating.group_id;
-          }
+        groupId = newUserTextRating.group_id;
 
-          let allRatingsForGroup = await UserTextRating.findAll({
-            where: { group_id: newUserTextRating.group_id },
+        if (isNewGroup) {
+
+          // Initialiser les valeurs dans `group`
+          group.average_plausibility = userRateSelected;
+          group.votes_count = 1;
+          await group.save({ transaction });
+        } else {
+
+          // Récupérer tous les votes pour ce groupe
+          const allRatingsForGroup = await UserTextRating.findAll({
+            where: { group_id: groupId },
             transaction: transaction,
           });
-          if (allRatingsForGroup.length > 1) {
+
+          if (allRatingsForGroup.length > 0) {
+            // Calcul de la moyenne pondérée pour comparaison (sans inclure le dernier vote)
             const totalWeight = allRatingsForGroup.reduce(
               (acc, rating) => acc + rating.vote_weight,
               0
@@ -424,10 +418,14 @@ const sendResponse = async (req, res) => {
                 acc + parseFloat(rating.plausibility) * rating.vote_weight,
               0
             );
+
             averagePlausibility = Math.round(
               totalWeight > 0 ? weightedSum / totalWeight : 0
             );
+
+            // Comparer la note utilisateur avec cette moyenne
             success = Math.abs(averagePlausibility - userRateSelected) <= 13;
+
             pointsToAdd = success
               ? basePointsEarnedMythoOuPas + userErrorDetails.length
               : basePointsEarnedMythoOuPas + userErrorDetails.length;
@@ -438,12 +436,37 @@ const sendResponse = async (req, res) => {
             message = success
               ? "Les autres enquêteurs sont d'accord avec vous."
               : "Les autres enquêteurs ont, de leurs côtés, donné des réponses différentes.";
+
+            // Inclure le dernier vote dans le calcul pour la mise à jour en BDD
+            const totalWeightWithLastVote = totalWeight + user.trust_index;
+            const weightedSumWithLastVote =
+              weightedSum + userRateSelected * user.trust_index;
+
+            const newAveragePlausibility = Math.round(
+              totalWeightWithLastVote > 0
+                ? weightedSumWithLastVote / totalWeightWithLastVote
+                : 0
+            );
+
+            // Mettre à jour directement `group`
+            group.average_plausibility = newAveragePlausibility;
+            group.votes_count = allRatingsForGroup.length + 1;
+            await group.save({ transaction });
           }
-        } else {
-          // Nouveau groupe
-          pointsToAdd = basePointsEarnedMythoOuPas + userErrorDetails.length;
-          percentageToAdd = base_catchability_mythooupas;
-          trustIndexIncrement = 0;
+        }
+
+        // Enregistrer les détails des erreurs utilisateur
+        for (let errorDetail of userErrorDetails) {
+          await createUserErrorDetail(
+            {
+              ...errorDetail,
+              user_id: userId,
+              text_id: textId,
+              vote_weight: user.trust_index,
+              content: errorDetail.content,
+            },
+            transaction
+          );
         }
       }
     }

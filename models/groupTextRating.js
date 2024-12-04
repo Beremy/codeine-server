@@ -22,6 +22,13 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.STRING,
         allowNull: false,
       },
+      average_plausibility: {
+        type: DataTypes.INTEGER,
+      },
+      votes_count: {
+        type: DataTypes.INTEGER,
+        defaultValue: 1,
+      },
       created_at: {
         type: DataTypes.DATE,
         defaultValue: DataTypes.NOW,

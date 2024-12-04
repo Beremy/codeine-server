@@ -38,14 +38,6 @@ module.exports = (sequelize, DataTypes) => {
         allowNull: true,
         defaultValue: "",
       },
-      // is_hypothesis_specification_test: {
-      //   type: DataTypes.BOOLEAN,
-      //   defaultValue: false,
-      // },
-      // is_condition_specification_test: {
-      //   type: DataTypes.BOOLEAN,
-      //   defaultValue: false,
-      // },
       is_negation_specification_test: {
         type: DataTypes.BOOLEAN,
         defaultValue: false,
@@ -68,7 +60,9 @@ module.exports = (sequelize, DataTypes) => {
     {
       sequelize,
       modelName: "texts",
-      timestamps: false,
+      timestamps: true,
+      createdAt: "created_at",
+      updatedAt: false,
     }
   );
   return Text;

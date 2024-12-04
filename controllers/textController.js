@@ -3,6 +3,7 @@ const { exec } = require("child_process");
 const { Sequelize } = require("sequelize");
 const Op = Sequelize.Op;
 const { getVariableFromCache } = require("../service/cache");
+const moment = require("moment");
 
 const getNumberOfTexts = async (req, res) => {
   try {
@@ -174,6 +175,7 @@ const getAllTexts = async (req, res) => {
       return {
         ...text.toJSON(),
         content: content,
+        created_at: text.created_at.toISOString().split("T")[0],
       };
     });
 
@@ -191,6 +193,10 @@ const getTextById = async (req, res) => {
     if (!text) {
       return res.status(404).json({ error: "Text not found" });
     }
+    text.dataValues.created_at = moment(text.created_at)
+    .locale("fr")
+    .format("DD MMMM YYYY");
+
     res.status(200).json(text);
   } catch (error) {
     res.status(500).json({ error: error.message });

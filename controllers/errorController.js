@@ -26,6 +26,8 @@ const createUserTextRating = async (userTextRating, transaction) => {
         {
           text_id: text_id,
           sentence_positions: sentence_positions,
+          average_plausibility: 0,
+          votes_count: 0,
         },
         { transaction: transaction }
       );
@@ -43,7 +45,7 @@ const createUserTextRating = async (userTextRating, transaction) => {
       },
       { transaction: transaction }
     );
-    return { newUserTextRating, isNewGroup };
+    return { newUserTextRating, isNewGroup, group };
   } catch (error) {
     console.error("Error in createUserTextRating:", error);
     throw error;
@@ -51,7 +53,8 @@ const createUserTextRating = async (userTextRating, transaction) => {
 };
 
 const createUserErrorDetail = async (userErrorDetail, transaction = null) => {
-  const { user_id, text_id, word_positions, vote_weight, content } = userErrorDetail;
+  const { user_id, text_id, word_positions, vote_weight, content } =
+    userErrorDetail;
 
   try {
     const newUserErrorDetail = await UserErrorDetail.create(
