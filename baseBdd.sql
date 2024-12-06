@@ -160,16 +160,18 @@ UNLOCK TABLES;
 
 DROP TABLE IF EXISTS `group_text_rating`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8 */;
+/*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `group_text_rating` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `text_id` int(11) NOT NULL,
   `sentence_positions` varchar(255) NOT NULL,
+  `average_plausibility` int(11) DEFAULT NULL,
+  `votes_count` int(11) DEFAULT 1,
   `created_at` datetime DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `text_id` (`text_id`),
   CONSTRAINT `group_text_rating_ibfk_1` FOREIGN KEY (`text_id`) REFERENCES `texts` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=545 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=546 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
