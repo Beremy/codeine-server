@@ -47,6 +47,11 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.INTEGER,
         defaultValue: false,
       },
+      reason_for_type: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+        defaultValue: "",
+      },
     },
     {
       sequelize,
