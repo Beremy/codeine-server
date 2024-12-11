@@ -34,6 +34,9 @@ module.exports = (sequelize, DataTypes) => {
           key: "id",
         },
       },
+      weight: {
+        type: DataTypes.INTEGER,
+      },
     },
     {
       sequelize,

@@ -676,7 +676,6 @@ const updateUserStats = async (
     let adjustedPercentageToAdd = 0;
 
     // Si malus, on ne prend pas en compte le nb de criminels arrêtés
-
     if (!isPenalty) {
       if (userTrust < 30) {
         adjustedPercentageToAdd = 0;
@@ -762,7 +761,7 @@ const updateUserStats = async (
 
     return {
       newPoints: user.points,
-      newCatchProbability: Math.round(parseFloat(user.catch_probability)), // Arrondir à l'entier
+      newCatchProbability: Math.round(parseFloat(user.catch_probability)), // Arrondi à l'entier
       newTrustIndex: user.trust_index,
       newCoeffMulti: user.coeffMulti,
       newAchievements,

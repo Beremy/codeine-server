@@ -2,13 +2,9 @@ const { UserErrorDetail } = require("../models");
 const { sequelize } = require("../service/db.js");
 
 const createErrorTest = async (req, res) => {
-  console.log("************ createErrorTest ************");
   const transaction = await sequelize.transaction();
   try {
     const errorTest = req.body;
-
-    console.log("errorTest");
-    console.log(errorTest);
 
     const newErrorTest = await UserErrorDetail.create(
       {
@@ -24,24 +20,17 @@ const createErrorTest = async (req, res) => {
     );
 
     await transaction.commit();
-    console.log("Transaction validée");
     return res.status(201).json(newErrorTest);
   } catch (error) {
     console.error("Error in createErrorTest:", error);
 
     await transaction.rollback();
-    console.log("Transaction annulée");
-
     res.status(500).json({ error: error.message });
   }
 };
 
 
 const getErrorTestByTextId = async (req, res) => {
-  console.log("************ getErrorTestByTextId ************");
-  console.log("req.params.textId");
-  console.log(req.params.textId);
-
   try {
     const textId = parseInt(req.params.textId);
     const userGameTexts = await UserErrorDetail.findAll({
@@ -58,10 +47,6 @@ const getErrorTestByTextId = async (req, res) => {
 };
 
 const getErrorTestById = async (req, res) => {
-  console.log("************ getErrorTestById ************");
-  console.log("req.params.errorId");
-  console.log(req.params.errorId);
-
   try {
     const errorId = parseInt(req.params.errorId);
     const userErrorDetail = await UserErrorDetail.findOne({

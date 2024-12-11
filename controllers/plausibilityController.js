@@ -365,13 +365,18 @@ const sendResponse = async (req, res) => {
         }
       }
     } else {
+      const baseWeight = user.trust_index;
+      const specificationWeight =
+        user.status === "medecin"
+          ? baseWeight + baseWeight * 0.3
+          : baseWeight;
       const { newUserTextRating, isNewGroup, group } =
         await createUserTextRating(
           {
             user_id: userId,
             text_id: textId,
             plausibility: userRateSelected,
-            vote_weight: user.trust_index,
+            vote_weight: specificationWeight,
             sentence_positions: sentencePositions,
           },
           transaction
@@ -383,7 +388,7 @@ const sendResponse = async (req, res) => {
             ...errorDetail,
             user_id: userId,
             text_id: textId,
-            vote_weight: user.trust_index,
+            vote_weight: specificationWeight,
             content: errorDetail.content,
           },
           transaction
@@ -462,7 +467,7 @@ const sendResponse = async (req, res) => {
               ...errorDetail,
               user_id: userId,
               text_id: textId,
-              vote_weight: user.trust_index,
+              vote_weight: specificationWeight,
               content: errorDetail.content,
             },
             transaction

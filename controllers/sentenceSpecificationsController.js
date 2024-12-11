@@ -4,7 +4,7 @@ const {
   Text,
   Token,
 } = require("../models");
-const { updateUserStats } = require("../controllers/userController.js");
+const { updateUserStats, getUserById } = require("../controllers/userController.js");
 const { sequelize } = require("../service/db.js");
 const textController = require("./textController.js");
 const { getVariableFromCache } = require("../service/cache");
@@ -76,6 +76,7 @@ const sendResponse = async (req, res) => {
     let additionalPoints = 0;
     let checkResult = null;
 
+    const user = await getUserById(userId);
     const text = await Text.findOne({ where: { id: textId } });
     if (!text) {
       await transaction.rollback();
@@ -132,9 +133,16 @@ const sendResponse = async (req, res) => {
 
       for (let spec of userSentenceSpecifications) {
         const { id, ...specData } = spec;
+        const baseWeight = user.trust_index;
+        const specificationWeight =
+          user.status === "medecin"
+            ? baseWeight + baseWeight * 0.3
+            : baseWeight;
+
         await createUserSentenceSpecification(
           {
             ...specData,
+            specification_weight: specificationWeight,
           },
           transaction
         );

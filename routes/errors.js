@@ -7,7 +7,10 @@ const {
   Token,
   Text,
 } = require("../models");
-const { updateUserStats } = require("../controllers/userController");
+const {
+  updateUserStats,
+  getUserById,
+} = require("../controllers/userController");
 const { sequelize } = require("../service/db.js");
 const { userAuthMiddleware } = require("../middleware/authMiddleware");
 const { Op } = require("sequelize");
@@ -16,7 +19,7 @@ const { getVariableFromCache } = require("../service/cache");
 router.get("/getTextMythoTypo", async function (req, res, next) {
   try {
     const percentage_test_mythotypo =
-    getVariableFromCache("percentage_test_mythotypo") || 30;
+      getVariableFromCache("percentage_test_mythotypo") || 30;
     const randomNumber = Math.floor(Math.random() * 100);
     if (randomNumber < percentage_test_mythotypo) {
       const userErrorDetail = await UserErrorDetail.findOne({
@@ -139,7 +142,14 @@ router.post("/sendResponse", userAuthMiddleware, async (req, res) => {
         pointsToAdd = 0;
         percentageToAdd = 0;
         trustIndexIncrement = -1;
-        message = getCorrectionMessage(userErrorDetail.test_error_type_id);
+        if (
+          userErrorDetail.reason_for_type &&
+          userErrorDetail.reason_for_type.trim() !== ""
+        ) {
+          message = userErrorDetail.reason_for_type;
+        } else {
+          message = getCorrectionMessage(userErrorDetail.test_error_type_id);
+        }
       }
       success = isUserCorrect;
     } else {
@@ -186,19 +196,26 @@ router.post("/sendResponse", userAuthMiddleware, async (req, res) => {
   }
 });
 
+// Par contre c'est bizarre, quand je crée le UserTypingErrors, le weight reste
 const createUserTypingError = async (
   userId,
   userErrorDetailId,
   errorTypeId
 ) => {
   const transaction = await sequelize.transaction();
-
   try {
+    const user = await getUserById(userId);
+
+    const baseWeight = user.trust_index;
+    const typingWeight =
+      user.status === "medecin" ? baseWeight + baseWeight * 0.3 : baseWeight;
+
     await UserTypingErrors.create(
       {
         user_id: userId,
         user_error_details_id: userErrorDetailId,
         error_type_id: errorTypeId,
+        weight: typingWeight,
       },
       { transaction }
     );
