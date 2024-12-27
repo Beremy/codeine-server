@@ -15,7 +15,7 @@ def custom_sentencizer(doc):
     return doc
 
 def tokenize_text_with_sentences(text):
-    nlp = spacy.load('fr_dep_news_trf')
+    nlp = spacy.load('fr_core_news_md')
     nlp.add_pipe("custom_sentencizer", before="parser")
 
     doc = nlp(text)

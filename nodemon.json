@@ -1,0 +1,4 @@
+{
+    "ignore": ["controllers/temp_texts.json", "uploads/*"]
+  }
+  

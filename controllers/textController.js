@@ -4,6 +4,8 @@ const { Sequelize } = require("sequelize");
 const Op = Sequelize.Op;
 const { getVariableFromCache } = require("../service/cache");
 const moment = require("moment");
+const fs = require("fs");
+const path = require("path");
 
 const getNumberOfTexts = async (req, res) => {
   try {
@@ -194,8 +196,8 @@ const getTextById = async (req, res) => {
       return res.status(404).json({ error: "Text not found" });
     }
     text.dataValues.created_at = moment(text.created_at)
-    .locale("fr")
-    .format("DD MMMM YYYY");
+      .locale("fr")
+      .format("DD MMMM YYYY");
 
     res.status(200).json(text);
   } catch (error) {
@@ -203,33 +205,120 @@ const getTextById = async (req, res) => {
   }
 };
 
-// const getTextsByTheme = async (req, res) => {
-//   try {
-//     const themeId = req.params.theme;
-//     const theme = await Theme.findOne({ where: { id: themeId } });
 
-//     if (!theme) {
-//       return res.status(404).json({ error: "Theme not found" });
-//     }
+const createSeveralTexts = async (req, res) => {
+  try {
+    console.log("createSeveralTexts started");
 
-//     const texts = await Text.findAll({ where: { id_theme: theme.id } });
-//     res.status(200).json(texts);
-//   } catch (error) {
-//     res.status(500).json({ error: error.message });
-//   }
-// };
+    const { texts } = req.body;
+
+    if (!Array.isArray(texts) || texts.length === 0) {
+      return res.status(400).json({ error: "Texts array is required and cannot be empty" });
+    }
+
+    // Écrire les textes dans un fichier temporaire
+    const tempFilePath = path.join(__dirname, "temp_texts.json");
+    fs.writeFileSync(tempFilePath, JSON.stringify(texts));
+    console.log("Temporary file created:", tempFilePath);
+
+    const scriptToRun = "./scripts/importSeveralTexts.py";
+    const command = `./hostomythoenv/bin/python ${scriptToRun} ${tempFilePath}`;
+
+    // Exécuter le script Python
+    console.log("Running Python script...");
+    const output = await new Promise((resolve, reject) => {
+      exec(command, (error, stdout, stderr) => {
+        if (error) {
+          console.error(`Python script error (stderr): ${stderr}`);
+          console.error(`Python script error (stdout): ${stdout}`);
+          return reject(`Error running script: ${stderr || error.message}`);
+        }
+        try {
+          const parsedOutput = JSON.parse(stdout);
+          console.log("Python script output:", parsedOutput);
+          resolve(parsedOutput);
+        } catch (err) {
+          console.error("Invalid JSON from Python script:", stdout);
+          reject(`Invalid JSON from script: ${err.message}`);
+        }
+      });
+    });
+
+    console.log("Processing output...");
+    const results = [];
+    for (const textOutput of output) {
+      const { num, origin, result } = textOutput;
+      const { tokens, sentences } = result;
+
+      // Récupérez les champs personnalisés pour ce texte
+      const originalTextData = texts.find((t) => t.num === num);
+      const { content, reason_for_rate, test_plausibility, is_plausibility_test,is_negation_specification_test, is_active } = originalTextData;
+
+      console.log(`Creating text for num: ${num}`);
+
+      const createdText = await Text.create({
+        num,
+        content,
+        origin,
+        reason_for_rate: reason_for_rate || null,
+        test_plausibility: test_plausibility || "0",
+        is_plausibility_test: is_plausibility_test || 0,
+        is_negation_specification_test: is_negation_specification_test || 0,
+        is_active: is_active || 1,
+        length: tokens.length,
+      });
+
+      console.log(`Created text: ${createdText.id}`);
+
+      for (const sentenceInfo of sentences) {
+        const sentence = await Sentence.create({
+          text_id: createdText.id,
+          content: sentenceInfo.content,
+          position: sentenceInfo.position,
+        });
+
+        console.log(`Created sentence: ${sentence.id} for text: ${createdText.id}`);
+
+        const tokensForThisSentence = tokens.filter(
+          (t) => t.sentence_position === sentenceInfo.position
+        );
+        for (const tokenInfo of tokensForThisSentence) {
+          await Token.create({
+            text_id: createdText.id,
+            sentence_id: sentence.id,
+            content: tokenInfo.text,
+            position: tokenInfo.position,
+            is_punctuation: tokenInfo.is_punctuation,
+          });
+        }
+      }
+
+      results.push(createdText);
+    }
+
+    console.log("Removing temporary file...");
+    // Supprimez le fichier temporaire après traitement
+    fs.unlinkSync(tempFilePath);
+
+    console.log("Sending response...");
+    res.status(201).json(results);
+  } catch (error) {
+    console.error(`Error during bulk import: ${error}`);
+    res.status(500).json({ error: error.message });
+  }
+};
+
+
 
 const createText = async (req, res) => {
   try {
-    const { content, includeSentences } = req.body;
+    const { content } = req.body;
 
     if (!content) {
       return res.status(400).json({ error: "Content is required" });
     }
 
-    const scriptToRun = includeSentences
-      ? "./scripts/spacyTokenAndSentence.py"
-      : "./scripts/spacyToken.py";
+    const scriptToRun = "./scripts/spacyTokenAndSentence.py";
 
     exec(
       `./hostomythoenv/bin/python ${scriptToRun} "${content}"`,
@@ -262,52 +351,30 @@ const createText = async (req, res) => {
 
           const text = await Text.create(textData);
 
-          if (includeSentences) {
-            const sentencesInfoArray = output.sentences;
-            for (let i = 0; i < sentencesInfoArray.length; i++) {
-              const sentenceInfo = sentencesInfoArray[i];
-              const sentence = await Sentence.create({
-                text_id: text.id,
-                content: sentenceInfo.content,
-                position: sentenceInfo.position,
-              });
+          const sentencesInfoArray = output.sentences;
+          for (let i = 0; i < sentencesInfoArray.length; i++) {
+            const sentenceInfo = sentencesInfoArray[i];
+            const sentence = await Sentence.create({
+              text_id: text.id,
+              content: sentenceInfo.content,
+              position: sentenceInfo.position,
+            });
 
-              // Insérer les tokens associés à cette phrase
-              const tokensForThisSentence = tokensInfoArray.filter(
-                (t) => t.sentence_position === sentenceInfo.position
-              );
-              for (const tokenInfo of tokensForThisSentence) {
-                await Token.create({
-                  text_id: text.id,
-                  sentence_id: sentence.id,
-                  content: tokenInfo.text,
-                  position: tokenInfo.position,
-                  is_punctuation: tokenInfo.is_punctuation,
-                });
-              }
-            }
-          } else {
-            // Insérer les tokens sans sentences
-            for (const tokenInfo of tokensInfoArray) {
+            // Insérer les tokens associés à cette phrase
+            const tokensForThisSentence = tokensInfoArray.filter(
+              (t) => t.sentence_position === sentenceInfo.position
+            );
+            for (const tokenInfo of tokensForThisSentence) {
               await Token.create({
                 text_id: text.id,
+                sentence_id: sentence.id,
                 content: tokenInfo.text,
                 position: tokenInfo.position,
                 is_punctuation: tokenInfo.is_punctuation,
-                sentence_id: null, // Aucune sentence associée
               });
             }
           }
-          // if (req.body.is_plausibility_test && req.body.errors) {
-          //   for (const error of req.body.errors) {
-          //     await TestPlausibilityError.create({
-          //       text_id: text.id,
-          //       content: error.content,
-          //       word_positions: error.word_positions,
-          //     });
-          //   }
-          // }
-
+   
           res.status(201).json(text);
         } catch (innerError) {
           console.error(`Database or data error: ${innerError}`);
@@ -394,6 +461,7 @@ module.exports = {
   getAllTexts,
   getTextById,
   createText,
+  createSeveralTexts,
   updateText,
   deleteText,
   getTextsByOrigin,
