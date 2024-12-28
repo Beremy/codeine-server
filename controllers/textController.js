@@ -6,6 +6,7 @@ const { getVariableFromCache } = require("../service/cache");
 const moment = require("moment");
 const fs = require("fs");
 const path = require("path");
+const { spawn } = require("child_process");
 
 const getNumberOfTexts = async (req, res) => {
   try {
@@ -205,7 +206,6 @@ const getTextById = async (req, res) => {
   }
 };
 
-
 const createSeveralTexts = async (req, res) => {
   try {
     const { texts } = req.body;
@@ -218,15 +218,25 @@ const createSeveralTexts = async (req, res) => {
     const tempFilePath = path.join(__dirname, "temp_texts.json");
     fs.writeFileSync(tempFilePath, JSON.stringify(texts));
     const scriptToRun = "./scripts/importSeveralTexts.py";
-    const command = `./hostomythoenv/bin/python ${scriptToRun} ${tempFilePath}`;
 
-    // Exécuter le script Python
     const output = await new Promise((resolve, reject) => {
-      exec(command, (error, stdout, stderr) => {
-        if (error) {
+      const process = spawn("./hostomythoenv/bin/python", [scriptToRun, tempFilePath]);
+
+      let stdout = "";
+      let stderr = "";
+
+      process.stdout.on("data", (data) => {
+        stdout += data.toString();
+      });
+
+      process.stderr.on("data", (data) => {
+        stderr += data.toString();
+      });
+
+      process.on("close", (code) => {
+        if (code !== 0) {
           console.error(`Python script error (stderr): ${stderr}`);
-          console.error(`Python script error (stdout): ${stdout}`);
-          return reject(`Error running script: ${stderr || error.message}`);
+          return reject(`Error running script: ${stderr || `Exit code ${code}`}`);
         }
         try {
           const parsedOutput = JSON.parse(stdout);
@@ -243,9 +253,15 @@ const createSeveralTexts = async (req, res) => {
       const { num, origin, result } = textOutput;
       const { tokens, sentences } = result;
 
-      // Récupérez les champs personnalisés pour ce texte
       const originalTextData = texts.find((t) => t.num === num);
-      const { content, reason_for_rate, test_plausibility, is_plausibility_test,is_negation_specification_test, is_active } = originalTextData;
+      const {
+        content,
+        reason_for_rate,
+        test_plausibility,
+        is_plausibility_test,
+        is_negation_specification_test,
+        is_active,
+      } = originalTextData;
 
       const createdText = await Text.create({
         num,
@@ -291,8 +307,6 @@ const createSeveralTexts = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
-
-
 
 const createText = async (req, res) => {
   try {
