@@ -208,8 +208,6 @@ const getTextById = async (req, res) => {
 
 const createSeveralTexts = async (req, res) => {
   try {
-    console.log("createSeveralTexts started");
-
     const { texts } = req.body;
 
     if (!Array.isArray(texts) || texts.length === 0) {
@@ -219,13 +217,10 @@ const createSeveralTexts = async (req, res) => {
     // Écrire les textes dans un fichier temporaire
     const tempFilePath = path.join(__dirname, "temp_texts.json");
     fs.writeFileSync(tempFilePath, JSON.stringify(texts));
-    console.log("Temporary file created:", tempFilePath);
-
     const scriptToRun = "./scripts/importSeveralTexts.py";
     const command = `./hostomythoenv/bin/python ${scriptToRun} ${tempFilePath}`;
 
     // Exécuter le script Python
-    console.log("Running Python script...");
     const output = await new Promise((resolve, reject) => {
       exec(command, (error, stdout, stderr) => {
         if (error) {
@@ -235,7 +230,6 @@ const createSeveralTexts = async (req, res) => {
         }
         try {
           const parsedOutput = JSON.parse(stdout);
-          console.log("Python script output:", parsedOutput);
           resolve(parsedOutput);
         } catch (err) {
           console.error("Invalid JSON from Python script:", stdout);
@@ -244,7 +238,6 @@ const createSeveralTexts = async (req, res) => {
       });
     });
 
-    console.log("Processing output...");
     const results = [];
     for (const textOutput of output) {
       const { num, origin, result } = textOutput;
@@ -253,8 +246,6 @@ const createSeveralTexts = async (req, res) => {
       // Récupérez les champs personnalisés pour ce texte
       const originalTextData = texts.find((t) => t.num === num);
       const { content, reason_for_rate, test_plausibility, is_plausibility_test,is_negation_specification_test, is_active } = originalTextData;
-
-      console.log(`Creating text for num: ${num}`);
 
       const createdText = await Text.create({
         num,
@@ -268,16 +259,12 @@ const createSeveralTexts = async (req, res) => {
         length: tokens.length,
       });
 
-      console.log(`Created text: ${createdText.id}`);
-
       for (const sentenceInfo of sentences) {
         const sentence = await Sentence.create({
           text_id: createdText.id,
           content: sentenceInfo.content,
           position: sentenceInfo.position,
         });
-
-        console.log(`Created sentence: ${sentence.id} for text: ${createdText.id}`);
 
         const tokensForThisSentence = tokens.filter(
           (t) => t.sentence_position === sentenceInfo.position
@@ -296,11 +283,8 @@ const createSeveralTexts = async (req, res) => {
       results.push(createdText);
     }
 
-    console.log("Removing temporary file...");
-    // Supprimez le fichier temporaire après traitement
     fs.unlinkSync(tempFilePath);
 
-    console.log("Sending response...");
     res.status(201).json(results);
   } catch (error) {
     console.error(`Error during bulk import: ${error}`);
