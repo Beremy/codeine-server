@@ -4,7 +4,7 @@ const {
   UserTextRating,
   UserErrorDetail,
   UserTypingErrors,
-  UserSentenceSpecification,
+  UserSentenceSpecification
 } = require("../models");
 const { sequelize } = require("../service/db.js");
 
@@ -23,6 +23,49 @@ const generateWeeklySeries = (startDate, endDate) => {
   }
   return dates;
 };
+
+
+// **************** Stats page ****************
+const getTotalUsersCount = async (req, res) => {
+  try {
+    const count = await User.count();
+    res.status(200).json({ totalUsers: count });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+const getUserAnnotationsCount = async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    const userErrorDetailsCount = await UserErrorDetail.count({ where: { user_id: userId } });
+    const userSentenceSpecificationCount = await UserSentenceSpecification.count({ where: { user_id: userId } });
+    const userTypingErrorsCount = await UserTypingErrors.count({ where: { user_id: userId } });
+
+    const totalAnnotations = userErrorDetailsCount + userSentenceSpecificationCount + userTypingErrorsCount;
+
+    res.status(200).json({ userAnnotations: totalAnnotations });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+
+const getTotalAnnotationsCount = async (req, res) => {
+  try {
+    const userErrorDetailsCount = await UserErrorDetail.count();
+    const userSentenceSpecificationCount = await UserSentenceSpecification.count();
+    const userTypingErrorsCount = await UserTypingErrors.count();
+
+    const totalAnnotations = userErrorDetailsCount + userSentenceSpecificationCount + userTypingErrorsCount;
+
+    res.status(200).json({ totalAnnotations });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
 
 // **************** User ****************
 const getUserRegistrationsDate = async (req, res) => {
@@ -533,4 +576,7 @@ module.exports = {
   getCumulativeUserTypingErrors,
   getUserSentenceSpecificationDate,
   getCumulativeUserSentenceSpecification,
+  getTotalUsersCount,
+  getUserAnnotationsCount,
+  getTotalAnnotationsCount,
 };

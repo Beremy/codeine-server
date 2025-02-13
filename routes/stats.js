@@ -1,12 +1,14 @@
 var express = require("express");
 var router = express.Router();
 const statsController = require("../controllers/statsController");
-const { adminAuthMiddleware } = require("../middleware/authMiddleware");
+const { adminAuthMiddleware, userAuthMiddleware } = require("../middleware/authMiddleware");
 
-// TODO Mettre les adminMiddleware quand token permanent
+// Stats page
+router.get("/getTotalUsers", statsController.getTotalUsersCount);
+router.get("/getUserAnnotations", userAuthMiddleware, statsController.getUserAnnotationsCount);
+router.get("/getTotalAnnotations", statsController.getTotalAnnotationsCount);
 
 // User
-// router.get("/getUserRegistrationsDate", adminAuthMiddleware, statsController.getUserRegistrationsDate);
 router.get("/getUserRegistrationsDate", adminAuthMiddleware, statsController.getUserRegistrationsDate);
 router.get('/getCumulativeUserRegistrations', adminAuthMiddleware, statsController.getCumulativeUserRegistrations);
 router.get('/getUserTypesCount', adminAuthMiddleware, statsController.getUserTypesCount);
